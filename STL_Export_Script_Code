@@ -45,7 +45,7 @@ class MyGui(QtGui.QWidget):
 
 		#name = FreeCADGui.Selection.__name__
 	
-	
+	########### ONLY VALID FOR MY COMPUTER - CHANGE IT FOR YOUR OWN PURPOSE #############
 		Mesh.export(object,u"C:/Users/DanielP/Desktop/Unnamed-Myshape.stl")
 	
 
