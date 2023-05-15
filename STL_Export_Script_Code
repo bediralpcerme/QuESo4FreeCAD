@@ -1,16 +1,28 @@
-from PySide.QtGui import QWidget, QLabel, QHBoxLayout, QPushButton, QFont
+	### TODO LIST
+	#		1. Directory Path setting
+	#		2. Custom name for file
+	# 		3. Repair text in box
+	#		4. Implement script as a tool in workbench
+
+
+from PySide import QtGui, QtCore
 import Mesh
+
+
+#from PySide.QtGui import QWidget, QLabel, QHBoxLayout, QPushButton, QFont
 
 
 class MyGui(QtGui.QWidget):
 	def __init__(self):
 		super(MyGui, self).__init__()
 		
+		'''
 		#Font and Text
 		font = QFont("Arial", 15)
 		label = QLabel("Select the geometry and press 'Export' ",self)
 		label.setFont(font)
 		#label.setAlignment(Qt.AlignCenter)
+		'''
 		
 		#Window
 		self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
@@ -53,8 +65,5 @@ class MyGui(QtGui.QWidget):
 		App.Console.PrintMessage("Closing...\n")	
 		self.close()
 
-	### TODO 
-	#		1. Directory Path setting
-	#		2. Custom name for file
 
 gui = MyGui()
