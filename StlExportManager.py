@@ -30,11 +30,11 @@ class StlExportManager(QtGui.QDialog):
         # cancel button
         cancelButton = QtGui.QPushButton('Cancel', self)
         cancelButton.clicked.connect(self.onCancel)
-        cancelButton.setAutoDefault(True)
         cancelButton.move(30, 90)
         # OK button
         okButton = QtGui.QPushButton('OK', self)
         okButton.clicked.connect(self.onOk)
+        okButton.setAutoDefault(True)
         okButton.move(120, 90)
 
     def onOk(self):
@@ -42,7 +42,10 @@ class StlExportManager(QtGui.QDialog):
         object = []
         object.append(FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(FreeCAD.ActiveDocument.myBox.Name))
         Mesh.export(object,os.getcwd() + "/" + self.textExtractor() + ".stl")
-        self.close()
+        infoBox = QtGui.QMessageBox.information(self, "STL Export Manager", "The STL file has been successfully exported to " \
+                                                 + "'" + os.getcwd() + "'" + " directory.", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+        if infoBox == QtGui.QMessageBox.StandardButton.Ok:
+            self.close()
 
     def onCancel(self):
         self.result = "Cancel"
@@ -51,3 +54,4 @@ class StlExportManager(QtGui.QDialog):
     def textExtractor(self):
          self.myStr = self.textInput_.text()
          return self.myStr
+    

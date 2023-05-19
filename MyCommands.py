@@ -67,7 +67,7 @@ class Function3_Class():
         icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/test-icon.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
                 'MenuText': "Export STL",
-                'ToolTip' : "It exports the STL file (hopefully)"}
+                'ToolTip' : "Export the STL file"}
 
     def Activated(self):
         
