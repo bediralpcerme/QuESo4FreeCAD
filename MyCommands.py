@@ -1,14 +1,16 @@
 import FreeCADGui
 import FreeCAD
 from random import *
-#from PySide.QtGui import QWidget, QLabel, QHBoxLayout, QPushButton, QFont
+from FreeCAD_PySide import *
+import StlExportManager
 import Mesh
+import sys
 
 class Function1_Class():
     """My new command"""
 
     def GetResources(self):
-        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/MyWorkbench/icon/test-icon.svg'
+        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/test-icon.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
                 'Accel' : "Shift+M", # a default shortcut (optional)
                 'MenuText': "My New Command 1",
@@ -35,7 +37,7 @@ class Function2_Class():
     """My new command"""
 
     def GetResources(self):
-        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/MyWorkbench/icon/test2-icon.svg'
+        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/test2-icon.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
                 'Accel' : "Shift+J", # a default shortcut (optional)
                 'MenuText': "My New Command 2",
@@ -57,10 +59,33 @@ class Function2_Class():
         """Here you can define if the command must be active or not (greyed) if certain conditions
         are met or not. This function is optional."""
         return True
+    
+class Function3_Class():
+    """My new command"""
+
+    def GetResources(self):
+        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/test-icon.svg'
+        return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
+                'MenuText': "Export STL",
+                'ToolTip' : "It exports the STL file (hopefully)"}
+
+    def Activated(self):
+        
+        form = StlExportManager.StlExportManager()
+        form.exec_()
+        return
+
+    def IsActive(self):
+        """Here you can define if the command must be active or not (greyed) if certain conditions
+        are met or not. This function is optional."""
+        if FreeCAD.ActiveDocument == None:
+            return False
+        else:
+            return True
         
         
 
 
 FreeCADGui.addCommand('MyCommand1',Function1_Class())
 FreeCADGui.addCommand('MyCommand2',Function2_Class())
-#FreeCADGui.addCommand('Exporting STL', MyGui(QWidget))
+FreeCADGui.addCommand('MyCommand3',Function3_Class())
