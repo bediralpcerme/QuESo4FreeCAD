@@ -38,12 +38,14 @@ class StlExportManager(QtGui.QDialog):
         okButton.move(120, 90)
 
     def onOk(self):
-        doc = FreeCAD.ActiveDocument
         object = []
+        docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
+        save_dir = FreeCAD.ActiveDocument.FileName
+        save_dir = save_dir.replace(docName,"")
         object.append(FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(FreeCAD.ActiveDocument.myBox.Name))
-        Mesh.export(object,os.getcwd() + "/" + self.textExtractor() + ".stl")
+        Mesh.export(object,save_dir + self.textExtractor() + ".stl")
         infoBox = QtGui.QMessageBox.information(self, "STL Export Manager", "The STL file has been successfully exported to " \
-                                                 + "'" + os.getcwd() + "'" + " directory.", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+                                                 + "'" + save_dir + "'" + " directory.", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
         if infoBox == QtGui.QMessageBox.StandardButton.Ok:
             self.close()
 
@@ -54,4 +56,3 @@ class StlExportManager(QtGui.QDialog):
     def textExtractor(self):
          self.myStr = self.textInput_.text()
          return self.myStr
-    
