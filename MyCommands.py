@@ -40,8 +40,8 @@ class Function2_Class():
         icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/test2-icon.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
                 'Accel' : "Shift+J", # a default shortcut (optional)
-                'MenuText': "My New Command 2",
-                'ToolTip' : "What my new command 2 does"}
+                'MenuText': "Create Random Box",
+                'ToolTip' : "Create Random Box"}
 
     def Activated(self):
         if FreeCAD.ActiveDocument == None:
@@ -83,9 +83,62 @@ class Function3_Class():
         else:
             return True
         
+        form = StlExportManager.StlExportManager()
+        form.exec_()
+        return
+
+    def IsActive(self):
+        """Here you can define if the command must be active or not (greyed) if certain conditions
+        are met or not. This function is optional."""
+        if FreeCAD.ActiveDocument == None:
+            return False
+        else:
+            return True
         
+class Function4_Class():
+    """My new command"""
+
+    def GetResources(self):
+        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/test-icon.svg'
+        return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
+                'MenuText': "Tibra Parameters",
+                'ToolTip' : "Setting Path"}
+
+    def Activated(self):
+        
+        form = TibraParameters.TibraParameters()
+        form.exec_()
+        return
+
+    def IsActive(self):
+        """Here you can define if the command must be active or not (greyed) if certain conditions
+        are met or not. This function is optional."""
+        return True
 
 
-FreeCADGui.addCommand('MyCommand1',Function1_Class())
-FreeCADGui.addCommand('MyCommand2',Function2_Class())
-FreeCADGui.addCommand('MyCommand3',Function3_Class())
+class RunTibra_Class():
+  
+
+    def GetResources(self):
+        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/test-icon.svg'
+        return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
+                'MenuText': "Run Tibra",
+                'ToolTip' : "Run Tibra"}
+
+    def Activated(self):
+        
+        form = RunTibra.RunTibra()
+        form.exec_()
+        return
+
+    def IsActive(self):
+        """Here you can define if the command must be active or not (greyed) if certain conditions
+        are met or not. This function is optional."""
+        return True
+
+
+
+FreeCADGui.addCommand('Create Random Box',Function2_Class())
+FreeCADGui.addCommand('Export STL',Function3_Class())
+FreeCADGui.addCommand('Set Tibra Parameters',Function4_Class())
+FreeCADGui.addCommand('Run Tibra',RunTibra_Class())

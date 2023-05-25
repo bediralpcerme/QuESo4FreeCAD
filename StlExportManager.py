@@ -56,3 +56,4 @@ class StlExportManager(QtGui.QDialog):
     def textExtractor(self):
          self.myStr = self.textInput_.text()
          return self.myStr
+    
