@@ -147,8 +147,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_integration_.setText("GGQ_Optimal")
         self.textInput_integration_.setFixedWidth(200)
         self.textInput_integration_.move(10, 490)
-
-
+        
         # cancel button
         cancelButton = QtGui.QPushButton('Cancel', self)
         cancelButton.clicked.connect(self.onCancel)
@@ -161,8 +160,12 @@ class TibraParameters(QtGui.QDialog):
 
     
     def onOk(self):
-        #Setting working directory - NEED TO BE CHANGED
-        os.chdir('C:\\Users\DanielP\Desktop\Example')
+        
+        docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
+        save_dir = FreeCAD.ActiveDocument.FileName
+        save_dir = save_dir.replace(docName,"")
+
+        os.chdir(save_dir)
 
         #Creating TIBRA directory:
         if os.path.isdir('TIBRA'):
@@ -176,24 +179,23 @@ class TibraParameters(QtGui.QDialog):
         else:
             os.mkdir('data')
        
-
         TibraParam = {
         
             "general_settings"   : {
-            "input_filename"  : "data/steering_knuckle.stl",
-            "echo_level"      : 1
+            "echo_level"      :  int(self.textInput_echo_.text()),
+            "input_filename"  :  'data/'+self.textInput_filename_.text()+'.stl'
             },
             "mesh_settings"     : {
-                "lower_bound": [0.0, 0.0, 0.0],
-                "upper_bound": [20.0, 190.0, 190.0],
-                "polynomial_order" : [2, 2, 2],
-                "number_of_elements" : [60, 120, 120]
+                "lower_bound": [ float(self.textInput_lowerbound_x_.text()), float(self.textInput_lowerbound_y_.text()), float(self.textInput_lowerbound_z_.text())],
+                "upper_bound": [ float(self.textInput_upperbound_x_.text()), float(self.textInput_upperbound_y_.text()), float(self.textInput_upperbound_z_.text())],
+                "polynomial_order" : [ int(self.textInput_polynomialOrder_x_.text()), int(self.textInput_polynomialOrder_y_.text()), int(self.textInput_polynomialOrder_z_.text())],
+                "number_of_elements" : [ int(self.textInput_nElements_x_.text()),  int(self.textInput_nElements_y_.text()), int(self.textInput_nElements_z_.text())]
             },
             "trimmed_quadrature_rule_settings"     : {
-                "moment_fitting_residual": 1e-6
+                "moment_fitting_residual": float(self.textInput_residual_.text())
             },
             "non_trimmed_quadrature_rule_settings" : {
-                "integration_method" : "GGQ_Optimal"
+                "integration_method" : self.textInput_integration_.text()
             }
         }
 
@@ -216,7 +218,6 @@ if __name__ == "__main__":
     main()''')
 
             pass
-
 
         self.result = "Ok"
         self.close()
