@@ -34,7 +34,7 @@ class StlExportManager(QtGui.QDialog):
         # OK button
         okButton = QtGui.QPushButton('OK', self)
         okButton.clicked.connect(self.onOk)
-        okButton.setAutoDefault(True)
+        okButton.setDefault(True)
         okButton.move(120, 90)
 
     def onOk(self):
