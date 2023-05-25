@@ -1,7 +1,5 @@
-from PySide import QtCore
+from FreeCAD_PySide import *
 import FreeCADGui as Gui
-
-import os
 
 #__dirname__ = C:\Users\DanielP\AppData\Roaming\FreeCAD\Mod\ExampleWorkbench
 
@@ -46,7 +44,7 @@ class MyExampleWorkbench (Workbench):
     def Initialize(self):
         """This function is executed when FreeCAD starts"""
         import MyCommands#, MyModuleB # import here all the needed files that create your FreeCAD commands
-        self.list = ["MyCommand1", "MyCommand2"] # A list of command names created in the line above
+        self.list = ["MyCommand1", "MyCommand2", "MyCommand3"] # A list of command names created in the line above
         self.appendToolbar("My Commands",self.list) # creates a new toolbar with your commands
         self.appendMenu("Example Menu",self.list) # creates a new menu
         self.appendMenu(["An existing Menu","My submenu"],self.list) # appends a submenu to an existing menu
