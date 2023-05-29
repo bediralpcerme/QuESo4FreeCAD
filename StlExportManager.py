@@ -42,7 +42,7 @@ class StlExportManager(QtGui.QDialog):
         docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
         save_dir = FreeCAD.ActiveDocument.FileName
         save_dir = save_dir.replace(docName,"")
-        object.append(FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(FreeCAD.ActiveDocument.myBox.Name))
+        object.append(FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(FreeCAD.ActiveDocument.ActiveObject.Name))
         Mesh.export(object,save_dir + self.textExtractor() + ".stl")
         infoBox = QtGui.QMessageBox.information(self, "STL Export Manager", "The STL file has been successfully exported to " \
                                                  + "'" + save_dir + "'" + " directory.", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
