@@ -52,6 +52,7 @@ class TibraParameters(QtGui.QDialog):
         self.label_main_ = QtGui.QLabel("Mesh settings:", self)
         self.label_main_.move(10, 160)
 
+        '''
         #lower bound
         self.label_lowerbound_ = QtGui.QLabel("Lower bound:", self)
         self.label_lowerbound_.move(10, 190)
@@ -84,11 +85,12 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_upperbound_y_.setText("y")
         self.textInput_upperbound_y_.setFixedWidth(70)
         self.textInput_upperbound_y_.move(110, 260)
- 
+
         self.textInput_upperbound_z_ = QtGui.QLineEdit(self)
         self.textInput_upperbound_z_.setText("z")
         self.textInput_upperbound_z_.setFixedWidth(70)
         self.textInput_upperbound_z_.move(210, 260)
+        '''
 
         #polynomial order
         self.label_polynomialOrder_ = QtGui.QLabel("Polynomial order:", self)
@@ -167,6 +169,14 @@ class TibraParameters(QtGui.QDialog):
 
         os.chdir(save_dir)
 
+        mybounds=self.bounds()
+        self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.15
+        self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.15
+        self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.15
+        self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.15
+        self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.15
+        self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.15
+
         #Creating TIBRA directory:
         if os.path.isdir('TIBRA'):
             os.chdir('TIBRA')
@@ -186,8 +196,8 @@ class TibraParameters(QtGui.QDialog):
             "input_filename"  :  'data/'+self.textInput_filename_.text()+'.stl'
             },
             "mesh_settings"     : {
-                "lower_bound": [ float(self.textInput_lowerbound_x_.text()), float(self.textInput_lowerbound_y_.text()), float(self.textInput_lowerbound_z_.text())],
-                "upper_bound": [ float(self.textInput_upperbound_x_.text()), float(self.textInput_upperbound_y_.text()), float(self.textInput_upperbound_z_.text())],
+                "lower_bound": [ self.lowerbound_x_,self.lowerbound_y_, self.lowerbound_z_],
+                "upper_bound": [ self.upperbound_x_, self.upperbound_y_, self.upperbound_z_],
                 "polynomial_order" : [ int(self.textInput_polynomialOrder_x_.text()), int(self.textInput_polynomialOrder_y_.text()), int(self.textInput_polynomialOrder_z_.text())],
                 "number_of_elements" : [ int(self.textInput_nElements_x_.text()),  int(self.textInput_nElements_y_.text()), int(self.textInput_nElements_z_.text())]
             },
@@ -225,8 +235,37 @@ if __name__ == "__main__":
     def onCancel(self):
         self.result = "Cancel"
         self.close()
+  
     
-    def textExtractor(self):
-         self.myStr = self.textInput_.text()
-         return self.myStr
-    
+    def bounds(self):
+        
+        #mesh = Mesh.Mesh(self.textInput_stlfile.text())
+        doc = FreeCAD.getDocument('data/'+self.textInput_filename_.text()+'.stl')
+        object = []
+        object.append(doc.Name).getObject(doc.myBox.Name)
+
+        #brrrrrrr
+        #sel   = FreeCADGui.Selection.getSelection()
+        #selEx = FreeCADGui.Selection.getSelectionEx()
+        #objs  = [selobj.Object for selobj in selEx]
+
+        if len(object) >= 1:
+            if hasattr(object[0], "Shape"):
+                s = object[0].Shape
+            elif hasattr(objs[0], "Mesh"):      
+                s = object[0].Mesh
+            elif hasattr(objs[0], "Points"):
+                s = object[0].Points
+
+        # boundBox
+        boundBox_    = s.BoundBox
+
+        boundBoxXMin = boundBox_.XMin
+        boundBoxYMin = boundBox_.YMin
+        boundBoxZMin = boundBox_.ZMin
+
+        boundBoxXMax = boundBox_.XMax
+        boundBoxYMax = boundBox_.YMax
+        boundBoxZMax = boundBox_.ZMax
+
+        return [boundBoxXMin,boundBoxYMin,boundBoxZMin,boundBoxXMax,boundBoxYMax,boundBoxZMax]
