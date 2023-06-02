@@ -33,7 +33,8 @@ class TibraParameters(QtGui.QDialog):
         self.label_main_.move(10, 10)
 
         #name of file
-        self.label_filename_ = QtGui.QLabel("Name of exporting file:", self)
+        #it should be the same as you exported by stl manager
+        self.label_filename_ = QtGui.QLabel("Name of exporting file (same in export manager):", self)
         self.label_filename_.move(10, 40)
         self.textInput_filename_ = QtGui.QLineEdit(self)
         self.textInput_filename_.setText("Box_1")
@@ -52,7 +53,7 @@ class TibraParameters(QtGui.QDialog):
         self.label_main_ = QtGui.QLabel("Mesh settings:", self)
         self.label_main_.move(10, 160)
 
-        '''
+        '''we dont need it anymore but im leaving it here just in case
         #lower bound
         self.label_lowerbound_ = QtGui.QLabel("Lower bound:", self)
         self.label_lowerbound_.move(10, 190)
@@ -125,10 +126,10 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_nElements_y_.setFixedWidth(70)
         self.textInput_nElements_y_.move(110, 360)
  
-        self.textInput_nElemets_z_ = QtGui.QLineEdit(self)
-        self.textInput_nElemets_z_.setText("z")
-        self.textInput_nElemets_z_.setFixedWidth(70)
-        self.textInput_nElemets_z_.move(210, 360)
+        self.textInput_nElements_z_ = QtGui.QLineEdit(self)
+        self.textInput_nElements_z_.setText("z")
+        self.textInput_nElements_z_.setFixedWidth(70)
+        self.textInput_nElements_z_.move(210, 360)
 
         #solution settings head
         self.label_main_ = QtGui.QLabel("Solution settings:", self)
@@ -162,20 +163,27 @@ class TibraParameters(QtGui.QDialog):
 
     
     def onOk(self):
-        
-        docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
-        save_dir = FreeCAD.ActiveDocument.FileName
-        save_dir = save_dir.replace(docName,"")
-
-        os.chdir(save_dir)
-
+        #bounds
         mybounds=self.bounds()
-        self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.15
-        self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.15
-        self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.15
-        self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.15
-        self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.15
-        self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.15
+
+        #bounds with 0.1 offset in total
+        
+        self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
+        self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
+        self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
+        self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
+        self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
+        self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
+
+        '''
+        #bounds without 0.1 offset in total
+        self.lowerbound_x_=mybounds[0]
+        self.lowerbound_y_=mybounds[1]
+        self.lowerbound_z_=mybounds[2]
+        self.upperbound_x_=mybounds[3]
+        self.upperbound_y_=mybounds[4]
+        self.upperbound_z_=mybounds[5]
+        '''
 
         #Creating TIBRA directory:
         if os.path.isdir('TIBRA'):
@@ -238,27 +246,11 @@ if __name__ == "__main__":
   
     
     def bounds(self):
+        print(os.getcwd())
+        mesh = Mesh.Mesh(self.textInput_filename_.text()+'.stl')
         
-        #mesh = Mesh.Mesh(self.textInput_stlfile.text())
-        doc = FreeCAD.getDocument('data/'+self.textInput_filename_.text()+'.stl')
-        object = []
-        object.append(doc.Name).getObject(doc.myBox.Name)
-
-        #brrrrrrr
-        #sel   = FreeCADGui.Selection.getSelection()
-        #selEx = FreeCADGui.Selection.getSelectionEx()
-        #objs  = [selobj.Object for selobj in selEx]
-
-        if len(object) >= 1:
-            if hasattr(object[0], "Shape"):
-                s = object[0].Shape
-            elif hasattr(objs[0], "Mesh"):      
-                s = object[0].Mesh
-            elif hasattr(objs[0], "Points"):
-                s = object[0].Points
-
         # boundBox
-        boundBox_    = s.BoundBox
+        boundBox_    = mesh.BoundBox
 
         boundBoxXMin = boundBox_.XMin
         boundBoxYMin = boundBox_.YMin
