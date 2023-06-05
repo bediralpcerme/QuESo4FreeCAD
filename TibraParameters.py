@@ -6,6 +6,10 @@ import Mesh
 import json
 
 
+### UPDATE ###
+# Bediralp currently commented "Creating TIBRA directory" part. Please tell him what is the goal 
+# of creating such a directory.
+
 #TO DO LIST: 
 # - make option to choose working directory manually (on Windows its not established automatically while saving project)
 # - would be nice to have checkbox while setting the integration method instead of textblock 
@@ -20,7 +24,7 @@ class TibraParameters(QtGui.QDialog):
     def initUI(self):
 
         #position and geometry of the dialog box
-        width = 400
+        width = 340
         height = 600
         centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
@@ -32,14 +36,22 @@ class TibraParameters(QtGui.QDialog):
         self.label_main_ = QtGui.QLabel("General settings:", self)
         self.label_main_.move(10, 10)
 
-        #name of file
-        #it should be the same as you exported by stl manager
-        self.label_filename_ = QtGui.QLabel("Name of exporting file (same in export manager):", self)
-        self.label_filename_.move(10, 40)
-        self.textInput_filename_ = QtGui.QLineEdit(self)
-        self.textInput_filename_.setText("Box_1")
-        self.textInput_filename_.setFixedWidth(200)
-        self.textInput_filename_.move(10, 60)
+        #path to the file
+        self.label_pathname_ = QtGui.QLabel("Path to the STL file:", self)
+        self.label_pathname_.move(10, 40)
+
+        #Text edit of pathname
+        self.textInput_pathname_ = QtGui.QLineEdit(self)
+        self.textInput_pathname_.setText("")
+        self.textInput_pathname_.setFixedWidth(200)
+        self.textInput_pathname_.move(10, 60)
+
+        #file browser button
+        self.fileBrowseButton = QtGui.QPushButton('Browse files',self)
+        self.fileBrowseButton.clicked.connect(self.onBrowseButton)
+        self.fileBrowseButton.setAutoDefault(False)
+        self.fileBrowseButton.move(220, 60)
+
 
         #label text
         self.label_echo_ = QtGui.QLabel("Echo level:", self)
@@ -146,10 +158,11 @@ class TibraParameters(QtGui.QDialog):
         #integration method setting
         self.label_integration_ = QtGui.QLabel("Integration method:", self)
         self.label_integration_.move(10, 470)
-        self.textInput_integration_ = QtGui.QLineEdit(self)
-        self.textInput_integration_.setText("GGQ_Optimal")
-        self.textInput_integration_.setFixedWidth(200)
-        self.textInput_integration_.move(10, 490)
+        self.popup_integration = QtGui.QComboBox(self)
+        self.popup_integration_items = ("Gauss","Gauss_Reduced1","Gauss_Reduced2","GGQ_Optimal","GGQ_Reduced1", "GGQ_Reduced2")
+        self.popup_integration.addItems(self.popup_integration_items)
+        self.popup_integration.setFixedWidth(200)
+        self.popup_integration.move(10, 490)
         
         # cancel button
         cancelButton = QtGui.QPushButton('Cancel', self)
@@ -161,6 +174,20 @@ class TibraParameters(QtGui.QDialog):
         okButton.setAutoDefault(True)
         okButton.move(80, 550)
 
+    def onBrowseButton(self):
+        docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
+        open_dir = FreeCAD.ActiveDocument.FileName
+        open_dir = open_dir.replace(docName,"")
+
+        self.browseWindow = QtGui.QFileDialog(self)
+        self.browseWindow.setFileMode(QtGui.QFileDialog.ExistingFile)
+        self.browseWindow.setNameFilter(str("*.stl"))
+        self.browseWindow.setViewMode(QtGui.QFileDialog.Detail)
+        self.browseWindow.setDirectory(open_dir)
+
+        if self.browseWindow.exec_():
+            path_name_list = self.browseWindow.selectedFiles()
+            self.textInput_pathname_.setText(path_name_list[0])
     
     def onOk(self):
         #bounds
@@ -186,22 +213,22 @@ class TibraParameters(QtGui.QDialog):
         '''
 
         #Creating TIBRA directory:
-        if os.path.isdir('TIBRA'):
-            os.chdir('TIBRA')
-        else:
-            os.mkdir('TIBRA')
-            os.chdir('TIBRA')
+        # if os.path.isdir('TIBRA'):
+        #     os.chdir('TIBRA')
+        # else:
+        #     os.mkdir('TIBRA')
+        #     os.chdir('TIBRA')
             
-        if os.path.isdir('data'):
-            None
-        else:
-            os.mkdir('data')
+        # if os.path.isdir('data'):
+        #     None
+        # else:
+        #     os.mkdir('data')
        
         TibraParam = {
         
             "general_settings"   : {
             "echo_level"      :  int(self.textInput_echo_.text()),
-            "input_filename"  :  'data/'+self.textInput_filename_.text()+'.stl'
+            "input_filename"  :  self.textInput_pathname_.text()
             },
             "mesh_settings"     : {
                 "lower_bound": [ self.lowerbound_x_,self.lowerbound_y_, self.lowerbound_z_],
@@ -213,7 +240,7 @@ class TibraParameters(QtGui.QDialog):
                 "moment_fitting_residual": float(self.textInput_residual_.text())
             },
             "non_trimmed_quadrature_rule_settings" : {
-                "integration_method" : self.textInput_integration_.text()
+                "integration_method" : self.popup_integration.currentText()
             }
         }
 
@@ -247,7 +274,7 @@ if __name__ == "__main__":
     
     def bounds(self):
         print(os.getcwd())
-        mesh = Mesh.Mesh(self.textInput_filename_.text()+'.stl')
+        mesh = Mesh.Mesh(self.textInput_pathname_.text())
         
         # boundBox
         boundBox_    = mesh.BoundBox
@@ -261,3 +288,4 @@ if __name__ == "__main__":
         boundBoxZMax = boundBox_.ZMax
 
         return [boundBoxXMin,boundBoxYMin,boundBoxZMin,boundBoxXMax,boundBoxYMax,boundBoxZMax]
+    
