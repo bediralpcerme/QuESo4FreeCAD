@@ -29,6 +29,9 @@ class TibraParameters(QtGui.QDialog):
         centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
         self.setWindowTitle("Tibra Parameters")
+        self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
+        self.work_dir = FreeCAD.ActiveDocument.FileName
+        self.work_dir = self.work_dir.replace(self.docName,"")
 
         #Initial Parameters input:
 
@@ -175,15 +178,11 @@ class TibraParameters(QtGui.QDialog):
         okButton.move(80, 550)
 
     def onBrowseButton(self):
-        docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
-        open_dir = FreeCAD.ActiveDocument.FileName
-        open_dir = open_dir.replace(docName,"")
-
         self.browseWindow = QtGui.QFileDialog(self)
         self.browseWindow.setFileMode(QtGui.QFileDialog.ExistingFile)
         self.browseWindow.setNameFilter(str("*.stl"))
         self.browseWindow.setViewMode(QtGui.QFileDialog.Detail)
-        self.browseWindow.setDirectory(open_dir)
+        self.browseWindow.setDirectory(self.work_dir)
 
         if self.browseWindow.exec_():
             path_name_list = self.browseWindow.selectedFiles()
@@ -212,17 +211,28 @@ class TibraParameters(QtGui.QDialog):
         self.upperbound_z_=mybounds[5]
         '''
 
-        #Creating TIBRA directory:
-        # if os.path.isdir('TIBRA'):
-        #     os.chdir('TIBRA')
-        # else:
-        #     os.mkdir('TIBRA')
-        #     os.chdir('TIBRA')
-            
-        # if os.path.isdir('data'):
-        #     None
-        # else:
-        #     os.mkdir('data')
+        #  Creating TIBRA directory:
+        os.chdir(self.work_dir)
+
+        if os.path.isdir(os.getcwd() + '/TIBRA'):
+            self.data_dir = os.getcwd() + '/TIBRA'
+            os.chdir(self.data_dir)
+
+            if os.path.isdir(self.data_dir + '/data'):
+                self.data_dir = self.data_dir + '/data'
+                os.chdir(self.data_dir)
+            else:
+                os.mkdir('data')
+                self.data_dir = self.data_dir + '/data'
+                os.chdir(self.data_dir)
+
+        else:
+            os.mkdir('TIBRA')
+            self.data_dir = os.getcwd() + '/TIBRA'
+            os.chdir(self.data_dir)
+            os.mkdir('data')
+            self.data_dir = self.data_dir + '/data'
+            os.chdir(self.data_dir)
        
         TibraParam = {
         
@@ -273,7 +283,6 @@ if __name__ == "__main__":
   
     
     def bounds(self):
-        print(os.getcwd())
         mesh = Mesh.Mesh(self.textInput_pathname_.text())
         
         # boundBox
