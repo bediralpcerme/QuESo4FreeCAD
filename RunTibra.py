@@ -1,6 +1,7 @@
 from FreeCAD_PySide import *
 import os
 import subprocess
+import FreeCAD
 
 
 
@@ -36,12 +37,15 @@ class RunTibra(QtGui.QDialog):
     def onOk(self):
 
         #By subprocess
-        '''
-        os.chdir('C:\\Users\DanielP\Desktop\Example\TIBRA')
 
-        run = subprocess.run(['python', 'TIBRA_main.py'])
-        '''
+        self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
+        self.work_dir = FreeCAD.ActiveDocument.FileName
+        self.work_dir = self.work_dir.replace(self.docName,"")
+        self.work_dir = self.work_dir + '/TIBRA/data'
 
+        os.chdir(self.work_dir)
+
+        exec(open('TIBRA_main.py').read())
 
         # By cmd
 
@@ -66,8 +70,5 @@ class RunTibra(QtGui.QDialog):
     def onCancel(self):
         self.result = "Cancel"
         self.close()
-    
-    def textExtractor(self):
-         self.myStr = self.textInput_.text()
-         return self.myStr
+
     

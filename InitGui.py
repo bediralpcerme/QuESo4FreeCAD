@@ -13,7 +13,7 @@ class Tibra4FreeCAD (Workbench):
 			/* XPM */
 			static const char *test_icon[]={
 			"16 16 2 1",
-			"a c #000000",
+			"a c #0065bd",
 			". c None",
 			"................",
 			"................",

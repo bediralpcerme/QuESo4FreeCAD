@@ -1,5 +1,4 @@
 from FreeCAD_PySide import *
-import sys
 import os
 import FreeCAD
 import Mesh
@@ -7,8 +6,6 @@ import json
 
 
 #TO DO LIST: 
-# - make option to choose working directory manually (on Windows its not established automatically while saving project)
-# - would be nice to have checkbox while setting the integration method instead of textblock 
 # - Font size in pop-up windows could be greater a bit
 
 class TibraParameters(QtGui.QDialog):
@@ -20,11 +17,14 @@ class TibraParameters(QtGui.QDialog):
     def initUI(self):
 
         #position and geometry of the dialog box
-        width = 400
+        width = 340
         height = 600
         centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
         self.setWindowTitle("Tibra Parameters")
+        self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
+        self.work_dir = FreeCAD.ActiveDocument.FileName
+        self.work_dir = self.work_dir.replace(self.docName,"")
 
         #Initial Parameters input:
 
@@ -32,13 +32,22 @@ class TibraParameters(QtGui.QDialog):
         self.label_main_ = QtGui.QLabel("General settings:", self)
         self.label_main_.move(10, 10)
 
-        #name of file
-        self.label_filename_ = QtGui.QLabel("Name of exporting file:", self)
-        self.label_filename_.move(10, 40)
-        self.textInput_filename_ = QtGui.QLineEdit(self)
-        self.textInput_filename_.setText("Box_1")
-        self.textInput_filename_.setFixedWidth(200)
-        self.textInput_filename_.move(10, 60)
+        #path to the file
+        self.label_pathname_ = QtGui.QLabel("Path to the STL file:", self)
+        self.label_pathname_.move(10, 40)
+
+        #Text edit of pathname
+        self.textInput_pathname_ = QtGui.QLineEdit(self)
+        self.textInput_pathname_.setText("")
+        self.textInput_pathname_.setFixedWidth(200)
+        self.textInput_pathname_.move(10, 60)
+
+        #file browser button
+        self.fileBrowseButton = QtGui.QPushButton('Browse files',self)
+        self.fileBrowseButton.clicked.connect(self.onBrowseButton)
+        self.fileBrowseButton.setAutoDefault(False)
+        self.fileBrowseButton.move(220, 60)
+
 
         #label text
         self.label_echo_ = QtGui.QLabel("Echo level:", self)
@@ -52,43 +61,45 @@ class TibraParameters(QtGui.QDialog):
         self.label_main_ = QtGui.QLabel("Mesh settings:", self)
         self.label_main_.move(10, 160)
 
-        #lower bound
-        self.label_lowerbound_ = QtGui.QLabel("Lower bound:", self)
-        self.label_lowerbound_.move(10, 190)
+        # we dont need it anymore but im leaving it here just in case
+        # #lower bound
+        # self.label_lowerbound_ = QtGui.QLabel("Lower bound:", self)
+        # self.label_lowerbound_.move(10, 190)
 
-        self.textInput_lowerbound_x_ = QtGui.QLineEdit(self)
-        self.textInput_lowerbound_x_.setText("x")
-        self.textInput_lowerbound_x_.setFixedWidth(70)
-        self.textInput_lowerbound_x_.move(10, 210)
+        # self.textInput_lowerbound_x_ = QtGui.QLineEdit(self)
+        # self.textInput_lowerbound_x_.setText("x")
+        # self.textInput_lowerbound_x_.setFixedWidth(70)
+        # self.textInput_lowerbound_x_.move(10, 210)
 
-        self.textInput_lowerbound_y_ = QtGui.QLineEdit(self)
-        self.textInput_lowerbound_y_.setText("y")
-        self.textInput_lowerbound_y_.setFixedWidth(70)
-        self.textInput_lowerbound_y_.move(110, 210)
+        # self.textInput_lowerbound_y_ = QtGui.QLineEdit(self)
+        # self.textInput_lowerbound_y_.setText("y")
+        # self.textInput_lowerbound_y_.setFixedWidth(70)
+        # self.textInput_lowerbound_y_.move(110, 210)
  
-        self.textInput_lowerbound_z_ = QtGui.QLineEdit(self)
-        self.textInput_lowerbound_z_.setText("z")
-        self.textInput_lowerbound_z_.setFixedWidth(70)
-        self.textInput_lowerbound_z_.move(210, 210)
+        # self.textInput_lowerbound_z_ = QtGui.QLineEdit(self)
+        # self.textInput_lowerbound_z_.setText("z")
+        # self.textInput_lowerbound_z_.setFixedWidth(70)
+        # self.textInput_lowerbound_z_.move(210, 210)
 
-        #upper bound
-        self.label_upperbound_ = QtGui.QLabel("Upper bound:", self)
-        self.label_upperbound_.move(10, 240)
+        # #upper bound
+        # self.label_upperbound_ = QtGui.QLabel("Upper bound:", self)
+        # self.label_upperbound_.move(10, 240)
 
-        self.textInput_upperbound_x_ = QtGui.QLineEdit(self)
-        self.textInput_upperbound_x_.setText("x")
-        self.textInput_upperbound_x_.setFixedWidth(70)
-        self.textInput_upperbound_x_.move(10, 260)
+        # self.textInput_upperbound_x_ = QtGui.QLineEdit(self)
+        # self.textInput_upperbound_x_.setText("x")
+        # self.textInput_upperbound_x_.setFixedWidth(70)
+        # self.textInput_upperbound_x_.move(10, 260)
 
-        self.textInput_upperbound_y_ = QtGui.QLineEdit(self)
-        self.textInput_upperbound_y_.setText("y")
-        self.textInput_upperbound_y_.setFixedWidth(70)
-        self.textInput_upperbound_y_.move(110, 260)
- 
-        self.textInput_upperbound_z_ = QtGui.QLineEdit(self)
-        self.textInput_upperbound_z_.setText("z")
-        self.textInput_upperbound_z_.setFixedWidth(70)
-        self.textInput_upperbound_z_.move(210, 260)
+        # self.textInput_upperbound_y_ = QtGui.QLineEdit(self)
+        # self.textInput_upperbound_y_.setText("y")
+        # self.textInput_upperbound_y_.setFixedWidth(70)
+        # self.textInput_upperbound_y_.move(110, 260)
+
+        # self.textInput_upperbound_z_ = QtGui.QLineEdit(self)
+        # self.textInput_upperbound_z_.setText("z")
+        # self.textInput_upperbound_z_.setFixedWidth(70)
+        # self.textInput_upperbound_z_.move(210, 260)
+        # 
 
         #polynomial order
         self.label_polynomialOrder_ = QtGui.QLabel("Polynomial order:", self)
@@ -123,10 +134,10 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_nElements_y_.setFixedWidth(70)
         self.textInput_nElements_y_.move(110, 360)
  
-        self.textInput_nElemets_z_ = QtGui.QLineEdit(self)
-        self.textInput_nElemets_z_.setText("z")
-        self.textInput_nElemets_z_.setFixedWidth(70)
-        self.textInput_nElemets_z_.move(210, 360)
+        self.textInput_nElements_z_ = QtGui.QLineEdit(self)
+        self.textInput_nElements_z_.setText("z")
+        self.textInput_nElements_z_.setFixedWidth(70)
+        self.textInput_nElements_z_.move(210, 360)
 
         #solution settings head
         self.label_main_ = QtGui.QLabel("Solution settings:", self)
@@ -143,10 +154,11 @@ class TibraParameters(QtGui.QDialog):
         #integration method setting
         self.label_integration_ = QtGui.QLabel("Integration method:", self)
         self.label_integration_.move(10, 470)
-        self.textInput_integration_ = QtGui.QLineEdit(self)
-        self.textInput_integration_.setText("GGQ_Optimal")
-        self.textInput_integration_.setFixedWidth(200)
-        self.textInput_integration_.move(10, 490)
+        self.popup_integration = QtGui.QComboBox(self)
+        self.popup_integration_items = ("Gauss","Gauss_Reduced1","Gauss_Reduced2","GGQ_Optimal","GGQ_Reduced1", "GGQ_Reduced2")
+        self.popup_integration.addItems(self.popup_integration_items)
+        self.popup_integration.setFixedWidth(200)
+        self.popup_integration.move(10, 490)
         
         # cancel button
         cancelButton = QtGui.QPushButton('Cancel', self)
@@ -158,36 +170,72 @@ class TibraParameters(QtGui.QDialog):
         okButton.setAutoDefault(True)
         okButton.move(80, 550)
 
+    def onBrowseButton(self):
+        self.browseWindow = QtGui.QFileDialog(self)
+        self.browseWindow.setFileMode(QtGui.QFileDialog.ExistingFile)
+        self.browseWindow.setNameFilter(str("*.stl"))
+        self.browseWindow.setViewMode(QtGui.QFileDialog.Detail)
+        self.browseWindow.setDirectory(self.work_dir)
+
+        if self.browseWindow.exec_():
+            path_name_list = self.browseWindow.selectedFiles()
+            self.textInput_pathname_.setText(path_name_list[0])
     
     def onOk(self):
+        #bounds
+        mybounds=self.bounds()
+
+        #bounds with 0.1 offset in total
         
-        docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
-        save_dir = FreeCAD.ActiveDocument.FileName
-        save_dir = save_dir.replace(docName,"")
+        self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
+        self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
+        self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
+        self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
+        self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
+        self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
 
-        os.chdir(save_dir)
+        
+        #bounds without 0.1 offset in total
+        # self.lowerbound_x_=mybounds[0]
+        # self.lowerbound_y_=mybounds[1]
+        # self.lowerbound_z_=mybounds[2]
+        # self.upperbound_x_=mybounds[3]
+        # self.upperbound_y_=mybounds[4]
+        # self.upperbound_z_=mybounds[5]
+        
 
-        #Creating TIBRA directory:
-        if os.path.isdir('TIBRA'):
-            os.chdir('TIBRA')
+        #  Creating TIBRA directory:
+        os.chdir(self.work_dir)
+
+        if os.path.isdir(os.getcwd() + '/TIBRA'):
+            self.data_dir = os.getcwd() + '/TIBRA'
+            os.chdir(self.data_dir)
+
+            if os.path.isdir(self.data_dir + '/data'):
+                self.data_dir = self.data_dir + '/data'
+                os.chdir(self.data_dir)
+            else:
+                os.mkdir('data')
+                self.data_dir = self.data_dir + '/data'
+                os.chdir(self.data_dir)
+
         else:
             os.mkdir('TIBRA')
-            os.chdir('TIBRA')
-            
-        if os.path.isdir('data'):
-            None
-        else:
+            self.data_dir = os.getcwd() + '/TIBRA'
+            os.chdir(self.data_dir)
             os.mkdir('data')
+            self.data_dir = self.data_dir + '/data'
+            os.chdir(self.data_dir)
        
         TibraParam = {
         
             "general_settings"   : {
             "echo_level"      :  int(self.textInput_echo_.text()),
-            "input_filename"  :  'data/'+self.textInput_filename_.text()+'.stl'
+            "input_filename"  :  self.textInput_pathname_.text()
             },
             "mesh_settings"     : {
-                "lower_bound": [ float(self.textInput_lowerbound_x_.text()), float(self.textInput_lowerbound_y_.text()), float(self.textInput_lowerbound_z_.text())],
-                "upper_bound": [ float(self.textInput_upperbound_x_.text()), float(self.textInput_upperbound_y_.text()), float(self.textInput_upperbound_z_.text())],
+                "lower_bound": [ self.lowerbound_x_,self.lowerbound_y_, self.lowerbound_z_],
+                "upper_bound": [ self.upperbound_x_, self.upperbound_y_, self.upperbound_z_],
                 "polynomial_order" : [ int(self.textInput_polynomialOrder_x_.text()), int(self.textInput_polynomialOrder_y_.text()), int(self.textInput_polynomialOrder_z_.text())],
                 "number_of_elements" : [ int(self.textInput_nElements_x_.text()),  int(self.textInput_nElements_y_.text()), int(self.textInput_nElements_z_.text())]
             },
@@ -195,7 +243,7 @@ class TibraParameters(QtGui.QDialog):
                 "moment_fitting_residual": float(self.textInput_residual_.text())
             },
             "non_trimmed_quadrature_rule_settings" : {
-                "integration_method" : self.textInput_integration_.text()
+                "integration_method" : self.popup_integration.currentText()
             }
         }
 
@@ -225,8 +273,21 @@ if __name__ == "__main__":
     def onCancel(self):
         self.result = "Cancel"
         self.close()
+  
     
-    def textExtractor(self):
-         self.myStr = self.textInput_.text()
-         return self.myStr
+    def bounds(self):
+        mesh = Mesh.Mesh(self.textInput_pathname_.text())
+        
+        # boundBox
+        boundBox_    = mesh.BoundBox
+
+        boundBoxXMin = boundBox_.XMin
+        boundBoxYMin = boundBox_.YMin
+        boundBoxZMin = boundBox_.ZMin
+
+        boundBoxXMax = boundBox_.XMax
+        boundBoxYMax = boundBox_.YMax
+        boundBoxZMax = boundBox_.ZMax
+
+        return [boundBoxXMin,boundBoxYMin,boundBoxZMin,boundBoxXMax,boundBoxYMax,boundBoxZMax]
     
