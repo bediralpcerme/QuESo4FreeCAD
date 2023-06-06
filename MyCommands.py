@@ -3,38 +3,10 @@ import FreeCAD
 from random import *
 from FreeCAD_PySide import *
 import TibraParameters
+import RunTibra
 import StlExportManager
-import Mesh
-import sys
 
-class Function1_Class():
-    """My new command"""
-
-    def GetResources(self):
-        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/test-icon.svg'
-        return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
-                'Accel' : "Shift+M", # a default shortcut (optional)
-                'MenuText': "My New Command 1",
-                'ToolTip' : "What my new command 1 does"}
-
-    def Activated(self):
-        doc = FreeCAD.ActiveDocument
-        box = doc.addObject("Part::Box", "myBox")
-        box.Height = random()*100
-        box.Width = random()*100
-        box.Length = random()*100
-        print("Big box created!!")
-        return
-
-    def IsActive(self):
-        """Here you can define if the command must be active or not (greyed) if certain conditions
-        are met or not. This function is optional."""
-        if FreeCAD.ActiveDocument == None:
-            return False
-        else:
-            return True
-
-class Function2_Class():
+class Random_Box():
     """My new command"""
 
     def GetResources(self):
@@ -61,7 +33,7 @@ class Function2_Class():
         are met or not. This function is optional."""
         return True
     
-class Function3_Class():
+class STLExporter():
     """My new command"""
 
     def GetResources(self):
@@ -83,10 +55,6 @@ class Function3_Class():
             return False
         else:
             return True
-        
-        form = StlExportManager.StlExportManager()
-        form.exec_()
-        return
 
     def IsActive(self):
         """Here you can define if the command must be active or not (greyed) if certain conditions
@@ -96,7 +64,7 @@ class Function3_Class():
         else:
             return True
         
-class Function4_Class():
+class SetTibraParameters():
     """My new command"""
 
     def GetResources(self):
@@ -139,7 +107,7 @@ class RunTibra_Class():
 
 
 
-FreeCADGui.addCommand('Create Random Box',Function2_Class())
-FreeCADGui.addCommand('Export STL',Function3_Class())
-FreeCADGui.addCommand('Set Tibra Parameters',Function4_Class())
+FreeCADGui.addCommand('Create Random Box',Random_Box())
+FreeCADGui.addCommand('Export STL',STLExporter())
+FreeCADGui.addCommand('Set Tibra Parameters',SetTibraParameters())
 FreeCADGui.addCommand('Run Tibra',RunTibra_Class())

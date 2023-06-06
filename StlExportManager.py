@@ -1,6 +1,4 @@
 from FreeCAD_PySide import *
-import sys
-import os
 import FreeCAD
 import Mesh
 

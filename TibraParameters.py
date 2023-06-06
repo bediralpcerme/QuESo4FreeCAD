@@ -1,18 +1,11 @@
 from FreeCAD_PySide import *
-import sys
 import os
 import FreeCAD
 import Mesh
 import json
 
 
-### UPDATE ###
-# Bediralp currently commented "Creating TIBRA directory" part. Please tell him what is the goal 
-# of creating such a directory.
-
 #TO DO LIST: 
-# - make option to choose working directory manually (on Windows its not established automatically while saving project)
-# - would be nice to have checkbox while setting the integration method instead of textblock 
 # - Font size in pop-up windows could be greater a bit
 
 class TibraParameters(QtGui.QDialog):
@@ -68,45 +61,45 @@ class TibraParameters(QtGui.QDialog):
         self.label_main_ = QtGui.QLabel("Mesh settings:", self)
         self.label_main_.move(10, 160)
 
-        '''we dont need it anymore but im leaving it here just in case
-        #lower bound
-        self.label_lowerbound_ = QtGui.QLabel("Lower bound:", self)
-        self.label_lowerbound_.move(10, 190)
+        # we dont need it anymore but im leaving it here just in case
+        # #lower bound
+        # self.label_lowerbound_ = QtGui.QLabel("Lower bound:", self)
+        # self.label_lowerbound_.move(10, 190)
 
-        self.textInput_lowerbound_x_ = QtGui.QLineEdit(self)
-        self.textInput_lowerbound_x_.setText("x")
-        self.textInput_lowerbound_x_.setFixedWidth(70)
-        self.textInput_lowerbound_x_.move(10, 210)
+        # self.textInput_lowerbound_x_ = QtGui.QLineEdit(self)
+        # self.textInput_lowerbound_x_.setText("x")
+        # self.textInput_lowerbound_x_.setFixedWidth(70)
+        # self.textInput_lowerbound_x_.move(10, 210)
 
-        self.textInput_lowerbound_y_ = QtGui.QLineEdit(self)
-        self.textInput_lowerbound_y_.setText("y")
-        self.textInput_lowerbound_y_.setFixedWidth(70)
-        self.textInput_lowerbound_y_.move(110, 210)
+        # self.textInput_lowerbound_y_ = QtGui.QLineEdit(self)
+        # self.textInput_lowerbound_y_.setText("y")
+        # self.textInput_lowerbound_y_.setFixedWidth(70)
+        # self.textInput_lowerbound_y_.move(110, 210)
  
-        self.textInput_lowerbound_z_ = QtGui.QLineEdit(self)
-        self.textInput_lowerbound_z_.setText("z")
-        self.textInput_lowerbound_z_.setFixedWidth(70)
-        self.textInput_lowerbound_z_.move(210, 210)
+        # self.textInput_lowerbound_z_ = QtGui.QLineEdit(self)
+        # self.textInput_lowerbound_z_.setText("z")
+        # self.textInput_lowerbound_z_.setFixedWidth(70)
+        # self.textInput_lowerbound_z_.move(210, 210)
 
-        #upper bound
-        self.label_upperbound_ = QtGui.QLabel("Upper bound:", self)
-        self.label_upperbound_.move(10, 240)
+        # #upper bound
+        # self.label_upperbound_ = QtGui.QLabel("Upper bound:", self)
+        # self.label_upperbound_.move(10, 240)
 
-        self.textInput_upperbound_x_ = QtGui.QLineEdit(self)
-        self.textInput_upperbound_x_.setText("x")
-        self.textInput_upperbound_x_.setFixedWidth(70)
-        self.textInput_upperbound_x_.move(10, 260)
+        # self.textInput_upperbound_x_ = QtGui.QLineEdit(self)
+        # self.textInput_upperbound_x_.setText("x")
+        # self.textInput_upperbound_x_.setFixedWidth(70)
+        # self.textInput_upperbound_x_.move(10, 260)
 
-        self.textInput_upperbound_y_ = QtGui.QLineEdit(self)
-        self.textInput_upperbound_y_.setText("y")
-        self.textInput_upperbound_y_.setFixedWidth(70)
-        self.textInput_upperbound_y_.move(110, 260)
+        # self.textInput_upperbound_y_ = QtGui.QLineEdit(self)
+        # self.textInput_upperbound_y_.setText("y")
+        # self.textInput_upperbound_y_.setFixedWidth(70)
+        # self.textInput_upperbound_y_.move(110, 260)
 
-        self.textInput_upperbound_z_ = QtGui.QLineEdit(self)
-        self.textInput_upperbound_z_.setText("z")
-        self.textInput_upperbound_z_.setFixedWidth(70)
-        self.textInput_upperbound_z_.move(210, 260)
-        '''
+        # self.textInput_upperbound_z_ = QtGui.QLineEdit(self)
+        # self.textInput_upperbound_z_.setText("z")
+        # self.textInput_upperbound_z_.setFixedWidth(70)
+        # self.textInput_upperbound_z_.move(210, 260)
+        # 
 
         #polynomial order
         self.label_polynomialOrder_ = QtGui.QLabel("Polynomial order:", self)
@@ -201,15 +194,15 @@ class TibraParameters(QtGui.QDialog):
         self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
         self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
 
-        '''
+        
         #bounds without 0.1 offset in total
-        self.lowerbound_x_=mybounds[0]
-        self.lowerbound_y_=mybounds[1]
-        self.lowerbound_z_=mybounds[2]
-        self.upperbound_x_=mybounds[3]
-        self.upperbound_y_=mybounds[4]
-        self.upperbound_z_=mybounds[5]
-        '''
+        # self.lowerbound_x_=mybounds[0]
+        # self.lowerbound_y_=mybounds[1]
+        # self.lowerbound_z_=mybounds[2]
+        # self.upperbound_x_=mybounds[3]
+        # self.upperbound_y_=mybounds[4]
+        # self.upperbound_z_=mybounds[5]
+        
 
         #  Creating TIBRA directory:
         os.chdir(self.work_dir)
