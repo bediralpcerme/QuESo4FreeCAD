@@ -1,0 +1,49 @@
+import os
+import subprocess
+import time
+
+os.chdir("C:\\Users\DanielP\Desktop\Example\TIBRA") # This change working directory with project files
+
+
+# Adding tibra path manually (to make sure if it's connected) - no neccessary
+import sys
+TIBRAPATH = 'C:\TIBRA\TIBRA-windows_installation' 
+sys.path.append(TIBRAPATH)
+
+#Checking of python path and variables
+#>>> import pprint
+#>>>pprint.pprint(sys.path)
+
+
+# This command works good, but doesn't create subprocess - not recommended solution
+
+exec(open('TIBRA_main.py').read())
+
+
+# 'The closest' solution that I achieved
+input = 'python -m TIBRA_main'
+subprocess.Popen([ 'start','cmd','/k',input], cwd = r'C:\\Users\DanielP\Desktop\Example\TIBRA', shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
+
+
+
+#Experimental codes: (trash):
+
+#os.popen('python -m TIBRA_main')
+#import pprint
+#pprint.pprint(sys.path)
+
+#run = subprocess.run(['python', 'TIBRA_main.py'])
+
+###p = subprocess.Popen("python -m TIBRA_main", cwd =r"C:\\Users\\DanielP\\Desktop\\Example\\TIBRA\\", shell = True)
+
+##subprocess.run(['C:/Program Files/FreeCAD 0.20/bin/python.exe', 'python -m TIBRA_main'])
+
+#subprocess.run(['python', '-c',  'TIBRA_main',"import time; time.sleep(5)"], capture_output=True, text=True, check=True)
+
+#subprocess.call(['C:\\Program Files\\FreeCAD 0.20\\bin\\python'] )
+
+#subprocess.call(['python',  '-m',  'TIBRA_main']) 
+
+#subprocess.Popen(['python', '-m', 'TIBRA_main.py'], cwd=r'C:\Users\DanielP\Desktop\Example\TIBRA', shell = True)
+
+#subprocess.check_call([''python -m TIBRA_main'], shell = True)
