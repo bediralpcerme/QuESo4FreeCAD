@@ -37,7 +37,7 @@ class STLExporter():
     """My new command"""
 
     def GetResources(self):
-        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/test-icon.svg'
+        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/export_STL.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
                 'MenuText': "Export STL",
                 'ToolTip' : "Export the STL file"}
@@ -68,10 +68,10 @@ class SetTibraParameters():
     """My new command"""
 
     def GetResources(self):
-        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/test-icon.svg'
+        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/set_parameter.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
                 'MenuText': "Tibra Parameters",
-                'ToolTip' : "Setting Path"}
+                'ToolTip' : "Set TIBRA Parameters"}
 
     def Activated(self):
         
@@ -89,7 +89,7 @@ class RunTibra_Class():
   
 
     def GetResources(self):
-        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/test-icon.svg'
+        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/run_icon.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
                 'MenuText': "Run Tibra",
                 'ToolTip' : "Run Tibra"}
