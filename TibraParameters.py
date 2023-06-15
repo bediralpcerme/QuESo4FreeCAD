@@ -266,7 +266,7 @@ class TibraParameters(QtGui.QDialog):
         if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
         &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
             pos = event.getPosition().getValue()
-            element_list = Gui.ActiveDocument.ActiveView.getObjectsInfo((int(pos[0]), int(pos[1])))
+            element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
             print(str(element_list))
             if(element_list != None):
                 if (self.DirichletBCBox_obj.dirichlet_count <= int(self.dirichlet_faces)):
@@ -321,7 +321,7 @@ class TibraParameters(QtGui.QDialog):
         if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
         &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
             pos = event.getPosition().getValue()
-            element_list = Gui.ActiveDocument.ActiveView.getObjectsInfo((int(pos[0]), int(pos[1])))
+            element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
             print(str(element_list))
             if(element_list != None):
                 if (self.NeumannBCBox_obj.neumann_count <= int(self.neumann_faces)):
