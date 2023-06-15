@@ -201,10 +201,10 @@ class TibraParameters(QtGui.QDialog):
         okButton.setAutoDefault(True)
         okButton.move(80, 650)
 
-        # show the dialog box
-        self.DirichletBCBox_flag = False
-        self.DirichletBCBox_Fun()
+        # show the dialog box and creates instances of other required classes
         self.show()
+        self.DirichletBCBox_obj = DirichletBCBox()
+        self.NeumannBCBox_obj = NeumannBCBox()
 
                             ############################# FUNCTION DEFINITIONS #############################
 
@@ -262,84 +262,73 @@ class TibraParameters(QtGui.QDialog):
 
     def getMouseClick_DirichletBCBox(self, event_cb):   
         event = event_cb.getEvent()
-        if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) & (Gui.Selection.hasSelection() == True):
-            if (self.dirichlet_count <= int(self.dirichlet_faces)):
-                    self.DirichletBCBox_Fun()               
-                    self.DirichletBCBox.exec_()
-                    if(self.dirichlet_count > int(self.dirichlet_faces)):
-                        self.setVisible(True)
-                        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
-                        
 
-    def DirichletBCBox_Fun(self):
-            self.DirichletBCBox = QtGui.QDialog(self)
-            width = 350
-            height = 120
-            centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
-            self.DirichletBCBox.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
-            self.DirichletBCBox.setWindowTitle("Apply Dirichlet Boundary Condition")
-            self.DirichletBCBox.label_dirichlet = QtGui.QLabel("Please enter the displacement constraint values:", self.DirichletBCBox)
-            self.DirichletBCBox.label_dirichlet.move(10, 20)
-
-            self.DirichletBCBox.label_x_constraint = QtGui.QLabel("x: ", self.DirichletBCBox)
-            self.DirichletBCBox.label_x_constraint.move(10,48)
-            self.DirichletBCBox.text_x_constraint = QtGui.QLineEdit(self.DirichletBCBox)
-            self.DirichletBCBox.text_x_constraint.setFixedWidth(80)
-            self.DirichletBCBox.text_x_constraint.move(30, 45)
-
-            self.DirichletBCBox.label_y_constraint = QtGui.QLabel("y: ", self.DirichletBCBox)
-            self.DirichletBCBox.label_y_constraint.move(120,48)
-            self.DirichletBCBox.text_y_constraint = QtGui.QLineEdit(self.DirichletBCBox)
-            self.DirichletBCBox.text_y_constraint.setFixedWidth(80)
-            self.DirichletBCBox.text_y_constraint.move(140, 45)
-
-            self.DirichletBCBox.label_z_constraint = QtGui.QLabel("z: ", self.DirichletBCBox)
-            self.DirichletBCBox.label_z_constraint.move(230, 48)
-            self.DirichletBCBox.text_z_constraint = QtGui.QLineEdit(self.DirichletBCBox)
-            self.DirichletBCBox.text_z_constraint.setFixedWidth(80)
-            self.DirichletBCBox.text_z_constraint.move(250, 45)
-
-            okButton_DirichletBCBox = QtGui.QPushButton('OK', self.DirichletBCBox)
-            okButton_DirichletBCBox.move(140, 85)
-            okButton_DirichletBCBox.clicked.connect(self.okButton_DirichletBCBox)
-            okButton_DirichletBCBox.setAutoDefault(True)
-
-    def okButton_DirichletBCBox(self):
-            print("Mouse Click " + str(self.dirichlet_count))
-            self.dirichlet_count = self.dirichlet_count + 1
-            Gui.Selection.clearSelection()
-            self.DirichletBCBox.close()
-
+        if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
+        &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
+            pos = event.getPosition().getValue()
+            element_list = Gui.ActiveDocument.ActiveView.getObjectsInfo((int(pos[0]), int(pos[1])))
+            print(str(element_list))
+            if(element_list != None):
+                if (self.DirichletBCBox_obj.dirichlet_count <= int(self.dirichlet_faces)):
+                        self.DirichletBCBox_obj.exec_()
+                        if(self.DirichletBCBox_obj.dirichlet_count > int(self.dirichlet_faces)):
+                            self.setVisible(True)
+                            self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)                   
 
     def onNeumannBC(self):
+        self.NeumannDialogBox_Fun()
+        self.NeumannDialogBox.exec_()
+
+    def NeumannDialogBox_Fun(self):
+
         self.NeumannDialogBox = QtGui.QDialog(self)
         width = 470
         height = 100
-        self.NeumannDialogBox.setGeometry(self.centerPoint.x()-0.5*width, self.centerPoint.y()-0.5*height, width, height)
+        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+        self.NeumannDialogBox.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
         self.NeumannDialogBox.setWindowTitle("Apply Neumann Boundary Condition")
 
-        self.NeumannDialogBox.label_Neumann = QtGui.QLabel("Please enter the number faces subject to Neumann BC:", self.NeumannDialogBox)
-        self.NeumannDialogBox.label_Neumann.move(10, 30)
+        self.NeumannDialogBox.label_neumann = QtGui.QLabel("Please enter the number faces subject to Neumann BC:", self.NeumannDialogBox)
+        self.NeumannDialogBox.label_neumann.move(10, 30)
 
         self.NeumannDialogBox.NeumannFaceNumber = QtGui.QLineEdit(self.NeumannDialogBox)
         self.NeumannDialogBox.NeumannFaceNumber.setPlaceholderText("example: 3")
         self.NeumannDialogBox.NeumannFaceNumber.setFixedWidth(80)
         self.NeumannDialogBox.NeumannFaceNumber.move(380, 28)
 
-        okButton_Neumann = QtGui.QPushButton('OK', self.NeumannDialogBox)
-        okButton_Neumann.move(0.5*width - 15, 65)
-        okButton_Neumann.clicked.connect(self.okButton_Neumann)
-        okButton_Neumann.setAutoDefault(True)
-        self.NeumannDialogBox.exec_()
+        okButton_NeumannDialogBox = QtGui.QPushButton('OK', self.NeumannDialogBox)
+        okButton_NeumannDialogBox.move(0.5*width - 15, 65)
+        okButton_NeumannDialogBox.clicked.connect(self.okButton_NeumannDialogBox)
+        okButton_NeumannDialogBox.setAutoDefault(True)
+        
 
-    def okButton_Neumann(self):
-        self.Neumann_faces = self.NeumannDialogBox.NeumannFaceNumber.text()
+    def okButton_NeumannDialogBox(self):
+        self.neumann_faces= self.NeumannDialogBox.NeumannFaceNumber.text()
         infoBox = QtGui.QMessageBox.information(self.NeumannDialogBox, "Apply Neumann Boundary Conditions", \
-                                                "Please select " + self.Neumann_faces + \
+                                                "Please select " + self.neumann_faces + \
                                                 " faces subject to Neumann BC one by one!")
+        
         if infoBox == QtGui.QMessageBox.StandardButton.Ok:
+            self.view = Gui.ActiveDocument.ActiveView
+            self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_NeumannBCBox)
             self.NeumannDialogBox.close()
             self.setVisible(False)
+
+
+    def getMouseClick_NeumannBCBox(self, event_cb):   
+        event = event_cb.getEvent()
+
+        if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
+        &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
+            pos = event.getPosition().getValue()
+            element_list = Gui.ActiveDocument.ActiveView.getObjectsInfo((int(pos[0]), int(pos[1])))
+            print(str(element_list))
+            if(element_list != None):
+                if (self.NeumannBCBox_obj.neumann_count <= int(self.neumann_faces)):
+                        self.NeumannBCBox_obj.exec_()
+                        if(self.NeumannBCBox_obj.neumann_count > int(self.neumann_faces)):
+                            self.setVisible(True)
+                            self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
 
 
 
@@ -453,3 +442,118 @@ if __name__ == "__main__":
 
         return [boundBoxXMin,boundBoxYMin,boundBoxZMin,boundBoxXMax,boundBoxYMax,boundBoxZMax]
     
+################################## OTHER REQUIRED CLASS DEFINITIONS #############################################
+    
+class DirichletBCBox(QtGui.QDialog):
+    """"""
+    def __init__(self):
+        super(DirichletBCBox, self).__init__()
+        self.initUI()
+
+    def initUI(self):
+            width = 350
+            height = 120
+            centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+            self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
+            self.setWindowTitle("Apply Dirichlet Boundary Condition")
+            self.label_dirichlet = QtGui.QLabel("Please enter the displacement constraint values:", self)
+            self.label_dirichlet.move(10, 20)
+
+            self.label_x_constraint = QtGui.QLabel("x: ", self)
+            self.label_x_constraint.move(10,48)
+            self.text_x_constraint = QtGui.QLineEdit(self)
+            self.text_x_constraint.setFixedWidth(80)
+            self.text_x_constraint.move(30, 45)
+
+            self.label_y_constraint = QtGui.QLabel("y: ", self)
+            self.label_y_constraint.move(120,48)
+            self.text_y_constraint = QtGui.QLineEdit(self)
+            self.text_y_constraint.setFixedWidth(80)
+            self.text_y_constraint.move(140, 45)
+
+            self.label_z_constraint = QtGui.QLabel("z: ", self)
+            self.label_z_constraint.move(230, 48)
+            self.text_z_constraint = QtGui.QLineEdit(self)
+            self.text_z_constraint.setFixedWidth(80)
+            self.text_z_constraint.move(250, 45)
+
+            okButton_DirichletBCBox = QtGui.QPushButton('OK', self)
+            okButton_DirichletBCBox.move(140, 85)
+            okButton_DirichletBCBox.clicked.connect(self.okButton_DirichletBCBox)
+            okButton_DirichletBCBox.setAutoDefault(True)
+
+            self.dirichlet_count = 1
+
+    def closeEvent(self, event):
+        Gui.Selection.clearSelection()
+        self.resetInputValues()
+        event.accept()
+    
+    def okButton_DirichletBCBox(self):
+        print("Mouse Click " + str(self.dirichlet_count))
+        self.dirichlet_count = self.dirichlet_count + 1
+        Gui.Selection.clearSelection()
+        self.resetInputValues()
+        self.close()
+
+    def resetInputValues(self):
+        self.text_x_constraint.setText("")
+        self.text_y_constraint.setText("")
+        self.text_z_constraint.setText("")
+
+class NeumannBCBox(QtGui.QDialog):
+    """"""
+    def __init__(self):
+        super(NeumannBCBox, self).__init__()
+        self.initUI()
+
+    def initUI(self):
+            width = 350
+            height = 120
+            centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+            self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
+            self.setWindowTitle("Apply Neumann Boundary Condition")
+            self.label_neumann = QtGui.QLabel("Please enter the force values:", self)
+            self.label_neumann.move(10, 20)
+
+            self.label_x_constraint = QtGui.QLabel("x: ", self)
+            self.label_x_constraint.move(10,48)
+            self.text_x_constraint = QtGui.QLineEdit(self)
+            self.text_x_constraint.setFixedWidth(80)
+            self.text_x_constraint.move(30, 45)
+
+            self.label_y_constraint = QtGui.QLabel("y: ", self)
+            self.label_y_constraint.move(120,48)
+            self.text_y_constraint = QtGui.QLineEdit(self)
+            self.text_y_constraint.setFixedWidth(80)
+            self.text_y_constraint.move(140, 45)
+
+            self.label_z_constraint = QtGui.QLabel("z: ", self)
+            self.label_z_constraint.move(230, 48)
+            self.text_z_constraint = QtGui.QLineEdit(self)
+            self.text_z_constraint.setFixedWidth(80)
+            self.text_z_constraint.move(250, 45)
+
+            okButton_NeumannBCBox = QtGui.QPushButton('OK', self)
+            okButton_NeumannBCBox.move(140, 85)
+            okButton_NeumannBCBox.clicked.connect(self.okButton_NeumannBCBox)
+            okButton_NeumannBCBox.setAutoDefault(True)
+
+            self.neumann_count = 1
+
+    def closeEvent(self, event):
+        Gui.Selection.clearSelection()
+        self.resetInputValues()
+        event.accept()
+    
+    def okButton_NeumannBCBox(self):
+        print("Mouse Click " + str(self.neumann_count))
+        self.neumann_count = self.neumann_count + 1
+        Gui.Selection.clearSelection()
+        self.resetInputValues()
+        self.close()
+
+    def resetInputValues(self):
+        self.text_x_constraint.setText("")
+        self.text_y_constraint.setText("")
+        self.text_z_constraint.setText("")
