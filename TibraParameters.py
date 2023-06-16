@@ -2,7 +2,7 @@ from FreeCAD_PySide import *
 import os
 import FreeCAD
 import FreeCADGui as Gui
-import Mesh
+import Draft, Sketcher, Mesh
 import json
 from pivy import coin
 
@@ -34,9 +34,7 @@ class TibraParameters(QtGui.QDialog):
         self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
         self.work_dir = FreeCAD.ActiveDocument.FileName
         self.work_dir = self.work_dir.replace(self.docName,"")
-        self.Neumann_count = 1
-        self.dirichlet_count = 1
-
+        
         #Initial Parameters input:
 
         #main (general) head
@@ -270,10 +268,93 @@ class TibraParameters(QtGui.QDialog):
             print(str(element_list))
             if(element_list != None):
                 if (self.DirichletBCBox_obj.dirichlet_count <= int(self.dirichlet_faces)):
-                        self.DirichletBCBox_obj.exec_()
-                        if(self.DirichletBCBox_obj.dirichlet_count > int(self.dirichlet_faces)):
-                            self.setVisible(True)
-                            self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)                   
+                    self.DirichletBCBox_obj.element_list = element_list
+                    self.DirichletBCBox_obj.exec_()
+                    if(self.DirichletBCBox_obj.dirichlet_count > int(self.dirichlet_faces)):
+                        self.setVisible(True)
+                        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)  
+
+        ### Sketch of the selected face (will be used for STL export later)
+        if (Gui.Selection.hasSelection()):
+            for sel in Gui.Selection.getSelectionEx():
+                print(sel)
+                face = sel.SubObjects[0]
+                print(face)
+                face.translate(face.Placement.Base.negative())
+                sketch = self.face2sketch([face],'mySketch4STL')
+                self.Constraints_Fun(sketch)
+                sketch.MapMode ='FlatFace'
+                sketch.MapReversed = False
+                # do we need to add support? it might inhibit our actual goal of extracting surface stl?
+                # sketch.Support = (FreeCAD.getDocument(element_list.get('Document')).getObject(element_list.get('Object')), element_list.get('Component'))
+                nVector = face.normalAt(1,1)
+                pVector = face.findPlane().Position
+                dVector = nVector.multiply(nVector.dot(pVector))
+                sketch.Placement.move(dVector)
+                # try :
+                    # Gui.ActiveDocument.setEdit(sketch,0)
+                # except :
+                    # pass
+                Gui.Selection.clearSelection()
+
+                ## Exporting the face as STL (hopefullyyyyy)
+                FreeCAD.activeDocument().addObject('PartDesign::Body','Body4STL')
+                features_ = [FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL')]
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').addObjects(features_)
+                del features_
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').newObject('PartDesign::Pad','Pad4STL')
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Profile = FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL')
+                # FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Length = 10
+                Gui.getDocument(element_list.get('Document')).setEdit(FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL'),0,'Pad')
+                FreeCAD.ActiveDocument.recompute()
+
+                ##Extruding the sketch as 3D object with very small thickness
+                # FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL').Visibility = False ---->>>> Do we need it?
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Length = 0.0001
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').UseCustomVector = 0
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Direction = (1, 1, 1)
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Type = 0
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').UpToFace = None
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Reversed = 0
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Midplane = 1
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Offset = 0
+                FreeCAD.getDocument(element_list.get('Document')).recompute()
+                Gui.getDocument(element_list.get('Document')).resetEdit()
+
+                object = []
+                object.append(FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL'))
+                Mesh.export(object, self.work_dir + "D" + str(self.DirichletBCBox_obj.dirichlet_count-1) + ".stl")
+                FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').removeObjectsFromDocument()
+                FreeCAD.getDocument(element_list.get('Document')).removeObject('Body4STL')
+                FreeCAD.getDocument(element_list.get('Document')).recompute()
+
+
+
+    def face2sketch(self, face_list, name):
+        try:
+            sketch = Draft.makeSketch(face_list, autoconstraints=True, addTo=None, delete=False, name=name,  \
+                     radiusPrecision=-1, tol=1e-3)
+            return sketch
+        except:
+            sketch = Draft.makeSketch(face_list, autoconstraints=False, addTo=None, delete=False, name=name,  \
+                     radiusPrecision=-1, tol=1e-3)
+            return sketch
+
+    def Constraints_Fun(self, sketch) :
+        geoList = sketch.Geometry
+        Lines = []
+        Arcs  = []
+        Circles = []
+        for i in range(sketch.GeometryCount):
+            if geoList[i].TypeId == 'Part::GeomLineSegment':
+               Lines.append([i,geoList[i]])
+            elif geoList[i].TypeId == 'Part::GeomArcOfCircle':
+               Arcs .append([i,geoList[i]])
+            elif geoList[i].TypeId == 'Part::GeomCircle':
+               Circles.append([i,geoList[i]])
+        for i in range(len(Circles)):
+            sketch.addConstraint(Sketcher.Constraint('Radius', \
+                 Circles[i][0],Circles[i][1].Radius))
 
     def onNeumannBC(self):
         self.NeumannDialogBox_Fun()
@@ -458,6 +539,7 @@ class DirichletBCBox(QtGui.QDialog):
             self.setWindowTitle("Apply Dirichlet Boundary Condition")
             self.label_dirichlet = QtGui.QLabel("Please enter the displacement constraint values:", self)
             self.label_dirichlet.move(10, 20)
+            self.element_list = []
 
             self.label_x_constraint = QtGui.QLabel("x: ", self)
             self.label_x_constraint.move(10,48)
@@ -485,15 +567,15 @@ class DirichletBCBox(QtGui.QDialog):
             self.dirichlet_count = 1
 
     def closeEvent(self, event):
-        Gui.Selection.clearSelection()
         self.resetInputValues()
         event.accept()
     
     def okButton_DirichletBCBox(self):
         print("Mouse Click " + str(self.dirichlet_count))
         self.dirichlet_count = self.dirichlet_count + 1
-        Gui.Selection.clearSelection()
         self.resetInputValues()
+        Gui.Selection.addSelection(self.element_list.get('Document'), self.element_list.get('Object'), \
+                                   self.element_list.get('Component'), self.element_list.get('x'), self.element_list.get('y'))
         self.close()
 
     def resetInputValues(self):
