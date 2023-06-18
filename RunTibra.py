@@ -3,6 +3,8 @@ import os
 import subprocess
 import FreeCAD
 
+import sys
+import os
 
 
 class RunTibra(QtGui.QDialog):
@@ -35,21 +37,24 @@ class RunTibra(QtGui.QDialog):
         okButton.move(170, 90)
 
     def onOk(self):
-
+       
         #By subprocess
-
         self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
         self.work_dir = FreeCAD.ActiveDocument.FileName
         self.work_dir = self.work_dir.replace(self.docName,"")
         self.work_dir = self.work_dir + '/TIBRA/data'
 
         os.chdir(self.work_dir)
-
+ 
+        sys.path.append("D:\COMPUTATIONAL MECHANICS\SOFTWARE_LAB\TIBRA\TIBRA_PythonApplication")
+        import PyTIBRA
+        '''
+        from TIBRA_PythonApplication.PyTIBRA import PyTIBRA
         exec(open('TIBRA_main.py').read())
 
         # By cmd
-
-        '''
+        
+        
         os.system('cd C:\\Users\DanielP\Desktop\Example\TIBRA')
         
         setPath1 = 'set PYTHONPATH=%PYTHONPATH%;C:\KRATOS\Kratos\bin\Release'
@@ -64,7 +69,6 @@ class RunTibra(QtGui.QDialog):
 
         os.system(runTibra)
         '''
-
         self.close()
 
     def onCancel(self):

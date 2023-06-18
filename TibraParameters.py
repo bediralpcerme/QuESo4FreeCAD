@@ -204,6 +204,7 @@ class TibraParameters(QtGui.QDialog):
         # self.upperbound_z_=mybounds[5]
         
 
+
         #  Creating TIBRA directory:
         os.chdir(self.work_dir)
 
@@ -253,6 +254,8 @@ class TibraParameters(QtGui.QDialog):
             pass
             
         # Creating Tibra_main.py file:
+        
+        
         with open('TIBRA_main.py', 'w') as f:
             f.write('''
 # Project imports
@@ -266,7 +269,7 @@ if __name__ == "__main__":
     main()''')
 
             pass
-
+        
         self.result = "Ok"
         self.close()
 
