@@ -45,9 +45,12 @@ class RunTibra(QtGui.QDialog):
         self.work_dir = self.work_dir + '/TIBRA/data'
 
         os.chdir(self.work_dir)
- 
-        sys.path.append("D:\COMPUTATIONAL MECHANICS\SOFTWARE_LAB\TIBRA\TIBRA_PythonApplication")
-        import PyTIBRA
+        #Idk how to automatize this but python in freecad doesnt see the path in the system so you add it again
+        sys.path.append("D:\COMPUTATIONAL MECHANICS\SOFTWARE_LAB\TIBRA")
+        from TIBRA_PythonApplication.PyTIBRA import PyTIBRA
+        pytibra = PyTIBRA("TIBRAParameters.json")
+        pytibra.Run()
+
         '''
         from TIBRA_PythonApplication.PyTIBRA import PyTIBRA
         exec(open('TIBRA_main.py').read())
