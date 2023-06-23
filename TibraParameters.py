@@ -27,10 +27,11 @@ class TibraParameters(QtGui.QDialog):
 
         #position and geometry of the dialog box
         width = 340
-        height = 720
+        height = 615
         self.centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         self.setGeometry(self.centerPoint.x()-0.5*width, self.centerPoint.y()-0.5*height, width, height)
         self.setWindowTitle("Tibra Parameters")
+        self.setWindowFlags(QtCore.Qt.WindowSystemMenuHint)
 
         self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
         self.work_dir = FreeCAD.ActiveDocument.FileName
@@ -44,171 +45,179 @@ class TibraParameters(QtGui.QDialog):
         self.label_main_.move(10, 10)
         boldFont=QtGui.QFont()
         boldFont.setBold(True)
-        self.label_main_.setFont(boldFont)
+        boldUnderlinedFont=QtGui.QFont()
+        boldUnderlinedFont.setBold(True)
+        boldUnderlinedFont.setUnderline(True)
+        blueFont = QtGui.QPalette()
+        blueFont.setColor(QtGui.QPalette.WindowText, QtGui.QColor('#005293'))
+        self.label_main_.setFont(boldUnderlinedFont)
+        self.label_main_.setPalette(blueFont)
 
         #path to the file
         self.label_pathname_ = QtGui.QLabel("Path to the STL file:", self)
-        self.label_pathname_.move(10, 40)
+        self.label_pathname_.move(10, self.label_main_.y()+30)
 
         #Text edit of pathname
         self.textInput_pathname_ = QtGui.QLineEdit(self)
         self.textInput_pathname_.setText("")
         self.textInput_pathname_.setFixedWidth(200)
-        self.textInput_pathname_.move(10, 60)
+        self.textInput_pathname_.move(10, self.label_pathname_.y()+20)
 
         #file browser button
         self.fileBrowseButton = QtGui.QPushButton('Browse files',self)
         self.fileBrowseButton.clicked.connect(self.onBrowseButton)
         self.fileBrowseButton.setAutoDefault(False)
-        self.fileBrowseButton.move(220, 60)
+        self.fileBrowseButton.move(220, self.textInput_pathname_.y())
 
 
         #label text
         self.label_echo_ = QtGui.QLabel("Echo level:", self)
-        self.label_echo_.move(10, 100)
+        self.label_echo_.move(10, self.textInput_pathname_.y()+30)
         self.textInput_echo_ = QtGui.QLineEdit(self)
-        self.textInput_echo_.setText("1")
+        self.textInput_echo_.setPlaceholderText("1")
         self.textInput_echo_.setFixedWidth(50)
-        self.textInput_echo_.move(10, 120)
+        self.textInput_echo_.move(10, self.label_echo_.y()+20)
         
         #mesh head
         self.label_main_ = QtGui.QLabel("Mesh settings:", self)
-        self.label_main_.move(10, 160)
-        self.label_main_.setFont(boldFont)
-
-        # we dont need it anymore but im leaving it here just in case
-        # #lower bound
-        # self.label_lowerbound_ = QtGui.QLabel("Lower bound:", self)
-        # self.label_lowerbound_.move(10, 190)
-
-        # self.textInput_lowerbound_x_ = QtGui.QLineEdit(self)
-        # self.textInput_lowerbound_x_.setText("x")
-        # self.textInput_lowerbound_x_.setFixedWidth(70)
-        # self.textInput_lowerbound_x_.move(10, 210)
-
-        # self.textInput_lowerbound_y_ = QtGui.QLineEdit(self)
-        # self.textInput_lowerbound_y_.setText("y")
-        # self.textInput_lowerbound_y_.setFixedWidth(70)
-        # self.textInput_lowerbound_y_.move(110, 210)
- 
-        # self.textInput_lowerbound_z_ = QtGui.QLineEdit(self)
-        # self.textInput_lowerbound_z_.setText("z")
-        # self.textInput_lowerbound_z_.setFixedWidth(70)
-        # self.textInput_lowerbound_z_.move(210, 210)
-
-        # #upper bound
-        # self.label_upperbound_ = QtGui.QLabel("Upper bound:", self)
-        # self.label_upperbound_.move(10, 240)
-
-        # self.textInput_upperbound_x_ = QtGui.QLineEdit(self)
-        # self.textInput_upperbound_x_.setText("x")
-        # self.textInput_upperbound_x_.setFixedWidth(70)
-        # self.textInput_upperbound_x_.move(10, 260)
-
-        # self.textInput_upperbound_y_ = QtGui.QLineEdit(self)
-        # self.textInput_upperbound_y_.setText("y")
-        # self.textInput_upperbound_y_.setFixedWidth(70)
-        # self.textInput_upperbound_y_.move(110, 260)
-
-        # self.textInput_upperbound_z_ = QtGui.QLineEdit(self)
-        # self.textInput_upperbound_z_.setText("z")
-        # self.textInput_upperbound_z_.setFixedWidth(70)
-        # self.textInput_upperbound_z_.move(210, 260)
-        # 
+        self.label_main_.move(10, self.textInput_echo_.y()+45)
+        self.label_main_.setFont(boldUnderlinedFont)
+        self.label_main_.setPalette(blueFont)
 
         #polynomial order
         self.label_polynomialOrder_ = QtGui.QLabel("Polynomial order:", self)
-        self.label_polynomialOrder_.move(10, 290)
+        self.label_polynomialOrder_.move(10, self.label_main_.y()+30)
+        self.label_polynomialOrder_.setFont(boldFont)
 
+        self.label_polynomialOrder_x_ = QtGui.QLabel("x: ", self)
+        self.label_polynomialOrder_x_.move(10, self.label_polynomialOrder_.y()+25)
         self.textInput_polynomialOrder_x_ = QtGui.QLineEdit(self)
-        self.textInput_polynomialOrder_x_.setText("x")
-        self.textInput_polynomialOrder_x_.setFixedWidth(70)
-        self.textInput_polynomialOrder_x_.move(10, 310)
+        self.textInput_polynomialOrder_x_.setPlaceholderText("1")
+        self.textInput_polynomialOrder_x_.setFixedWidth(60)
+        self.textInput_polynomialOrder_x_.move(25, self.label_polynomialOrder_.y()+20)
 
+        self.label_polynomialOrder_y_ = QtGui.QLabel("y: ", self)
+        self.label_polynomialOrder_y_.move(110, self.label_polynomialOrder_.y()+25)
         self.textInput_polynomialOrder_y_ = QtGui.QLineEdit(self)
-        self.textInput_polynomialOrder_y_.setText("y")
-        self.textInput_polynomialOrder_y_.setFixedWidth(70)
-        self.textInput_polynomialOrder_y_.move(110, 310)
+        self.textInput_polynomialOrder_y_.setPlaceholderText("2")
+        self.textInput_polynomialOrder_y_.setFixedWidth(60)
+        self.textInput_polynomialOrder_y_.move(125, self.label_polynomialOrder_.y()+20)
  
+        self.label_polynomialOrder_z_ = QtGui.QLabel("z: ", self)
+        self.label_polynomialOrder_z_.move(210, self.label_polynomialOrder_.y()+25)
         self.textInput_polynomialOrder_z_ = QtGui.QLineEdit(self)
-        self.textInput_polynomialOrder_z_.setText("z")
-        self.textInput_polynomialOrder_z_.setFixedWidth(70)
-        self.textInput_polynomialOrder_z_.move(210, 310)
+        self.textInput_polynomialOrder_z_.setPlaceholderText("3")
+        self.textInput_polynomialOrder_z_.setFixedWidth(60)
+        self.textInput_polynomialOrder_z_.move(225, self.label_polynomialOrder_.y()+20)
 
         #number of elements
         self.label_nElements_ = QtGui.QLabel("Number of elements:", self)
-        self.label_nElements_.move(10, 340)
+        self.label_nElements_.move(10, self.textInput_polynomialOrder_z_.y()+30)
+        self.label_nElements_.setFont(boldFont)
 
+        self.label_nElements_x_ = QtGui.QLabel("x: ", self)
+        self.label_nElements_x_.move(10, self.label_nElements_.y()+25)
         self.textInput_nElements_x_ = QtGui.QLineEdit(self)
-        self.textInput_nElements_x_.setText("x")
-        self.textInput_nElements_x_.setFixedWidth(70)
-        self.textInput_nElements_x_.move(10, 360)
+        self.textInput_nElements_x_.setPlaceholderText("10")
+        self.textInput_nElements_x_.setFixedWidth(60)
+        self.textInput_nElements_x_.move(25, self.label_nElements_.y()+20)
 
+        self.label_nElements_y_ = QtGui.QLabel("y: ", self)
+        self.label_nElements_y_.move(110, self.label_nElements_.y()+25)
         self.textInput_nElements_y_ = QtGui.QLineEdit(self)
-        self.textInput_nElements_y_.setText("y")
-        self.textInput_nElements_y_.setFixedWidth(70)
-        self.textInput_nElements_y_.move(110, 360)
+        self.textInput_nElements_y_.setPlaceholderText("20")
+        self.textInput_nElements_y_.setFixedWidth(60)
+        self.textInput_nElements_y_.move(125, self.label_nElements_.y()+20)
  
+        self.label_nElements_z_ = QtGui.QLabel("z: ", self)
+        self.label_nElements_z_.move(210, self.label_nElements_.y()+25)
         self.textInput_nElements_z_ = QtGui.QLineEdit(self)
-        self.textInput_nElements_z_.setText("z")
-        self.textInput_nElements_z_.setFixedWidth(70)
-        self.textInput_nElements_z_.move(210, 360)
+        self.textInput_nElements_z_.setPlaceholderText("30")
+        self.textInput_nElements_z_.setFixedWidth(60)
+        self.textInput_nElements_z_.move(225, self.label_nElements_.y()+20)
 
         #solution settings head
         self.label_main_ = QtGui.QLabel("Solution Settings:", self)
-        self.label_main_.move(10, 400)
-        self.label_main_.setFont(boldFont)
+        self.label_main_.move(10, self.textInput_nElements_z_.y()+45)
+        self.label_main_.setFont(boldUnderlinedFont)
+        self.label_main_.setPalette(blueFont)
 
         #residual setting
         self.label_residual_ = QtGui.QLabel("Moment fitting residual:", self)
-        self.label_residual_.move(10, 420)
+        self.label_residual_.move(10, self.label_main_.y()+30)
         self.textInput_residual_ = QtGui.QLineEdit(self)
-        self.textInput_residual_.setText("1e-6")
+        self.textInput_residual_.setPlaceholderText("1e-6")
         self.textInput_residual_.setFixedWidth(50)
-        self.textInput_residual_.move(10, 440)
+        self.textInput_residual_.move(10, self.label_residual_.y()+20)
 
         # min_element_volume ratio
         self.label_min_el_vol_rat = QtGui.QLabel("Minimum element volume ratio:", self)
-        self.label_min_el_vol_rat.move(10, 470)
+        self.label_min_el_vol_rat.move(10, self.textInput_residual_.y()+30)
         self.textInput__min_el_vol_rat = QtGui.QLineEdit(self)
-        self.textInput__min_el_vol_rat.setText("1e-3")
+        self.textInput__min_el_vol_rat.setPlaceholderText("1e-3")
         self.textInput__min_el_vol_rat.setFixedWidth(50)
-        self.textInput__min_el_vol_rat.move(10, 490)
+        self.textInput__min_el_vol_rat.move(10, self.label_min_el_vol_rat.y()+20)
 
 
         #integration method setting
         self.label_integration_ = QtGui.QLabel("Integration method:", self)
-        self.label_integration_.move(10, 520)
+        self.label_integration_.move(10, self.textInput__min_el_vol_rat.y()+30)
         self.popup_integration = QtGui.QComboBox(self)
         self.popup_integration_items = ("Gauss","Gauss_Reduced1","Gauss_Reduced2","GGQ_Optimal","GGQ_Reduced1", "GGQ_Reduced2")
         self.popup_integration.addItems(self.popup_integration_items)
-        self.popup_integration.setFixedWidth(200)
-        self.popup_integration.move(10, 540)
+        self.popup_integration.setFixedWidth(140)
+        self.popup_integration.move(10, self.label_integration_.y()+20)
 
         #BC settings
         self.label_ApplyBC_ = QtGui.QLabel("Boundary Conditions:", self)
-        self.label_ApplyBC_.move(10, 585)
-        self.label_ApplyBC_.setFont(boldFont)
+        self.label_ApplyBC_.move(10, self.popup_integration.y()+45)
+        self.label_ApplyBC_.setFont(boldUnderlinedFont)
+        self.label_ApplyBC_.setPalette(blueFont)
 
         self.button_Dirichlet_ = QtGui.QPushButton('Apply Dirichlet B.C.',self)
         self.button_Dirichlet_.clicked.connect(self.onDirichletBC)
         self.button_Dirichlet_.setAutoDefault(False)
-        self.button_Dirichlet_.move(10, 605)
+        self.button_Dirichlet_.setFixedWidth(145)
 
         self.button_Neumann_ = QtGui.QPushButton('Apply Neumann B.C.',self)
         self.button_Neumann_.clicked.connect(self.onNeumannBC)
         self.button_Neumann_.setAutoDefault(False)
-        self.button_Neumann_.move(180, 605)
+        self.button_Neumann_.setFixedWidth(145)
+
+        self.container_DirichletNeumann = QtGui.QWidget(self)
+        self.container_DirichletNeumann.setContentsMargins(0, 0, 0, 0)
+
+        layout_DirichletNeumann = QtGui.QHBoxLayout(self.container_DirichletNeumann)
+        layout_DirichletNeumann.setContentsMargins(0, 0, 0, 0)
+        layout_DirichletNeumann.addWidget(self.button_Dirichlet_)
+        layout_DirichletNeumann.addWidget(self.button_Neumann_)
+        layout_DirichletNeumann.setSpacing(10)
+
+        self.container_DirichletNeumann.move(0.5*width - self.button_Dirichlet_.geometry().width() - 
+                                             0.5*layout_DirichletNeumann.spacing(), self.label_ApplyBC_.y()+25)
+
 
         # cancel button
         cancelButton = QtGui.QPushButton('Cancel', self)
         cancelButton.clicked.connect(self.onCancel)
-        cancelButton.move(200, 670)
+        cancelButton.setFixedWidth(80)
         # OK button
         okButton = QtGui.QPushButton('OK', self)
         okButton.clicked.connect(self.onOk)
         okButton.setAutoDefault(True)
-        okButton.move(80, 670)
+        okButton.setFixedWidth(80)
+        
+        self.container_okCancel = QtGui.QWidget(self)
+        self.container_okCancel.setContentsMargins(0, 0, 0, 0)
+    
+        layout_okCancel = QtGui.QHBoxLayout(self.container_okCancel)
+        layout_okCancel.setContentsMargins(0, 0, 0,0)
+        layout_okCancel.addWidget(okButton)
+        layout_okCancel.addWidget(cancelButton)
+        layout_okCancel.setSpacing(40)
+
+        self.container_okCancel.move(0.5*width - okButton.geometry().width() - 0.5*layout_okCancel.spacing(), 
+                                     self.container_DirichletNeumann.y()+50)
 
         # show the dialog box and creates instances of other required classes
         self.DirichletBCBox_obj = DirichletBCBox()
@@ -243,15 +252,15 @@ class TibraParameters(QtGui.QDialog):
         self.DirichletDialogBox.setWindowTitle("Apply Dirichlet Boundary Condition")
 
         self.DirichletDialogBox.label_dirichlet = QtGui.QLabel("Please enter the number faces subject to Dirichlet BC:", self.DirichletDialogBox)
-        self.DirichletDialogBox.label_dirichlet.move(10, 30)
+        self.DirichletDialogBox.label_dirichlet.move(10, 35)
 
         self.DirichletDialogBox.DirichletFaceNumber = QtGui.QLineEdit(self.DirichletDialogBox)
-        self.DirichletDialogBox.DirichletFaceNumber.setPlaceholderText("example: 3")
-        self.DirichletDialogBox.DirichletFaceNumber.setFixedWidth(80)
-        self.DirichletDialogBox.DirichletFaceNumber.move(380, 28)
+        self.DirichletDialogBox.DirichletFaceNumber.setPlaceholderText("3")
+        self.DirichletDialogBox.DirichletFaceNumber.setFixedWidth(50)
+        self.DirichletDialogBox.DirichletFaceNumber.move(400, 30)
 
         okButton_DirichletDialogBox = QtGui.QPushButton('OK', self.DirichletDialogBox)
-        okButton_DirichletDialogBox.move(0.5*width - 15, 65)
+        okButton_DirichletDialogBox.move(0.5*width - 30, 65)
         okButton_DirichletDialogBox.clicked.connect(self.okButton_DirichletDialogBox)
         okButton_DirichletDialogBox.setAutoDefault(True)
         
@@ -301,7 +310,6 @@ class TibraParameters(QtGui.QDialog):
                 self.Constraints_Fun(sketch)
                 sketch.MapMode ='FlatFace'
                 sketch.MapReversed = False
-                # do we need to add support? it might inhibit our actual goal of extracting surface stl?
                 # sketch.Support = (FreeCAD.getDocument(element_list.get('Document')).getObject(element_list.get('Object')), element_list.get('Component'))
                 nVector = face.normalAt(1,1)
                 pVector = face.findPlane().Position
@@ -325,7 +333,6 @@ class TibraParameters(QtGui.QDialog):
                 FreeCAD.ActiveDocument.recompute()
 
                 ##Extruding the sketch as 3D object with very small thickness
-                # FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL').Visibility = False ---->>>> Do we need it?
                 FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Length = 0.0001
                 FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').UseCustomVector = 0
                 FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Direction = (1, 1, 1)
@@ -343,6 +350,7 @@ class TibraParameters(QtGui.QDialog):
                 FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').removeObjectsFromDocument()
                 FreeCAD.getDocument(element_list.get('Document')).removeObject('Body4STL')
                 FreeCAD.getDocument(element_list.get('Document')).recompute()
+                del object
 
 
     def onNeumannBC(self):
@@ -359,15 +367,15 @@ class TibraParameters(QtGui.QDialog):
         self.NeumannDialogBox.setWindowTitle("Apply Neumann Boundary Condition")
 
         self.NeumannDialogBox.label_neumann = QtGui.QLabel("Please enter the number faces subject to Neumann BC:", self.NeumannDialogBox)
-        self.NeumannDialogBox.label_neumann.move(10, 30)
+        self.NeumannDialogBox.label_neumann.move(10, 35)
 
         self.NeumannDialogBox.NeumannFaceNumber = QtGui.QLineEdit(self.NeumannDialogBox)
-        self.NeumannDialogBox.NeumannFaceNumber.setPlaceholderText("example: 3")
-        self.NeumannDialogBox.NeumannFaceNumber.setFixedWidth(80)
-        self.NeumannDialogBox.NeumannFaceNumber.move(380, 28)
+        self.NeumannDialogBox.NeumannFaceNumber.setPlaceholderText("3")
+        self.NeumannDialogBox.NeumannFaceNumber.setFixedWidth(50)
+        self.NeumannDialogBox.NeumannFaceNumber.move(400, 30)
 
         okButton_NeumannDialogBox = QtGui.QPushButton('OK', self.NeumannDialogBox)
-        okButton_NeumannDialogBox.move(0.5*width - 15, 65)
+        okButton_NeumannDialogBox.move(0.5*width - 30, 65)
         okButton_NeumannDialogBox.clicked.connect(self.okButton_NeumannDialogBox)
         okButton_NeumannDialogBox.setAutoDefault(True)
         
@@ -459,6 +467,7 @@ class TibraParameters(QtGui.QDialog):
                 FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').removeObjectsFromDocument()
                 FreeCAD.getDocument(element_list.get('Document')).removeObject('Body4STL')
                 FreeCAD.getDocument(element_list.get('Document')).recompute()
+                del object
 
 
 
@@ -578,7 +587,7 @@ class TibraParameters(QtGui.QDialog):
             dirichlet_jason = {"dirichlet": {
                 "filename" : str(self.json_dir) + "D" + str(i+1) + ".stl",
                 "displacement" : out_arr,
-                "penalty_factor" : '1e10'
+                "penalty_factor" : 1e10
                 }
             }
             self.append_json(dirichlet_jason)
