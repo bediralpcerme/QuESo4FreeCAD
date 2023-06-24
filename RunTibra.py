@@ -51,27 +51,6 @@ class RunTibra(QtGui.QDialog):
         pytibra = PyTIBRA("TIBRAParameters.json")
         pytibra.Run()
 
-        '''
-        from TIBRA_PythonApplication.PyTIBRA import PyTIBRA
-        exec(open('TIBRA_main.py').read())
-
-        # By cmd
-        
-        
-        os.system('cd C:\\Users\DanielP\Desktop\Example\TIBRA')
-        
-        setPath1 = 'set PYTHONPATH=%PYTHONPATH%;C:\KRATOS\Kratos\bin\Release'
-
-        setPath2 = 'set PYTHONPATH=%PYTHONPATH%;C:\TIBRA\TIBRA-windows_installation'
-
-        runTibra = 'python -m TIBRA_main'
-
-        os.system(setPath1)
-
-        os.system(setPath2)
-
-        os.system(runTibra)
-        '''
         self.close()
 
     def onCancel(self):

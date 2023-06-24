@@ -3,6 +3,7 @@ import os
 import FreeCAD
 import Mesh
 import json
+import FreeCADGui, Draft, Part, PySide
 
 
 #TO DO LIST: 
@@ -193,18 +194,7 @@ class TibraParameters(QtGui.QDialog):
         self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
         self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
         self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
-
         
-        #bounds without 0.1 offset in total
-        # self.lowerbound_x_=mybounds[0]
-        # self.lowerbound_y_=mybounds[1]
-        # self.lowerbound_z_=mybounds[2]
-        # self.upperbound_x_=mybounds[3]
-        # self.upperbound_y_=mybounds[4]
-        # self.upperbound_z_=mybounds[5]
-        
-
-
         #  Creating TIBRA directory:
         os.chdir(self.work_dir)
 
@@ -269,7 +259,129 @@ if __name__ == "__main__":
     main()''')
 
             pass
-        
+
+
+
+        #BOUNDINGBOX&GRID
+
+        red   = 1.0  # 1 = 255
+        green = 0.0  #
+        blue  = 0.0  #
+
+        BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
+        BDvol.Length.Value = (self.upperbound_x_-self.lowerbound_x_)
+        BDvol.Width.Value  = (self.upperbound_y_-self.lowerbound_y_)
+        BDvol.Height.Value = (self.upperbound_z_-self.lowerbound_z_)
+        BDvol.Placement = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
+        BDPl = BDvol.Placement
+        oripl_X=BDvol.Placement.Base.x
+        oripl_Y=BDvol.Placement.Base.y
+        oripl_Z=BDvol.Placement.Base.z
+        FreeCADGui.ActiveDocument.getObject(BDvol.Name).LineColor  = (red, green, blue)
+        FreeCADGui.ActiveDocument.getObject(BDvol.Name).PointColor = (red, green, blue)
+        FreeCADGui.ActiveDocument.getObject(BDvol.Name).ShapeColor = (red, green, blue)
+        FreeCADGui.ActiveDocument.getObject(BDvol.Name).Transparency = 90
+
+        conteneurRectangle = []
+        del conteneurRectangle[:]
+        conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
+
+        if (mybounds[6] and mybounds[7]) > 0.0:
+            pl_0 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
+            #pl_0 = adjustedGlobalPlacement(objs[0], boundBoxLocation)
+            duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_0,face=False,support=None) #OK
+            duble.Label = "_BoundBoxRectangle_Bo"
+            FreeCADGui.activeDocument().activeObject().LineColor = (1.0, 1.0, blue)
+            conteneurRectangle.addObject(duble)
+           
+            pl_1 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
+            #pl_1 =adjustedGlobalPlacement(objs[0], boundBoxLocation + FreeCAD.Vector(0,0,boundBoxLZ))
+            duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_1,face=False,support=None) #Ok
+            duble.Label = "_BoundBoxRectangle_To"
+            FreeCADGui.activeDocument().activeObject().LineColor = (1.0, 1.0, blue)
+            conteneurRectangle.addObject(duble)
+
+            pl_z_first=[]
+            pl_z_sec=[]
+            stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.textInput_nElements_z_.text())
+
+            for i in range(int(self.textInput_nElements_z_.text())-1):
+                #pl_z_first.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i+1)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
+                #duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_first[i],face=False,support=None) #Ok
+                #duble.Label = "_BoundBoxRectangle_z_line"+str(i+1)
+                #conteneurRectangle.addObject(duble)
+
+                pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i+1)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_z_fill"+str(i+1)
+                FreeCADGui.activeDocument().activeObject().LineColor = (1.0 , 1.0, blue)
+                conteneurRectangle.addObject(duble)
+
+
+        if (mybounds[6] and mybounds[8]) > 0.0:
+            pl_2 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90))
+            #pl_2 = pl_0.multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
+            duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_2,face=False,support=None) #Ok
+            duble.Label = "_BoundBoxRectangle_Fr"
+            FreeCADGui.activeDocument().activeObject().LineColor = (0.0, 1.0, blue)
+            conteneurRectangle.addObject(duble)
+            pl_3 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.upperbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90))
+            #pl_3 = adjustedGlobalPlacement(objs[0], boundBoxLocation+App.Vector(0, boundBoxLY, 0)).multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
+            duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_3,face=False,support=None) #Ok
+            duble.Label = "_BoundBoxRectangle_Re"
+            FreeCADGui.activeDocument().activeObject().LineColor = (0.0, 1.0, blue)
+            conteneurRectangle.addObject(duble)
+
+
+            pl_y_first=[]
+            pl_y_sec=[]
+            stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.textInput_nElements_y_.text())
+
+            for i in range(int(self.textInput_nElements_y_.text())-1):
+                #pl_y_first.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
+                #duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_y_first[i],face=False,support=None) #Ok
+                #duble.Label = "_BoundBoxRectangle_y_line"+str(i+1)
+                #conteneurRectangle.addObject(duble)
+
+                pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(1+i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_y_fill"+str(i+1)
+                FreeCADGui.activeDocument().activeObject().LineColor = (0.0 , 1.0, blue)
+                conteneurRectangle.addObject(duble)
+
+        if (mybounds[7] and mybounds[8]) > 0.0:
+            pl_4 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90))
+            #pl_2 = pl_0.multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
+            duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_4,face=False,support=None) #Ok
+            duble.Label = "_BoundBoxRectangle_Le"
+            FreeCADGui.activeDocument().activeObject().LineColor = (0.0, 0.0, 1.0)
+            conteneurRectangle.addObject(duble)
+
+            pl_5= FreeCAD.Placement(FreeCAD.Vector(self.upperbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90))
+            #pl_3 = adjustedGlobalPlacement(objs[0], boundBoxLocation+App.Vector(0, boundBoxLY, 0)).multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
+            duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_5,face=False,support=None) #Ok
+            duble.Label = "_BoundBoxRectangle_Ri"
+            FreeCADGui.activeDocument().activeObject().LineColor = (0.0, 0.0, 1.0)
+            conteneurRectangle.addObject(duble)
+
+            pl_x_first=[]
+            pl_x_sec=[]
+            stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.textInput_nElements_x_.text())
+
+            for i in range(int(self.textInput_nElements_x_.text())-1):
+                #pl_y_first.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
+                #duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_y_first[i],face=False,support=None) #Ok
+                #duble.Label = "_BoundBoxRectangle_y_line"+str(i+1)
+                #conteneurRectangle.addObject(duble)
+
+                pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(1+i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_x_fill"+str(i+1)
+                FreeCADGui.activeDocument().activeObject().LineColor = (0.0 , 0.0, 1.0)
+                conteneurRectangle.addObject(duble)
+
+        FreeCAD.ActiveDocument.recompute()
+
         self.result = "Ok"
         self.close()
 
@@ -292,5 +404,9 @@ if __name__ == "__main__":
         boundBoxYMax = boundBox_.YMax
         boundBoxZMax = boundBox_.ZMax
 
-        return [boundBoxXMin,boundBoxYMin,boundBoxZMin,boundBoxXMax,boundBoxYMax,boundBoxZMax]
+        boundBoxLX=boundBox_.XLength
+        boundBoxLY=boundBox_.YLength
+        boundBoxLZ=boundBox_.ZLength
+
+        return [boundBoxXMin,boundBoxYMin,boundBoxZMin,boundBoxXMax,boundBoxYMax,boundBoxZMax,boundBoxLX,boundBoxLY,boundBoxLZ]
     
