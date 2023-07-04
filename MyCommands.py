@@ -2,9 +2,11 @@ import FreeCADGui
 import FreeCAD
 from random import *
 from FreeCAD_PySide import *
+
 import TibraParameters
 import RunTibra
 import StlExportManager
+import __main__
 
 class Random_Box():
     """My new command"""
@@ -40,7 +42,7 @@ class STLExporter():
         icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/export_STL.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
                 'MenuText': "Export STL",
-                'ToolTip' : "Export the STL file"}
+                'ToolTip' : "Export the STL file (Without Running TIBRA)"}
 
     def Activated(self):
         
@@ -55,14 +57,7 @@ class STLExporter():
             return False
         else:
             return True
-
-    def IsActive(self):
-        """Here you can define if the command must be active or not (greyed) if certain conditions
-        are met or not. This function is optional."""
-        if FreeCAD.ActiveDocument == None:
-            return False
-        else:
-            return True
+        
         
 class SetTibraParameters():
     """My new command"""
@@ -74,9 +69,7 @@ class SetTibraParameters():
                 'ToolTip' : "Set TIBRA Parameters"}
 
     def Activated(self):
-        
-        form = TibraParameters.TibraParameters()
-        form.exec_()
+        __main__.form = TibraParameters.TibraParameters()
         return
 
     def IsActive(self):
@@ -96,8 +89,8 @@ class RunTibra_Class():
 
     def Activated(self):
         
-        form = RunTibra.RunTibra()
-        form.exec_()
+        tibra = RunTibra.RunTibra()
+        tibra.exec_()
         return
 
     def IsActive(self):
