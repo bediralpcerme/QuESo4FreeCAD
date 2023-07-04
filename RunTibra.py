@@ -3,6 +3,8 @@ import os
 import subprocess
 import FreeCAD
 
+import sys
+import os
 
 
 class RunTibra(QtGui.QDialog):
@@ -35,35 +37,19 @@ class RunTibra(QtGui.QDialog):
         okButton.move(170, 90)
 
     def onOk(self):
-
+       
         #By subprocess
-
         self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
         self.work_dir = FreeCAD.ActiveDocument.FileName
         self.work_dir = self.work_dir.replace(self.docName,"")
         self.work_dir = self.work_dir + '/TIBRA/data'
 
         os.chdir(self.work_dir)
-
-        exec(open('TIBRA_main.py').read())
-
-        # By cmd
-
-        '''
-        os.system('cd C:\\Users\DanielP\Desktop\Example\TIBRA')
-        
-        setPath1 = 'set PYTHONPATH=%PYTHONPATH%;C:\KRATOS\Kratos\bin\Release'
-
-        setPath2 = 'set PYTHONPATH=%PYTHONPATH%;C:\TIBRA\TIBRA-windows_installation'
-
-        runTibra = 'python -m TIBRA_main'
-
-        os.system(setPath1)
-
-        os.system(setPath2)
-
-        os.system(runTibra)
-        '''
+        #Idk how to automatize this but python in freecad doesnt see the path in the system so you add it again
+        sys.path.append("D:\COMPUTATIONAL MECHANICS\SOFTWARE_LAB\TIBRA")
+        from TIBRA_PythonApplication.PyTIBRA import PyTIBRA
+        pytibra = PyTIBRA("TIBRAParameters.json")
+        pytibra.Run()
 
         self.close()
 
