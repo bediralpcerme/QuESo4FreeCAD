@@ -88,8 +88,8 @@ class RunTibra_Class():
 
     def Activated(self):
         
-        form = RunTibra.RunTibra()
-        form.exec_()
+        tibra = RunTibra.RunTibra()
+        tibra.exec_()
         return
 
     def IsActive(self):

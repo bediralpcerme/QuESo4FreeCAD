@@ -1,4 +1,4 @@
-from FreeCAD_PySide import *
+from FreeCAD_PySide import QtGui, QtCore
 import os
 import FreeCAD
 import FreeCADGui as Gui
@@ -31,7 +31,12 @@ class TibraParameters(QtGui.QDialog):
         self.centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         self.setGeometry(self.centerPoint.x()-0.5*width, self.centerPoint.y()-0.5*height, width, height)
         self.setWindowTitle("Tibra Parameters")
-        self.setWindowFlags(QtCore.Qt.WindowSystemMenuHint)
+        self.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+        self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
+        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, on = True)
+        self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, on = True)
+        # self.setWindowFlags(QtCore.Qt.WindowMinimizeButtonHint)
+
 
         self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
         self.work_dir = FreeCAD.ActiveDocument.FileName
@@ -202,29 +207,48 @@ class TibraParameters(QtGui.QDialog):
         cancelButton.clicked.connect(self.onCancel)
         cancelButton.setFixedWidth(80)
         # OK button
-        okButton = QtGui.QPushButton('OK', self)
-        okButton.clicked.connect(self.onOk)
-        okButton.setAutoDefault(True)
-        okButton.setFixedWidth(80)
+        saveButton = QtGui.QPushButton('Save', self)
+        saveButton.clicked.connect(self.onSave)
+        saveButton.setAutoDefault(True)
+        saveButton.setFixedWidth(80)
         
-        self.container_okCancel = QtGui.QWidget(self)
-        self.container_okCancel.setContentsMargins(0, 0, 0, 0)
+        self.container_saveCancel = QtGui.QWidget(self)
+        self.container_saveCancel.setContentsMargins(0, 0, 0, 0)
     
-        layout_okCancel = QtGui.QHBoxLayout(self.container_okCancel)
-        layout_okCancel.setContentsMargins(0, 0, 0,0)
-        layout_okCancel.addWidget(okButton)
-        layout_okCancel.addWidget(cancelButton)
-        layout_okCancel.setSpacing(40)
+        layout_saveCancel = QtGui.QHBoxLayout(self.container_saveCancel)
+        layout_saveCancel.setContentsMargins(0, 0, 0,0)
+        layout_saveCancel.addWidget(saveButton)
+        layout_saveCancel.addWidget(cancelButton)
+        layout_saveCancel.setSpacing(40)
 
-        self.container_okCancel.move(0.5*width - okButton.geometry().width() - 0.5*layout_okCancel.spacing(), 
+        self.container_saveCancel.move(0.5*width - saveButton.geometry().width() - 0.5*layout_saveCancel.spacing(), 
                                      self.container_DirichletNeumann.y()+50)
 
         # show the dialog box and creates instances of other required classes
         self.DirichletBCBox_obj = DirichletBCBox()
         self.NeumannBCBox_obj = NeumannBCBox()
+
+        self.DirichletFacesList_Obj = DirichletFacesList()
+        self.DirichletFacesList_Obj.Modify_button.clicked.connect(self.ModifyButtonClicked_DirichletFacesList)
+        self.DirichletFacesList_Obj.Delete_button.clicked.connect(self.DeleteButtonClicked_DirichletFacesList)
+        self.DirichletFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_DirichletFacesList)
+        self.DirichletFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_DirichletFacesList)
+
+        self.NeumannFacesList_Obj = NeumannFacesList()
+        self.NeumannFacesList_Obj.Modify_button.clicked.connect(self.ModifyButtonClicked_NeumannFacesList)
+        self.NeumannFacesList_Obj.Delete_button.clicked.connect(self.DeleteButtonClicked_NeumannFacesList)
+        self.NeumannFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_NeumannFacesList)
+        self.NeumannFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_NeumannFacesList)
+
+        self.dirichlet_displacement_arr = []
+        self.neumann_force_arr = []
         self.show()
 
+    #################################################################################################################################
                             ############################# FUNCTION DEFINITIONS #############################
+    #################################################################################################################################
+    
+                                                ##### Browse Files Function #####
 
     def onBrowseButton(self):
         self.browseWindow = QtGui.QFileDialog(self)
@@ -239,45 +263,61 @@ class TibraParameters(QtGui.QDialog):
 
 
     def onDirichletBC(self):
-        self.DirichletDialogBox_Fun()
-        self.DirichletDialogBox.exec_()
-
-    def DirichletDialogBox_Fun(self):
-
-        self.DirichletDialogBox = QtGui.QDialog(self)
-        width = 470
-        height = 100
-        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
-        self.DirichletDialogBox.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
-        self.DirichletDialogBox.setWindowTitle("Apply Dirichlet Boundary Condition")
-
-        self.DirichletDialogBox.label_dirichlet = QtGui.QLabel("Please enter the number faces subject to Dirichlet BC:", self.DirichletDialogBox)
-        self.DirichletDialogBox.label_dirichlet.move(10, 35)
-
-        self.DirichletDialogBox.DirichletFaceNumber = QtGui.QLineEdit(self.DirichletDialogBox)
-        self.DirichletDialogBox.DirichletFaceNumber.setPlaceholderText("3")
-        self.DirichletDialogBox.DirichletFaceNumber.setFixedWidth(50)
-        self.DirichletDialogBox.DirichletFaceNumber.move(400, 30)
-
-        okButton_DirichletDialogBox = QtGui.QPushButton('OK', self.DirichletDialogBox)
-        okButton_DirichletDialogBox.move(0.5*width - 30, 65)
-        okButton_DirichletDialogBox.clicked.connect(self.okButton_DirichletDialogBox)
-        okButton_DirichletDialogBox.setAutoDefault(True)
-        
-
-    def okButton_DirichletDialogBox(self):
-        self.dirichlet_faces= self.DirichletDialogBox.DirichletFaceNumber.text()
-        self.dirichlet_displacement_arr = np.zeros(shape = (int(self.dirichlet_faces), 3))
-        infoBox = QtGui.QMessageBox.information(self.DirichletDialogBox, "Apply Dirichlet Boundary Conditions", \
-                                                "Please select " + self.dirichlet_faces + \
-                                                " faces subject to Dirichlet BC one by one!")
+        infoBox = QtGui.QMessageBox.information(self, "Apply Dirichlet Boundary Conditions", \
+                                                "Please select faces subject to Dirichlet BC one by one!")
         
         if infoBox == QtGui.QMessageBox.StandardButton.Ok:
             self.view = Gui.ActiveDocument.ActiveView
             self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_DirichletBCBox)
-            self.DirichletDialogBox.close()
             self.setVisible(False)
+            self.DirichletFacesList_Obj.show()
 
+            ############################ DIRICHLET FACES LIST FUNCTIONS #################################
+
+    def okButtonClicked_DirichletFacesList(self):
+        self.setVisible(True)
+        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
+        self.DirichletFacesList_Obj.result = True
+        self.DirichletFacesList_Obj.close()
+
+    def DiscardButtonClicked_DirichletFacesList(self):
+        self.setVisible(True)
+        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
+        self.DirichletFacesList_Obj.result = False
+        self.dirichlet_displacement_arr = []
+        self.DirichletFacesList_Obj.close()
+    
+    def DeleteButtonClicked_DirichletFacesList(self):
+        current_Item = self.DirichletFacesList_Obj.listwidget.currentItem()
+        indexToDel = self.DirichletFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        del self.dirichlet_displacement_arr[indexToDel]
+        print(str(self.dirichlet_displacement_arr))
+        self.DirichletFacesList_Obj.listwidget.takeItem(self.DirichletFacesList_Obj.listwidget.row(current_Item))
+
+    def ModifyButtonClicked_DirichletFacesList(self):
+        current_Item = self.DirichletFacesList_Obj.listwidget.currentItem()
+        indexToMod = self.DirichletFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        prev_vals = self.dirichlet_displacement_arr[indexToMod]
+        prev_x = prev_vals[0]
+        prev_y = prev_vals[1]
+        prev_z = prev_vals[2]
+        self.DirichletBCBox_obj.text_x_constraint.setText(str(prev_x))
+        self.DirichletBCBox_obj.text_y_constraint.setText(str(prev_y))
+        self.DirichletBCBox_obj.text_z_constraint.setText(str(prev_z))
+        self.DirichletBCBox_obj.exec_()
+
+        self.dirichlet_displacement_arr[indexToMod] = \
+                                                    [float(self.DirichletBCBox_obj.x_val),\
+                                                     float(self.DirichletBCBox_obj.y_val),\
+                                                     float(self.DirichletBCBox_obj.z_val)]
+        Gui.Selection.clearSelection()
+    
+
+        
+
+
+
+                                                ##### Dirichlet Event Button #####
 
     def getMouseClick_DirichletBCBox(self, event_cb):   
         event = event_cb.getEvent()
@@ -288,112 +328,118 @@ class TibraParameters(QtGui.QDialog):
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
             print(str(element_list))
             if(element_list != None):
-                if (self.DirichletBCBox_obj.dirichlet_count <= int(self.dirichlet_faces)):
-                    self.DirichletBCBox_obj.element_list = element_list
-                    self.DirichletBCBox_obj.exec_()
-                    self.dirichlet_displacement_arr[self.DirichletBCBox_obj.dirichlet_count-2] = \
-                                                                            [float(self.DirichletBCBox_obj.x_val), \
-                                                                             float(self.DirichletBCBox_obj.y_val), \
-                                                                             float(self.DirichletBCBox_obj.z_val)]
-                    if(self.DirichletBCBox_obj.dirichlet_count > int(self.dirichlet_faces)):
-                        self.setVisible(True)
-                        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)  
+                self.DirichletBCBox_obj.element_list = element_list
+                self.DirichletBCBox_obj.okButton_Flag = False
+                self.DirichletBCBox_obj.exec_()
+                if(self.DirichletBCBox_obj.okButton_Flag):
+                    self.dirichlet_displacement_arr.append(\
+                                                                [float(self.DirichletBCBox_obj.x_val), \
+                                                                 float(self.DirichletBCBox_obj.y_val), \
+                                                                 float(self.DirichletBCBox_obj.z_val)])
+                    print(str(self.dirichlet_displacement_arr))
+                    self.DirichletFacesList_Obj.listwidget.addItem(element_list.get('Component'))
+        
+        Gui.Selection.clearSelection()
+                     
+    # #Sketch of the selected face (will be used for STL export later)
+        #if (Gui.Selection.hasSelection()):
+    #         for sel in Gui.Selection.getSelectionEx():
+    #             face = sel.SubObjects[0]
+    #             face.translate(face.Placement.Base.negative())
+    #             sketch = self.face2sketch([face],'mySketch4STL')
+    #             self.Constraints_Fun(sketch)
+    #             sketch.MapMode ='FlatFace'
+    #             sketch.MapReversed = False
+    #             nVector = face.normalAt(1,1)
+    #             pVector = face.findPlane().Position
+    #             dVector = nVector.multiply(nVector.dot(pVector))
+    #             sketch.Placement.move(dVector)
+    #             # try :
+    #                 # Gui.ActiveDocument.setEdit(sketch,0)
+    #             # except :
+    #                 # pass
+    #             Gui.Selection.clearSelection()
 
-        ### Sketch of the selected face (will be used for STL export later)
-        if (Gui.Selection.hasSelection()):
-            for sel in Gui.Selection.getSelectionEx():
-                print(sel)
-                face = sel.SubObjects[0]
-                print(face)
-                face.translate(face.Placement.Base.negative())
-                sketch = self.face2sketch([face],'mySketch4STL')
-                self.Constraints_Fun(sketch)
-                sketch.MapMode ='FlatFace'
-                sketch.MapReversed = False
-                # sketch.Support = (FreeCAD.getDocument(element_list.get('Document')).getObject(element_list.get('Object')), element_list.get('Component'))
-                nVector = face.normalAt(1,1)
-                pVector = face.findPlane().Position
-                dVector = nVector.multiply(nVector.dot(pVector))
-                sketch.Placement.move(dVector)
-                # try :
-                    # Gui.ActiveDocument.setEdit(sketch,0)
-                # except :
-                    # pass
-                Gui.Selection.clearSelection()
+    # ## Exporting the face as STL
+    #             FreeCAD.activeDocument().addObject('PartDesign::Body','Body4STL')
+    #             features_ = [FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL')]
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').addObjects(features_)
+    #             del features_
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').newObject('PartDesign::Pad','Pad4STL')
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Profile = FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL')
+    #             Gui.getDocument(element_list.get('Document')).setEdit(FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL'),0,'Pad')
+    #             FreeCAD.ActiveDocument.recompute()
 
-                ## Exporting the face as STL
-                FreeCAD.activeDocument().addObject('PartDesign::Body','Body4STL')
-                features_ = [FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL')]
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').addObjects(features_)
-                del features_
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').newObject('PartDesign::Pad','Pad4STL')
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Profile = FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL')
-                # FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Length = 10
-                Gui.getDocument(element_list.get('Document')).setEdit(FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL'),0,'Pad')
-                FreeCAD.ActiveDocument.recompute()
+    # ##Extruding the sketch as 3D object with very small thickness
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Length = 0.0001
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').UseCustomVector = 0
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Direction = (1, 1, 1)
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Type = 0
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').UpToFace = None
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Reversed = 0
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Midplane = 1
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Offset = 0
+    #             FreeCAD.getDocument(element_list.get('Document')).recompute()
+    #             Gui.getDocument(element_list.get('Document')).resetEdit()
 
-                ##Extruding the sketch as 3D object with very small thickness
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Length = 0.0001
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').UseCustomVector = 0
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Direction = (1, 1, 1)
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Type = 0
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').UpToFace = None
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Reversed = 0
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Midplane = 1
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Offset = 0
-                FreeCAD.getDocument(element_list.get('Document')).recompute()
-                Gui.getDocument(element_list.get('Document')).resetEdit()
-
-                object = []
-                object.append(FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL'))
-                Mesh.export(object, self.work_dir + "D" + str(self.DirichletBCBox_obj.dirichlet_count-1) + ".stl")
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').removeObjectsFromDocument()
-                FreeCAD.getDocument(element_list.get('Document')).removeObject('Body4STL')
-                FreeCAD.getDocument(element_list.get('Document')).recompute()
-                del object
+    #             object = []
+    #             object.append(FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL'))
+    #             Mesh.export(object, self.work_dir + "D" + str(self.DirichletBCBox_obj.dirichlet_count-1) + ".stl")
+    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').removeObjectsFromDocument()
+    #             FreeCAD.getDocument(element_list.get('Document')).removeObject('Body4STL')
+    #             FreeCAD.getDocument(element_list.get('Document')).recompute()
+    #             del object
 
 
     def onNeumannBC(self):
-        self.NeumannDialogBox_Fun()
-        self.NeumannDialogBox.exec_()
-
-    def NeumannDialogBox_Fun(self):
-
-        self.NeumannDialogBox = QtGui.QDialog(self)
-        width = 470
-        height = 100
-        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
-        self.NeumannDialogBox.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
-        self.NeumannDialogBox.setWindowTitle("Apply Neumann Boundary Condition")
-
-        self.NeumannDialogBox.label_neumann = QtGui.QLabel("Please enter the number faces subject to Neumann BC:", self.NeumannDialogBox)
-        self.NeumannDialogBox.label_neumann.move(10, 35)
-
-        self.NeumannDialogBox.NeumannFaceNumber = QtGui.QLineEdit(self.NeumannDialogBox)
-        self.NeumannDialogBox.NeumannFaceNumber.setPlaceholderText("3")
-        self.NeumannDialogBox.NeumannFaceNumber.setFixedWidth(50)
-        self.NeumannDialogBox.NeumannFaceNumber.move(400, 30)
-
-        okButton_NeumannDialogBox = QtGui.QPushButton('OK', self.NeumannDialogBox)
-        okButton_NeumannDialogBox.move(0.5*width - 30, 65)
-        okButton_NeumannDialogBox.clicked.connect(self.okButton_NeumannDialogBox)
-        okButton_NeumannDialogBox.setAutoDefault(True)
-        
-
-    def okButton_NeumannDialogBox(self):
-        self.neumann_faces= self.NeumannDialogBox.NeumannFaceNumber.text()
-        print(self.neumann_faces)
-        self.neumann_force_arr = np.zeros(shape = (int(self.neumann_faces), 3))
-        infoBox = QtGui.QMessageBox.information(self.NeumannDialogBox, "Apply Neumann Boundary Conditions", \
-                                                "Please select " + self.neumann_faces + \
-                                                " faces subject to Neumann BC one by one!")
+        infoBox = QtGui.QMessageBox.information(self, "Apply Neumann Boundary Conditions", \
+                                                "Please select faces subject to Neumann BC one by one!")
         
         if infoBox == QtGui.QMessageBox.StandardButton.Ok:
             self.view = Gui.ActiveDocument.ActiveView
             self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_NeumannBCBox)
-            self.NeumannDialogBox.close()
             self.setVisible(False)
+            self.NeumannFacesList_Obj.show()
 
+            ############################ NEUMANN FACES LIST FUNCTIONS #################################
+
+    def okButtonClicked_NeumannFacesList(self):
+        self.setVisible(True)
+        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
+        self.NeumannFacesList_Obj.result = True
+        self.NeumannFacesList_Obj.close()
+
+    def DiscardButtonClicked_NeumannFacesList(self):
+        self.setVisible(True)
+        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
+        self.NeumannFacesList_Obj.result = False
+        self.neumann_force_arr = []
+        self.NeumannFacesList_Obj.close()
+    
+    def DeleteButtonClicked_NeumannFacesList(self):
+        current_Item = self.NeumannFacesList_Obj.listwidget.currentItem()
+        indexToDel = self.NeumannFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        del self.neumann_force_arr[indexToDel]
+        print(str(self.neumann_force_arr))
+        self.NeumannFacesList_Obj.listwidget.takeItem(self.NeumannFacesList_Obj.listwidget.row(current_Item))
+
+    def ModifyButtonClicked_NeumannFacesList(self):
+        current_Item = self.NeumannFacesList_Obj.listwidget.currentItem()
+        indexToMod = self.NeumannFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        prev_vals = self.neumann_force_arr[indexToMod]
+        prev_x = prev_vals[0]
+        prev_y = prev_vals[1]
+        prev_z = prev_vals[2]
+        self.NeumannBCBox_obj.text_x_constraint.setText(str(prev_x))
+        self.NeumannBCBox_obj.text_y_constraint.setText(str(prev_y))
+        self.NeumannBCBox_obj.text_z_constraint.setText(str(prev_z))
+        self.NeumannBCBox_obj.exec_()
+
+        self.neumann_force_arr[indexToMod] = \
+                                                    [float(self.NeumannBCBox_obj.x_val),\
+                                                     float(self.NeumannBCBox_obj.y_val),\
+                                                     float(self.NeumannBCBox_obj.z_val)]
+        Gui.Selection.clearSelection()
 
     def getMouseClick_NeumannBCBox(self, event_cb):   
         event = event_cb.getEvent()
@@ -404,70 +450,18 @@ class TibraParameters(QtGui.QDialog):
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
             print(str(element_list))
             if(element_list != None):
-                if (self.NeumannBCBox_obj.neumann_count <= int(self.neumann_faces)):
-                    self.NeumannBCBox_obj.element_list = element_list
-                    self.NeumannBCBox_obj.exec_()
-                    self.neumann_force_arr[self.NeumannBCBox_obj.neumann_count-2] = [float(self.NeumannBCBox_obj.x_val), \
-                                                                                     float(self.NeumannBCBox_obj.y_val), \
-                                                                                     float(self.NeumannBCBox_obj.z_val)]
-                    if(self.NeumannBCBox_obj.neumann_count > int(self.neumann_faces)):
-                        self.setVisible(True)
-                        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)  
-
-        ### Sketch of the selected face (will be used for STL export later)
-        if (Gui.Selection.hasSelection()):
-            for sel in Gui.Selection.getSelectionEx():
-                print(sel)
-                face = sel.SubObjects[0]
-                print(face)
-                face.translate(face.Placement.Base.negative())
-                sketch = self.face2sketch([face],'mySketch4STL')
-                self.Constraints_Fun(sketch)
-                sketch.MapMode ='FlatFace'
-                sketch.MapReversed = False
-                # do we need to add support? it might inhibit our actual goal of extracting surface stl?
-                # sketch.Support = (FreeCAD.getDocument(element_list.get('Document')).getObject(element_list.get('Object')), element_list.get('Component'))
-                nVector = face.normalAt(1,1)
-                pVector = face.findPlane().Position
-                dVector = nVector.multiply(nVector.dot(pVector))
-                sketch.Placement.move(dVector)
-                # try :
-                    # Gui.ActiveDocument.setEdit(sketch,0)
-                # except :
-                    # pass
-                Gui.Selection.clearSelection()
-
-                ## Exporting the face as STL
-                FreeCAD.activeDocument().addObject('PartDesign::Body','Body4STL')
-                features_ = [FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL')]
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').addObjects(features_)
-                del features_
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').newObject('PartDesign::Pad','Pad4STL')
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Profile = FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL')
-                # FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Length = 10
-                Gui.getDocument(element_list.get('Document')).setEdit(FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL'),0,'Pad')
-                FreeCAD.ActiveDocument.recompute()
-
-                ##Extruding the sketch as 3D object with very small thickness
-                # FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL').Visibility = False ---->>>> Do we need it?
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Length = 0.0001
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').UseCustomVector = 0
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Direction = (1, 1, 1)
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Type = 0
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').UpToFace = None
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Reversed = 0
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Midplane = 1
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Offset = 0
-                FreeCAD.getDocument(element_list.get('Document')).recompute()
-                Gui.getDocument(element_list.get('Document')).resetEdit()
-
-                object = []
-                object.append(FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL'))
-                Mesh.export(object, self.work_dir + "N" + str(self.NeumannBCBox_obj.neumann_count-1) + ".stl")
-                FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').removeObjectsFromDocument()
-                FreeCAD.getDocument(element_list.get('Document')).removeObject('Body4STL')
-                FreeCAD.getDocument(element_list.get('Document')).recompute()
-                del object
+                self.NeumannBCBox_obj.element_list = element_list
+                self.NeumannBCBox_obj.okButton_Flag = False
+                self.NeumannBCBox_obj.exec_()
+                if(self.NeumannBCBox_obj.okButton_Flag):
+                    self.neumann_force_arr.append(\
+                                                                [float(self.NeumannBCBox_obj.x_val), \
+                                                                 float(self.NeumannBCBox_obj.y_val), \
+                                                                 float(self.NeumannBCBox_obj.z_val)])
+                    print(str(self.neumann_force_arr))
+                    self.NeumannFacesList_Obj.listwidget.addItem(element_list.get('Component'))
+        
+        Gui.Selection.clearSelection()  
 
 
 
@@ -497,105 +491,115 @@ class TibraParameters(QtGui.QDialog):
             sketch.addConstraint(Sketcher.Constraint('Radius', \
                  Circles[i][0],Circles[i][1].Radius))
 
-    def onOk(self):
+    def onSave(self):
         #bounds
-        mybounds=self.bounds()
 
-        #bounds with 0.1 offset in total
-        
-        self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
-        self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
-        self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
-        self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
-        self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
-        self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
+        reply = QtGui.QMessageBox.question(self, "Tibra Parameters", "Upon Yes, the TibraParameters.json file and all STL files related to boundary conditions will be saved. If you want to modify Tibra Parameters, you will need to set them up from scratch. \n \n" 
+                                           "Are you sure you want to continue?", QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
 
-        
-        #bounds without 0.1 offset in total
-        # self.lowerbound_x_=mybounds[0]
-        # self.lowerbound_y_=mybounds[1]
-        # self.lowerbound_z_=mybounds[2]
-        # self.upperbound_x_=mybounds[3]
-        # self.upperbound_y_=mybounds[4]
-        # self.upperbound_z_=mybounds[5]
-        
 
-        #  Creating TIBRA directory:
-        os.chdir(self.work_dir)
+        if reply ==  QtGui.QMessageBox.No:
+            pass
 
-        if os.path.isdir(os.getcwd() + '/TIBRA'):
-            self.data_dir = os.getcwd() + '/TIBRA'
-            os.chdir(self.data_dir)
+        elif reply == QtGui.QMessageBox.Yes:
+                                                                        
+            mybounds=self.bounds()
 
-            if os.path.isdir(self.data_dir + '/data'):
-                self.data_dir = self.data_dir + '/data'
+            #bounds with 0.1 offset in total
+
+            self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
+            self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
+            self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
+            self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
+            self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
+            self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
+
+
+            #bounds without 0.1 offset in total
+            # self.lowerbound_x_=mybounds[0]
+            # self.lowerbound_y_=mybounds[1]
+            # self.lowerbound_z_=mybounds[2]
+            # self.upperbound_x_=mybounds[3]
+            # self.upperbound_y_=mybounds[4]
+            # self.upperbound_z_=mybounds[5]
+
+
+            #  Creating TIBRA directory:
+            os.chdir(self.work_dir)
+
+            if os.path.isdir(os.getcwd() + '/TIBRA'):
+                self.data_dir = os.getcwd() + '/TIBRA'
                 os.chdir(self.data_dir)
+
+                if os.path.isdir(self.data_dir + '/data'):
+                    self.data_dir = self.data_dir + '/data'
+                    os.chdir(self.data_dir)
+                else:
+                    os.mkdir('data')
+                    self.data_dir = self.data_dir + '/data'
+                    os.chdir(self.data_dir)
+
             else:
+                os.mkdir('TIBRA')
+                self.data_dir = os.getcwd() + '/TIBRA'
+                os.chdir(self.data_dir)
                 os.mkdir('data')
                 self.data_dir = self.data_dir + '/data'
                 os.chdir(self.data_dir)
 
-        else:
-            os.mkdir('TIBRA')
-            self.data_dir = os.getcwd() + '/TIBRA'
-            os.chdir(self.data_dir)
-            os.mkdir('data')
-            self.data_dir = self.data_dir + '/data'
-            os.chdir(self.data_dir)
-       
-        TibraParam = \
-        {
-        
-            "general_settings"   : {
-                "input_filename"  :  self.textInput_pathname_.text(),
-                "postprocess_filename" : self.data_dir + "/postprocess_STL.stl",
-                "echo_level"      :  int(self.textInput_echo_.text())   
-            },
-            "mesh_settings"     : {
-                "lower_bound": list([self.lowerbound_x_, self.lowerbound_y_, self.lowerbound_z_]),
-                "upper_bound": list([self.upperbound_x_, self.upperbound_y_, self.upperbound_z_]),
-                "polynomial_order" : list([int(self.textInput_polynomialOrder_x_.text()), int(self.textInput_polynomialOrder_y_.text()), int(self.textInput_polynomialOrder_z_.text())]),
-                "number_of_elements" : list([int(self.textInput_nElements_x_.text()),  int(self.textInput_nElements_y_.text()), int(self.textInput_nElements_z_.text())])
-            },
-            "trimmed_quadrature_rule_settings"     : {
-                "moment_fitting_residual": float(self.textInput_residual_.text()),
-                "min_element_volume_ratio": float(self.textInput__min_el_vol_rat.text())
-            },
-            "non_trimmed_quadrature_rule_settings" : {
-                "integration_method" : self.popup_integration.currentText()
-            },
-            "conditions"    :  [
-            ]
-        }
-
-        # Creating TibraParameters.json file:
-        with open('TIBRAParameters.json', 'w') as f:
-            json.dump(TibraParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
-            pass
-
-        for i in range (int(self.neumann_faces)):
-            out_arr = list(self.neumann_force_arr[i])
-            neumann_json = {"neumann": {
-                "filename" : str(self.json_dir) + "N" + str(i+1) + ".stl",
-                "force" : out_arr,
-                }
-            }
-            self.append_json(neumann_json)
-
-        for i in range (int(self.dirichlet_faces)):
-            out_arr = list(self.dirichlet_displacement_arr[i])
-            dirichlet_jason = {"dirichlet": {
-                "filename" : str(self.json_dir) + "D" + str(i+1) + ".stl",
-                "displacement" : out_arr,
-                "penalty_factor" : 1e10
-                }
-            }
-            self.append_json(dirichlet_jason)
-
+            TibraParam = \
+            {
             
-        # Creating Tibra_main.py file:
-        with open('TIBRA_main.py', 'w') as f:
-            f.write('''
+                "general_settings"   : {
+                    "input_filename"  :  self.textInput_pathname_.text(),
+                    "postprocess_filename" : self.data_dir + "/postprocess_STL.stl",
+                    "echo_level"      :  int(self.textInput_echo_.text())   
+                },
+                "mesh_settings"     : {
+                    "lower_bound": list([self.lowerbound_x_, self.lowerbound_y_, self.lowerbound_z_]),
+                    "upper_bound": list([self.upperbound_x_, self.upperbound_y_, self.upperbound_z_]),
+                    "polynomial_order" : list([int(self.textInput_polynomialOrder_x_.text()), int(self.textInput_polynomialOrder_y_.text()), int(self.textInput_polynomialOrder_z_.text())]),
+                    "number_of_elements" : list([int(self.textInput_nElements_x_.text()),  int(self.textInput_nElements_y_.text()), int(self.textInput_nElements_z_.text())])
+                },
+                "trimmed_quadrature_rule_settings"     : {
+                    "moment_fitting_residual": float(self.textInput_residual_.text()),
+                    "min_element_volume_ratio": float(self.textInput__min_el_vol_rat.text())
+                },
+                "non_trimmed_quadrature_rule_settings" : {
+                    "integration_method" : self.popup_integration.currentText()
+                },
+                "conditions"    :  [
+                ]
+            }
+
+            # Creating TibraParameters.json file:
+            with open('TIBRAParameters.json', 'w') as f:
+                json.dump(TibraParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
+                pass
+
+            for i in range (int(self.neumann_faces)):
+                out_arr = list(self.neumann_force_arr[i])
+                neumann_json = {"neumann": {
+                    "filename" : str(self.json_dir) + "N" + str(i+1) + ".stl",
+                    "force" : out_arr,
+                    }
+                }
+                self.append_json(neumann_json)
+
+            for i in range (int(self.dirichlet_faces)):
+                out_arr = list(self.dirichlet_displacement_arr[i])
+                dirichlet_jason = {"dirichlet": {
+                    "filename" : str(self.json_dir) + "D" + str(i+1) + ".stl",
+                    "displacement" : out_arr,
+                    "penalty_factor" : 1e10
+                    }
+                }
+                self.append_json(dirichlet_jason)
+
+
+            # Creating Tibra_main.py file:
+            with open('TIBRA_main.py', 'w') as f:
+                f.write('''
 # Project imports
 from TIBRA_PythonApplication.PyTIBRA import PyTIBRA
 
@@ -606,10 +610,10 @@ def main():
 if __name__ == "__main__":
     main()''')
 
-            pass
+                pass
 
-        self.result = "Ok"
-        self.close()
+            self.result = "Ok"
+            self.close()
 
     def onCancel(self):
         self.result = "Cancel"
@@ -685,7 +689,7 @@ class DirichletBCBox(QtGui.QDialog):
             okButton_DirichletBCBox.clicked.connect(self.okButton_DirichletBCBox)
             okButton_DirichletBCBox.setAutoDefault(True)
 
-            self.dirichlet_count = 1
+            self.dirichlet_count = 0
 
     def closeEvent(self, event):
         self.resetInputValues()
@@ -700,6 +704,7 @@ class DirichletBCBox(QtGui.QDialog):
         self.resetInputValues()
         Gui.Selection.addSelection(self.element_list.get('Document'), self.element_list.get('Object'), \
                                    self.element_list.get('Component'), self.element_list.get('x'), self.element_list.get('y'))
+        self.okButton_Flag = True
         self.close()
 
     def resetInputValues(self):
@@ -765,9 +770,124 @@ class NeumannBCBox(QtGui.QDialog):
         self.resetInputValues()
         Gui.Selection.addSelection(self.element_list.get('Document'), self.element_list.get('Object'), \
                                    self.element_list.get('Component'), self.element_list.get('x'), self.element_list.get('y'))
+        self.okButton_Flag = True
         self.close()
 
     def resetInputValues(self):
         self.text_x_constraint.setText("")
         self.text_y_constraint.setText("")
         self.text_z_constraint.setText("")
+
+class DirichletFacesList(QtGui.QWidget):
+    """"""
+    def __init__(self):
+        QtGui.QWidget.__init__(self)
+        self.setWindowTitle("List of Faces")
+        self.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+        self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, on = True)
+        layout = QtGui.QGridLayout()
+
+        FaceID_label = QtGui.QLabel("Faces Under Dirichlet BC:", self)
+        layout.addWidget(FaceID_label, 0, 0, 1, 1)
+
+        layout.setColumnMinimumWidth(1, 10)
+
+        self.Modify_button = QtGui.QPushButton("Modify", self)
+        self.Modify_button.setFixedWidth(80)
+        layout.addWidget(self.Modify_button, 1, 2, 1, 1)
+
+        layout.setRowMinimumHeight(2, 10)
+
+        self.Delete_button = QtGui.QPushButton("Delete", self)
+        self.Delete_button.setFixedWidth(80)
+        layout.addWidget(self.Delete_button, 3, 2, 1, 1)
+
+        layout.setRowMinimumHeight(4, 70)
+
+        self.listwidget = QtGui.QListWidget(self)
+        layout.addWidget(self.listwidget, 1, 0, 4, 1)
+
+        layout.setRowMinimumHeight(5, 10)
+
+        self.okButton = QtGui.QPushButton('OK', self)
+        self.okButton.setAutoDefault(True)
+        self.okButton.setFixedWidth(80)
+
+        self.DiscardButton = QtGui.QPushButton('Discard', self)
+        self.DiscardButton.setFixedWidth(80)
+
+        layout4OkDiscard = QtGui.QHBoxLayout()
+        layout4OkDiscard.addWidget(self.okButton)
+        layout4OkDiscard.addWidget(self.DiscardButton)
+
+        layout.addLayout(layout4OkDiscard, 6, 0, 1, -1)
+
+        self.finished_flag = QtGui.QAction("Quit", self)
+
+        self.setLayout(layout)
+
+
+    def closeEvent(self, event):
+        if (self.result):
+            event.accept()
+        else:
+            self.listwidget.clear()
+            event.accept()
+
+class NeumannFacesList(QtGui.QWidget):
+    """"""
+    def __init__(self):
+        QtGui.QWidget.__init__(self)
+        self.setWindowTitle("List of Faces")
+        self.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+        self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, on = True)
+        layout = QtGui.QGridLayout()
+
+        FaceID_label = QtGui.QLabel("Faces Under Neumann BC:", self)
+        layout.addWidget(FaceID_label, 0, 0, 1, 1)
+
+        layout.setColumnMinimumWidth(1, 10)
+
+        self.Modify_button = QtGui.QPushButton("Modify", self)
+        self.Modify_button.setFixedWidth(80)
+        layout.addWidget(self.Modify_button, 1, 2, 1, 1)
+
+        layout.setRowMinimumHeight(2, 10)
+
+        self.Delete_button = QtGui.QPushButton("Delete", self)
+        self.Delete_button.setFixedWidth(80)
+        layout.addWidget(self.Delete_button, 3, 2, 1, 1)
+
+        layout.setRowMinimumHeight(4, 70)
+
+        self.listwidget = QtGui.QListWidget(self)
+        layout.addWidget(self.listwidget, 1, 0, 4, 1)
+
+        layout.setRowMinimumHeight(5, 10)
+
+        self.okButton = QtGui.QPushButton('OK', self)
+        self.okButton.setAutoDefault(True)
+        self.okButton.setFixedWidth(80)
+
+        self.DiscardButton = QtGui.QPushButton('Discard', self)
+        self.DiscardButton.setFixedWidth(80)
+
+        layout4OkDiscard = QtGui.QHBoxLayout()
+        layout4OkDiscard.addWidget(self.okButton)
+        layout4OkDiscard.addWidget(self.DiscardButton)
+
+        layout.addLayout(layout4OkDiscard, 6, 0, 1, -1)
+
+        self.finished_flag = QtGui.QAction("Quit", self)
+
+        self.setLayout(layout)
+
+
+    def closeEvent(self, event):
+        if (self.result):
+            event.accept()
+        else:
+            self.listwidget.clear()
+            event.accept()
