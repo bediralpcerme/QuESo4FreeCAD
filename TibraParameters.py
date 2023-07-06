@@ -29,6 +29,9 @@ class TibraParameters(QtGui.QDialog):
         width = 340
         height = 615
         self.centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+        std_validate = QtGui.QIntValidator()
+        scientific_validate = QtGui.QDoubleValidator()
+        scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation)
         self.setGeometry(self.centerPoint.x()-0.5*width, self.centerPoint.y()-0.5*height, width, height)
         self.setWindowTitle("Tibra Parameters")
         self.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
@@ -82,6 +85,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_echo_ = QtGui.QLineEdit(self)
         self.textInput_echo_.setPlaceholderText("1")
         self.textInput_echo_.setFixedWidth(50)
+        self.textInput_echo_.setValidator(std_validate)
         self.textInput_echo_.move(10, self.label_echo_.y()+20)
 
         #mesh head
@@ -100,6 +104,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_polynomialOrder_x_ = QtGui.QLineEdit(self)
         self.textInput_polynomialOrder_x_.setPlaceholderText("1")
         self.textInput_polynomialOrder_x_.setFixedWidth(60)
+        self.textInput_polynomialOrder_x_.setValidator(std_validate)
         self.textInput_polynomialOrder_x_.move(25, self.label_polynomialOrder_.y()+20)
 
         self.label_polynomialOrder_y_ = QtGui.QLabel("y: ", self)
@@ -107,6 +112,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_polynomialOrder_y_ = QtGui.QLineEdit(self)
         self.textInput_polynomialOrder_y_.setPlaceholderText("2")
         self.textInput_polynomialOrder_y_.setFixedWidth(60)
+        self.textInput_polynomialOrder_y_.setValidator(std_validate)
         self.textInput_polynomialOrder_y_.move(125, self.label_polynomialOrder_.y()+20)
 
         self.label_polynomialOrder_z_ = QtGui.QLabel("z: ", self)
@@ -114,6 +120,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_polynomialOrder_z_ = QtGui.QLineEdit(self)
         self.textInput_polynomialOrder_z_.setPlaceholderText("3")
         self.textInput_polynomialOrder_z_.setFixedWidth(60)
+        self.textInput_polynomialOrder_z_.setValidator(std_validate)
         self.textInput_polynomialOrder_z_.move(225, self.label_polynomialOrder_.y()+20)
 
         #number of elements
@@ -126,6 +133,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_nElements_x_ = QtGui.QLineEdit(self)
         self.textInput_nElements_x_.setPlaceholderText("10")
         self.textInput_nElements_x_.setFixedWidth(60)
+        self.textInput_nElements_x_.setValidator(std_validate)
         self.textInput_nElements_x_.move(25, self.label_nElements_.y()+20)
 
         self.label_nElements_y_ = QtGui.QLabel("y: ", self)
@@ -133,6 +141,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_nElements_y_ = QtGui.QLineEdit(self)
         self.textInput_nElements_y_.setPlaceholderText("20")
         self.textInput_nElements_y_.setFixedWidth(60)
+        self.textInput_nElements_y_.setValidator(std_validate)
         self.textInput_nElements_y_.move(125, self.label_nElements_.y()+20)
 
         self.label_nElements_z_ = QtGui.QLabel("z: ", self)
@@ -140,6 +149,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_nElements_z_ = QtGui.QLineEdit(self)
         self.textInput_nElements_z_.setPlaceholderText("30")
         self.textInput_nElements_z_.setFixedWidth(60)
+        self.textInput_nElements_z_.setValidator(std_validate)
         self.textInput_nElements_z_.move(225, self.label_nElements_.y()+20)
 
         #solution settings head
@@ -154,6 +164,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_residual_ = QtGui.QLineEdit(self)
         self.textInput_residual_.setPlaceholderText("1e-6")
         self.textInput_residual_.setFixedWidth(50)
+        self.textInput_residual_.setValidator(scientific_validate)
         self.textInput_residual_.move(10, self.label_residual_.y()+20)
 
         # min_element_volume ratio
@@ -162,6 +173,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput__min_el_vol_rat = QtGui.QLineEdit(self)
         self.textInput__min_el_vol_rat.setPlaceholderText("1e-3")
         self.textInput__min_el_vol_rat.setFixedWidth(50)
+        self.textInput__min_el_vol_rat.setValidator(scientific_validate)
         self.textInput__min_el_vol_rat.move(10, self.label_min_el_vol_rat.y()+20)
 
 
@@ -424,34 +436,6 @@ class TibraParameters(QtGui.QDialog):
                     self.NeumannSelectionList.append(sel)
                     Gui.Selection.clearSelection()
 
-
-
-
-    def face2sketch(self, face_list, name):
-        try:
-            sketch = Draft.makeSketch(face_list, autoconstraints=True, addTo=None, delete=False, name=name,  \
-                     radiusPrecision=-1, tol=1e-3)
-            return sketch
-        except:
-            sketch = Draft.makeSketch(face_list, autoconstraints=False, addTo=None, delete=False, name=name,  \
-                     radiusPrecision=-1, tol=1e-3)
-            return sketch
-
-    def Constraints_Fun(self, sketch) :
-        geoList = sketch.Geometry
-        Lines = []
-        Arcs  = []
-        Circles = []
-        for i in range(sketch.GeometryCount):
-            if geoList[i].TypeId == 'Part::GeomLineSegment':
-               Lines.append([i,geoList[i]])
-            elif geoList[i].TypeId == 'Part::GeomArcOfCircle':
-               Arcs .append([i,geoList[i]])
-            elif geoList[i].TypeId == 'Part::GeomCircle':
-               Circles.append([i,geoList[i]])
-        for i in range(len(Circles)):
-            sketch.addConstraint(Sketcher.Constraint('Radius', \
-                 Circles[i][0],Circles[i][1].Radius))
 
     def onSave(self):
         #bounds
@@ -746,6 +730,8 @@ class DirichletBCBox(QtGui.QDialog):
     def initUI(self):
             width = 350
             height = 120
+            std_validate = QtGui.QDoubleValidator()
+            std_validate.setNotation(QtGui.QDoubleValidator.StandardNotation)
             centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
             self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
             self.setWindowTitle("Apply Dirichlet Boundary Condition")
@@ -760,18 +746,21 @@ class DirichletBCBox(QtGui.QDialog):
             self.label_x_constraint.move(10,48)
             self.text_x_constraint = QtGui.QLineEdit(self)
             self.text_x_constraint.setFixedWidth(80)
+            self.text_x_constraint.setValidator(std_validate)
             self.text_x_constraint.move(30, 45)
 
             self.label_y_constraint = QtGui.QLabel("y: ", self)
             self.label_y_constraint.move(120,48)
             self.text_y_constraint = QtGui.QLineEdit(self)
             self.text_y_constraint.setFixedWidth(80)
+            self.text_y_constraint.setValidator(std_validate)
             self.text_y_constraint.move(140, 45)
 
             self.label_z_constraint = QtGui.QLabel("z: ", self)
             self.label_z_constraint.move(230, 48)
             self.text_z_constraint = QtGui.QLineEdit(self)
             self.text_z_constraint.setFixedWidth(80)
+            self.text_z_constraint.setValidator(std_validate)
             self.text_z_constraint.move(250, 45)
 
             okButton_DirichletBCBox = QtGui.QPushButton('OK', self)
@@ -791,8 +780,12 @@ class DirichletBCBox(QtGui.QDialog):
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
         self.z_val = self.text_z_constraint.text()
+        if (self.x_val == '') or (self.y_val == '') or (self.z_val == ''):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error: Dirichlet Boundary Condition","Displacement constraint values cannot be blank!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+        
         self.resetInputValues()
-
         self.okButton_Flag = True
         self.close()
 
@@ -810,6 +803,8 @@ class NeumannBCBox(QtGui.QDialog):
     def initUI(self):
             width = 350
             height = 120
+            std_validate = QtGui.QDoubleValidator()
+            std_validate.setNotation(QtGui.QDoubleValidator.StandardNotation)
             centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
             self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
             self.setWindowTitle("Apply Neumann Boundary Condition")
@@ -820,23 +815,25 @@ class NeumannBCBox(QtGui.QDialog):
             self.y_val = 0
             self.z_val = 0
 
-
             self.label_x_constraint = QtGui.QLabel("x: ", self)
             self.label_x_constraint.move(10,48)
             self.text_x_constraint = QtGui.QLineEdit(self)
             self.text_x_constraint.setFixedWidth(80)
+            self.text_x_constraint.setValidator(std_validate)
             self.text_x_constraint.move(30, 45)
 
             self.label_y_constraint = QtGui.QLabel("y: ", self)
             self.label_y_constraint.move(120,48)
             self.text_y_constraint = QtGui.QLineEdit(self)
             self.text_y_constraint.setFixedWidth(80)
+            self.text_y_constraint.setValidator(std_validate)
             self.text_y_constraint.move(140, 45)
 
             self.label_z_constraint = QtGui.QLabel("z: ", self)
             self.label_z_constraint.move(230, 48)
             self.text_z_constraint = QtGui.QLineEdit(self)
             self.text_z_constraint.setFixedWidth(80)
+            self.text_z_constraint.setValidator(std_validate)
             self.text_z_constraint.move(250, 45)
 
             okButton_NeumannBCBox = QtGui.QPushButton('OK', self)
@@ -856,8 +853,12 @@ class NeumannBCBox(QtGui.QDialog):
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
         self.z_val = self.text_z_constraint.text()
-        self.resetInputValues()
+        if (self.x_val == '') or (self.y_val == '') or (self.z_val == ''):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error: Neumann Boundary Condition","Force values cannot be blank!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
         
+        self.resetInputValues()
         self.okButton_Flag = True
         self.close()
 
