@@ -591,9 +591,6 @@ if __name__ == "__main__":
             BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
             conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
 
-            Gui.ActiveDocument.getObject(BDvol.Name).LineColor  = (0, 0, 0)
-            Gui.ActiveDocument.getObject(BDvol.Name).PointColor = (0, 0, 0)
-            Gui.ActiveDocument.getObject(BDvol.Name).ShapeColor = (0, 0, 0)
             Gui.ActiveDocument.getObject(BDvol.Name).Transparency = 100
             BDvol.Length.Value = (self.upperbound_x_-self.lowerbound_x_)
             BDvol.Width.Value  = (self.upperbound_y_-self.lowerbound_y_)
