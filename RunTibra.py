@@ -45,11 +45,16 @@ class RunTibra(QtGui.QDialog):
         self.work_dir = self.work_dir + '/TIBRA/data'
 
         os.chdir(self.work_dir)
-        #Idk how to automatize this but python in freecad doesnt see the path in the system so you add it again
-        sys.path.append("D:\COMPUTATIONAL MECHANICS\SOFTWARE_LAB\TIBRA")
+
+        #TIBRA is run with parameters and B.C.s
         from TIBRA_PythonApplication.PyTIBRA import PyTIBRA
         pytibra = PyTIBRA("TIBRAParameters.json")
         pytibra.Run()
+        # Direct Analysis with kratos
+        if( os.path.exists(self.work_dir+'\StructuralMaterials.json') and os.path.exists(self.work_dir+'\KratosParameters.json')):
+            pytibra.RunKratosAnalysis()
+            pytibra.PostProcess()
+
 
         self.close()
 

@@ -22,12 +22,14 @@ class TibraParameters(QtGui.QDialog):
     def __init__(self):
         super(TibraParameters, self).__init__()
         self.initUI()
+        self.visulizerun=0
+        self.gridList=[]
 
     def initUI(self):
 
         #position and geometry of the dialog box
         width = 340
-        height = 615
+        height = 650
         self.centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         std_validate = QtGui.QIntValidator()
         scientific_validate = QtGui.QDoubleValidator()
@@ -38,6 +40,7 @@ class TibraParameters(QtGui.QDialog):
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, on = True)
+
         # self.setWindowFlags(QtCore.Qt.WindowMinimizeButtonHint)
 
 
@@ -152,9 +155,15 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_nElements_z_.setValidator(std_validate)
         self.textInput_nElements_z_.move(225, self.label_nElements_.y()+20)
 
+        # visulize button
+        self.visualizeButton = QtGui.QCheckBox('Visualize Grids', self)
+        self.visualizeButton.stateChanged.connect(self.onVisualize)
+
+        self.visualizeButton.move(10, self.textInput_nElements_z_.y()+45)
+
         #solution settings head
         self.label_main_ = QtGui.QLabel("Solution Settings:", self)
-        self.label_main_.move(10, self.textInput_nElements_z_.y()+45)
+        self.label_main_.move(10, self.visualizeButton.y()+45)
         self.label_main_.setFont(boldUnderlinedFont)
         self.label_main_.setPalette(blueFont)
 
@@ -215,10 +224,12 @@ class TibraParameters(QtGui.QDialog):
                                              0.5*layout_DirichletNeumann.spacing(), self.label_ApplyBC_.y()+25)
 
 
+
         # cancel button
         cancelButton = QtGui.QPushButton('Cancel', self)
         cancelButton.clicked.connect(self.onCancel)
         cancelButton.setFixedWidth(80)
+       
         # OK button
         saveButton = QtGui.QPushButton('Save', self)
         saveButton.clicked.connect(self.onSave)
@@ -436,6 +447,13 @@ class TibraParameters(QtGui.QDialog):
                     self.NeumannSelectionList.append(sel)
                     Gui.Selection.clearSelection()
 
+    def onVisualize(self):
+            
+            if (self.visualizeButton.isChecked()):
+                self.VisualizeGrid_Fun()
+            else:
+                self.deVisualizeGrid_Fun()
+
 
     def onSave(self):
         #bounds
@@ -563,12 +581,20 @@ if __name__ == "__main__":
 
 
             #BOUNDINGBOX&GRID
-    
-            red   = 1.0  # 1 = 255
-            green = 0.0  #
-            blue  = 0.0  #
-    
+
+            if self.visulizerun>0:
+                FreeCAD.activeDocument().removeObject('Grid')
+                #FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
+                for i in self.gridList:
+                    FreeCAD.activeDocument().removeObject(i)
+                self.gridList=[]
             BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
+            conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
+
+            Gui.ActiveDocument.getObject(BDvol.Name).LineColor  = (0, 0, 0)
+            Gui.ActiveDocument.getObject(BDvol.Name).PointColor = (0, 0, 0)
+            Gui.ActiveDocument.getObject(BDvol.Name).ShapeColor = (0, 0, 0)
+            Gui.ActiveDocument.getObject(BDvol.Name).Transparency = 100
             BDvol.Length.Value = (self.upperbound_x_-self.lowerbound_x_)
             BDvol.Width.Value  = (self.upperbound_y_-self.lowerbound_y_)
             BDvol.Height.Value = (self.upperbound_z_-self.lowerbound_z_)
@@ -577,111 +603,53 @@ if __name__ == "__main__":
             oripl_X=BDvol.Placement.Base.x
             oripl_Y=BDvol.Placement.Base.y
             oripl_Z=BDvol.Placement.Base.z
-            Gui.ActiveDocument.getObject(BDvol.Name).LineColor  = (red, green, blue)
-            Gui.ActiveDocument.getObject(BDvol.Name).PointColor = (red, green, blue)
-            Gui.ActiveDocument.getObject(BDvol.Name).ShapeColor = (red, green, blue)
-            Gui.ActiveDocument.getObject(BDvol.Name).Transparency = 90
-    
-            conteneurRectangle = []
-            del conteneurRectangle[:]
-            conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
-    
+
+
             if (mybounds[6] and mybounds[7]) > 0.0:
-                pl_0 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
-                #pl_0 = adjustedGlobalPlacement(objs[0], boundBoxLocation)
-                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_0,face=False,support=None) #OK
-                duble.Label = "_BoundBoxRectangle_Bo"
-                Gui.activeDocument().activeObject().LineColor = (1.0, 1.0, blue)
-                conteneurRectangle.addObject(duble)
-    
-                pl_1 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
-                #pl_1 =adjustedGlobalPlacement(objs[0], boundBoxLocation + FreeCAD.Vector(0,0,boundBoxLZ))
-                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_1,face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_To"
-                Gui.activeDocument().activeObject().LineColor = (1.0, 1.0, blue)
-                conteneurRectangle.addObject(duble)
-    
                 pl_z_first=[]
                 pl_z_sec=[]
                 stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.textInput_nElements_z_.text())
+                
+                for i in range(int(self.textInput_nElements_z_.text())+1):
     
-                for i in range(int(self.textInput_nElements_z_.text())-1):
-                    #pl_z_first.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i+1)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
-                    #duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_first[i],face=False,support=None) #Ok
-                    #duble.Label = "_BoundBoxRectangle_z_line"+str(i+1)
-                    #conteneurRectangle.addObject(duble)
-    
-                    pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i+1)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
+                    pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
                     duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
-                    duble.Label = "_BoundBoxRectangle_z_fill"+str(i+1)
-                    Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, blue)
+                    self.gridList.append(duble.Name)
+                    duble.Label = "_BoundBoxRectangle_z_fill"+str(i)
+                    Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
                     conteneurRectangle.addObject(duble)
     
     
             if (mybounds[6] and mybounds[8]) > 0.0:
-                pl_2 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90))
-                #pl_2 = pl_0.multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
-                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_2,face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_Fr"
-                Gui.activeDocument().activeObject().LineColor = (0.0, 1.0, blue)
-                conteneurRectangle.addObject(duble)
-                pl_3 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.upperbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90))
-                #pl_3 = adjustedGlobalPlacement(objs[0], boundBoxLocation+App.Vector(0, boundBoxLY, 0)).multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
-                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_3,face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_Re"
-                Gui.activeDocument().activeObject().LineColor = (0.0, 1.0, blue)
-                conteneurRectangle.addObject(duble)
-    
-    
                 pl_y_first=[]
                 pl_y_sec=[]
                 stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.textInput_nElements_y_.text())
     
-                for i in range(int(self.textInput_nElements_y_.text())-1):
-                    #pl_y_first.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
-                    #duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_y_first[i],face=False,support=None) #Ok
-                    #duble.Label = "_BoundBoxRectangle_y_line"+str(i+1)
-                    #conteneurRectangle.addObject(duble)
+                for i in range(int(self.textInput_nElements_y_.text())+1):
     
-                    pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(1+i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
+                    pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
                     duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
-                    duble.Label = "_BoundBoxRectangle_y_fill"+str(i+1)
-                    Gui.activeDocument().activeObject().LineColor = (0.0 , 1.0, blue)
+                    duble.Label = "_BoundBoxRectangle_y_fill"+str(i)
+                    self.gridList.append(duble.Name)
+                    Gui.activeDocument().activeObject().LineColor = (0.0 , 1.0, 0.0)
                     conteneurRectangle.addObject(duble)
     
             if (mybounds[7] and mybounds[8]) > 0.0:
-                pl_4 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90))
-                #pl_2 = pl_0.multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
-                duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_4,face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_Le"
-                Gui.activeDocument().activeObject().LineColor = (0.0, 0.0, 1.0)
-                conteneurRectangle.addObject(duble)
-    
-                pl_5= FreeCAD.Placement(FreeCAD.Vector(self.upperbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90))
-                #pl_3 = adjustedGlobalPlacement(objs[0], boundBoxLocation+App.Vector(0, boundBoxLY, 0)).multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
-                duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_5,face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_Ri"
-                Gui.activeDocument().activeObject().LineColor = (0.0, 0.0, 1.0)
-                conteneurRectangle.addObject(duble)
-    
                 pl_x_first=[]
                 pl_x_sec=[]
                 stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.textInput_nElements_x_.text())
     
-                for i in range(int(self.textInput_nElements_x_.text())-1):
-                    #pl_y_first.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
-                    #duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_y_first[i],face=False,support=None) #Ok
-                    #duble.Label = "_BoundBoxRectangle_y_line"+str(i+1)
-                    #conteneurRectangle.addObject(duble)
+                for i in range(int(self.textInput_nElements_x_.text())+1):
     
-                    pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(1+i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
+                    pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
                     duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
-                    duble.Label = "_BoundBoxRectangle_x_fill"+str(i+1)
+                    duble.Label = "_BoundBoxRectangle_x_fill"+str(i)
+                    self.gridList.append(duble.Name)
                     Gui.activeDocument().activeObject().LineColor = (0.0 , 0.0, 1.0)
                     conteneurRectangle.addObject(duble)
     
             FreeCAD.ActiveDocument.recompute()
-    
+            FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
             self.result = "Ok"
             self.close()
 
@@ -709,6 +677,90 @@ if __name__ == "__main__":
         boundBoxLZ=boundBox_.ZLength
 
         return [boundBoxXMin, boundBoxYMin, boundBoxZMin, boundBoxXMax, boundBoxYMax, boundBoxZMax, boundBoxLX, boundBoxLY, boundBoxLZ]
+    
+    def VisualizeGrid_Fun(self):
+
+        mybounds=self.bounds()
+        self.visulizerun=self.visulizerun+1
+        #bounds with 0.1 offset in total
+        self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
+        self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
+        self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
+        self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
+        self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
+        self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
+        #BOUNDINGBOX&GRID
+        #if vizualize run for the first time
+        if self.visulizerun>1:
+            FreeCAD.activeDocument().removeObject('Grid')
+            for i in self.gridList:
+                FreeCAD.activeDocument().removeObject(i)
+            self.gridList=[]
+        BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
+        conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
+            
+        
+        BDvol.Length.Value = (self.upperbound_x_-self.lowerbound_x_)
+        BDvol.Width.Value  = (self.upperbound_y_-self.lowerbound_y_)
+        BDvol.Height.Value = (self.upperbound_z_-self.lowerbound_z_)
+        BDvol.Placement = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
+        BDPl = BDvol.Placement
+        oripl_X=BDvol.Placement.Base.x
+        oripl_Y=BDvol.Placement.Base.y
+        oripl_Z=BDvol.Placement.Base.z
+        Gui.ActiveDocument.getObject(BDvol.Name).Transparency = 100
+        
+
+        if (mybounds[6] and mybounds[7]) > 0.0:
+            pl_z_first=[]
+            pl_z_sec=[]
+            stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.textInput_nElements_z_.text())
+            
+            for i in range(int(self.textInput_nElements_z_.text())+1):
+
+                pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_z_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
+                conteneurRectangle.addObject(duble)
+
+
+        if (mybounds[6] and mybounds[8]) > 0.0:
+            pl_y_first=[]
+            pl_y_sec=[]
+            stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.textInput_nElements_y_.text())
+
+            for i in range(int(self.textInput_nElements_y_.text())+1):
+
+                pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_y_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (0.0 , 1.0, 0.0)
+                conteneurRectangle.addObject(duble)
+
+        if (mybounds[7] and mybounds[8]) > 0.0:
+            pl_x_first=[]
+            pl_x_sec=[]
+            stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.textInput_nElements_x_.text())
+
+            for i in range(int(self.textInput_nElements_x_.text())+1):
+
+                pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_x_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (0.0 , 0.0, 1.0)
+                conteneurRectangle.addObject(duble)
+
+        FreeCAD.ActiveDocument.recompute()
+        FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
+
+    #def deVisualizeGrid_Fun(self):
+
+        ######### INSERT YOUR CODE HERE #########
+
 
     def append_json(self, entry, filename='TIBRAParameters.json'):
             with open(filename, "r") as file:
