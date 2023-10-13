@@ -689,11 +689,13 @@ if __name__ == "__main__":
         self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
         #BOUNDINGBOX&GRID
         #if vizualize run for the first time
+        '''
         if self.visulizerun>1:
             FreeCAD.activeDocument().removeObject('Grid')
             for i in self.gridList:
                 FreeCAD.activeDocument().removeObject(i)
             self.gridList=[]
+        '''
         BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
         conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
             
@@ -755,9 +757,14 @@ if __name__ == "__main__":
         FreeCAD.ActiveDocument.recompute()
         FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
 
-    #def deVisualizeGrid_Fun(self):
+    def deVisualizeGrid_Fun(self):
 
         ######### INSERT YOUR CODE HERE #########
+        if self.visulizerun>0:
+            FreeCAD.activeDocument().removeObject('Grid')
+            for i in self.gridList:
+                FreeCAD.activeDocument().removeObject(i)
+            self.gridList=[]
 
 
     def append_json(self, entry, filename='TIBRAParameters.json'):
