@@ -30,6 +30,7 @@ class TibraParameters(QtGui.QDialog):
         #position and geometry of the dialog box
         width = 340
         height = 650
+
         self.centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         std_validate = QtGui.QIntValidator()
         scientific_validate = QtGui.QDoubleValidator()
@@ -204,12 +205,12 @@ class TibraParameters(QtGui.QDialog):
         self.button_Dirichlet_ = QtGui.QPushButton('Apply Dirichlet B.C.',self)
         self.button_Dirichlet_.clicked.connect(self.onDirichletBC)
         self.button_Dirichlet_.setAutoDefault(False)
-        self.button_Dirichlet_.setFixedWidth(145)
+        self.button_Dirichlet_.setFixedWidth(155)
 
         self.button_Neumann_ = QtGui.QPushButton('Apply Neumann B.C.',self)
         self.button_Neumann_.clicked.connect(self.onNeumannBC)
         self.button_Neumann_.setAutoDefault(False)
-        self.button_Neumann_.setFixedWidth(145)
+        self.button_Neumann_.setFixedWidth(155)
 
         self.container_DirichletNeumann = QtGui.QWidget(self)
         self.container_DirichletNeumann.setContentsMargins(0, 0, 0, 0)
@@ -223,6 +224,17 @@ class TibraParameters(QtGui.QDialog):
         self.container_DirichletNeumann.move(0.5*width - self.button_Dirichlet_.geometry().width() -
                                              0.5*layout_DirichletNeumann.spacing(), self.label_ApplyBC_.y()+25)
 
+        #Solver settings button
+        self.label_SolverSettings_ = QtGui.QLabel("Solver Settings:", self)
+        self.label_SolverSettings_.move(10, self.container_DirichletNeumann.y()+45)
+        self.label_SolverSettings_.setFont(boldUnderlinedFont)
+        self.label_SolverSettings_.setPalette(blueFont)
+        
+
+        self.SolverSettingsButton = QtGui.QPushButton('Apply Solver Settings',self)
+        self.SolverSettingsButton.clicked.connect(self.onSolverSettingsButton)
+        self.SolverSettingsButton.setAutoDefault(False)
+        self.SolverSettingsButton.move(10, self.label_SolverSettings_.y()+30)
 
 
         # cancel button
@@ -246,7 +258,7 @@ class TibraParameters(QtGui.QDialog):
         layout_saveCancel.setSpacing(40)
 
         self.container_saveCancel.move(0.5*width - saveButton.geometry().width() - 0.5*layout_saveCancel.spacing(),
-                                     self.container_DirichletNeumann.y()+50)
+                                     self.SolverSettingsButton.y()+70)
 
         # show the dialog box and creates instances of other required classes
         self.DirichletBCBox_obj = DirichletBCBox()
@@ -368,6 +380,365 @@ class TibraParameters(QtGui.QDialog):
                     self.DirichletSelectionList.append(sel)
                     Gui.Selection.clearSelection()
                                         
+
+
+    def onSolverSettingsButton(self):
+        self.SolverSettingsBox_Fun()
+        self.SolverSettingsBox.exec_()
+
+                                                     ############### SOLVER SETTINGS WINDOW ###################
+    def SolverSettingsBox_Fun(self):
+
+        self.SolverSettingsBox = QtGui.QDialog(self)
+        width = 330
+        height = 1070
+        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+        self.SolverSettingsBox.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
+        self.SolverSettingsBox.setWindowTitle("Kratos Solver Settings")
+
+        boldFont=QtGui.QFont()
+        boldFont.setBold(True)
+        boldUnderlinedFont=QtGui.QFont()
+        boldUnderlinedFont.setBold(True)
+        boldUnderlinedFont.setUnderline(True)
+        blueFont = QtGui.QPalette()
+        blueFont.setColor(QtGui.QPalette.WindowText, QtGui.QColor('#005293'))
+
+        #solution settings head
+        self.SolverSettingsBox.label_main_ = QtGui.QLabel("Problem data:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_main_.move(10, 10)
+       
+        self.SolverSettingsBox.label_main_.setFont(boldUnderlinedFont)
+        self.SolverSettingsBox.label_main_.setPalette(blueFont)
+
+        #parallel type
+        self.SolverSettingsBox.label_parallel_type_ = QtGui.QLabel("Parallel type:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_parallel_type_.move(10, self.SolverSettingsBox.label_main_.y()+30)
+        self.SolverSettingsBox.textInput_parallel_type_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_parallel_type_.setPlaceholderText("OpenMP")
+        self.SolverSettingsBox.textInput_parallel_type_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_parallel_type_.move(10, self.SolverSettingsBox.label_parallel_type_.y()+20)
+
+        #echo level
+        self.SolverSettingsBox.label_echo_level2_ = QtGui.QLabel("Echo level:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_echo_level2_.move(200, self.SolverSettingsBox.label_main_.y()+30)
+        self.SolverSettingsBox.textInput_echo_level2_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_echo_level2_.setPlaceholderText("1")
+        self.SolverSettingsBox.textInput_echo_level2_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_echo_level2_.move(200, self.SolverSettingsBox.label_echo_level2_.y()+20)
+
+        #start time
+        self.SolverSettingsBox.label_start_time_ = QtGui.QLabel("Start time:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_start_time_.move(10, self.SolverSettingsBox.textInput_echo_level2_.y()+30)
+        self.SolverSettingsBox.textInput_start_time_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_start_time_.setPlaceholderText("0.0")
+        self.SolverSettingsBox.textInput_start_time_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_start_time_.move(10, self.SolverSettingsBox.label_start_time_.y()+20)
+
+        #end time
+        self.SolverSettingsBox.label_end_time_ = QtGui.QLabel("End time:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_end_time_.move(200, self.SolverSettingsBox.textInput_echo_level2_.y()+30)
+        self.SolverSettingsBox.textInput_end_time_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_end_time_.setPlaceholderText("1.0")
+        self.SolverSettingsBox.textInput_end_time_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_end_time_.move(200, self.SolverSettingsBox.label_end_time_.y()+20)
+
+         #Solver settings head
+        self.SolverSettingsBox.label_main_ = QtGui.QLabel("Solver settings:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_end_time_.y()+45)
+        self.SolverSettingsBox.label_main_.setFont(boldUnderlinedFont)
+        self.SolverSettingsBox.label_main_.setPalette(blueFont)
+
+        #solver type
+        self.SolverSettingsBox.label_solver_type_ = QtGui.QLabel("Solver type:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_solver_type_.move(10, self.SolverSettingsBox.label_main_.y()+30)
+        self.SolverSettingsBox.textInput_solver_type_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_solver_type_.setPlaceholderText("Static")
+        self.SolverSettingsBox.textInput_solver_type_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_solver_type_.move(10, self.SolverSettingsBox.label_solver_type_.y()+20)
+
+        #analysis type
+        self.SolverSettingsBox.label_analysis_type_ = QtGui.QLabel("Analysis type:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_analysis_type_.move(200, self.SolverSettingsBox.label_main_.y()+30)
+        self.SolverSettingsBox.popup_analysis_type_ = QtGui.QComboBox(self.SolverSettingsBox)
+        self.SolverSettingsBox.popup_analysis_type_items = ('linear', 'nonlinear')
+        self.SolverSettingsBox.popup_analysis_type_.addItems(self.SolverSettingsBox.popup_analysis_type_items)
+        self.SolverSettingsBox.popup_analysis_type_.setFixedWidth(100)
+        self.SolverSettingsBox.popup_analysis_type_.move(200, self.SolverSettingsBox.label_analysis_type_.y()+20)
+
+        #model part name
+        self.SolverSettingsBox.label_model_part_name_ = QtGui.QLabel("Model part name:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_model_part_name_.move(10, self.SolverSettingsBox.popup_analysis_type_.y()+30)
+        self.SolverSettingsBox.textInput_model_part_name_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_model_part_name_.setPlaceholderText("NurbsMesh")
+        self.SolverSettingsBox.textInput_model_part_name_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_model_part_name_.move(10, self.SolverSettingsBox.label_model_part_name_.y()+20)
+
+        #echo level 
+        self.SolverSettingsBox.label_echo_level3_ = QtGui.QLabel("Echo level:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_echo_level3_.move(200, self.SolverSettingsBox.popup_analysis_type_.y()+30)
+        self.SolverSettingsBox.textInput_echo_level3_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_echo_level3_.setPlaceholderText("1")
+        self.SolverSettingsBox.textInput_echo_level3_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_echo_level3_.move(200, self.SolverSettingsBox.label_echo_level3_.y()+20)
+
+        #Material import setting - Input type
+        self.SolverSettingsBox.label_input_type_ = QtGui.QLabel("Material import setting - Input type:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_input_type_.move(10, self.SolverSettingsBox.textInput_echo_level3_.y()+35)
+        self.SolverSettingsBox.textInput_input_type_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_input_type_.setPlaceholderText("use_input_model_part")
+        self.SolverSettingsBox.textInput_input_type_.setFixedWidth(300)
+        self.SolverSettingsBox.textInput_input_type_.move(10, self.SolverSettingsBox.label_input_type_.y()+20)
+
+        #linear solver settings head
+        self.SolverSettingsBox.label_main_ = QtGui.QLabel("Linear solver settings:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_input_type_.y()+45)
+       
+        self.SolverSettingsBox.label_main_.setFont(boldUnderlinedFont)
+        self.SolverSettingsBox.label_main_.setPalette(blueFont)
+
+        #Preconditioner type
+        self.SolverSettingsBox.label_preconditioner_type_ = QtGui.QLabel("Preconditioner type:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_preconditioner_type_.move(10, self.SolverSettingsBox.label_main_.y()+30)
+        self.SolverSettingsBox.textInput_preconditioner_type_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_preconditioner_type_.setPlaceholderText("additive_schwarz")
+        self.SolverSettingsBox.textInput_preconditioner_type_.setFixedWidth(300)
+        self.SolverSettingsBox.textInput_preconditioner_type_.move(10, self.SolverSettingsBox.label_preconditioner_type_.y()+20)
+
+        #Solver type
+        self.SolverSettingsBox.label_solver_type2_ = QtGui.QLabel("Solver type:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_solver_type2_.move(10, self.SolverSettingsBox.textInput_preconditioner_type_.y()+30)
+        self.SolverSettingsBox.textInput_solver_type2_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_solver_type2_.setPlaceholderText("bicgstab")
+        self.SolverSettingsBox.textInput_solver_type2_.setFixedWidth(300)
+        self.SolverSettingsBox.textInput_solver_type2_.move(10, self.SolverSettingsBox.label_solver_type2_.y()+20)
+
+
+        #Tolerance
+        self.SolverSettingsBox.label_tolerance_ = QtGui.QLabel("Tolerance:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_tolerance_.move(200, self.SolverSettingsBox.textInput_solver_type2_.y()+30)
+        self.SolverSettingsBox.textInput_tolerance_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_tolerance_.setPlaceholderText("1e-6")
+        self.SolverSettingsBox.textInput_tolerance_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_tolerance_.move(200, self.SolverSettingsBox.label_tolerance_.y()+20)
+
+        #Rotation dofs
+        self.SolverSettingsBox.label_rotation_dofs_ = QtGui.QLabel("Rotation dof:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_rotation_dofs_.move(10, self.SolverSettingsBox.textInput_solver_type2_.y()+30)
+        self.SolverSettingsBox.popup_rotation_dofs_ = QtGui.QComboBox(self.SolverSettingsBox)
+        self.SolverSettingsBox.popup_rotation_dofs_items = ("false", "true")
+        self.SolverSettingsBox.popup_rotation_dofs_.addItems(self.SolverSettingsBox.popup_rotation_dofs_items)
+        self.SolverSettingsBox.popup_rotation_dofs_.setFixedWidth(100)
+        self.SolverSettingsBox.popup_rotation_dofs_.move(10, self.SolverSettingsBox.label_rotation_dofs_.y()+20)
+
+        #use block builder
+        self.SolverSettingsBox.label_block_builder_ = QtGui.QLabel("Use block builder:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_block_builder_.move(200, self.SolverSettingsBox.textInput_tolerance_.y()+30)
+        self.SolverSettingsBox.popup_block_builder_ = QtGui.QComboBox(self.SolverSettingsBox)
+        self.SolverSettingsBox.popup_block_builder_items = ("true", "false")
+        self.SolverSettingsBox.popup_block_builder_.addItems(self.SolverSettingsBox.popup_block_builder_items)
+        self.SolverSettingsBox.popup_block_builder_.setFixedWidth(100)
+        self.SolverSettingsBox.popup_block_builder_.move(200, self.SolverSettingsBox.label_block_builder_.y()+20)
+
+        #Residual relative tolerance
+        self.SolverSettingsBox.label_relative_tolerance_ = QtGui.QLabel("Residual relative tol.:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_relative_tolerance_.move(10, self.SolverSettingsBox.textInput_tolerance_.y()+30)
+        self.SolverSettingsBox.textInput_relative_tolerance_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_relative_tolerance_.setPlaceholderText("0.000001")
+        self.SolverSettingsBox.textInput_relative_tolerance_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_relative_tolerance_.move(10, self.SolverSettingsBox.label_relative_tolerance_.y()+20)
+
+        #Modelers head
+        self.SolverSettingsBox.label_main_ = QtGui.QLabel("Modelers:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_relative_tolerance_.y()+45)
+       
+        self.SolverSettingsBox.label_main_.setFont(boldUnderlinedFont)
+        self.SolverSettingsBox.label_main_.setPalette(blueFont)
+
+        #Modeler Name
+        self.SolverSettingsBox.label_modeler_name_ = QtGui.QLabel("Modeler name:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_modeler_name_.move(10, self.SolverSettingsBox.label_main_.y()+30)
+        self.SolverSettingsBox.textInput_modeler_name_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_modeler_name_.setPlaceholderText("NurbsGeometryModeler")
+        self.SolverSettingsBox.textInput_modeler_name_.setFixedWidth(300)
+        self.SolverSettingsBox.textInput_modeler_name_.move(10, self.SolverSettingsBox.label_modeler_name_.y()+20)
+
+        #Modeler Part Name
+        self.SolverSettingsBox.label_modeler_part_name_ = QtGui.QLabel("Modeler part name:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_modeler_part_name_.move(10, self.SolverSettingsBox.textInput_modeler_name_.y()+30)
+        self.SolverSettingsBox.textInput_modeler_part_name_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_modeler_part_name_.setPlaceholderText("NurbsMesh")
+        self.SolverSettingsBox.textInput_modeler_part_name_.setFixedWidth(300)
+        self.SolverSettingsBox.textInput_modeler_part_name_.move(10, self.SolverSettingsBox.label_modeler_part_name_.y()+20)
+
+        #Modeler Geometry Name
+        self.SolverSettingsBox.label_modeler_geometry_name_ = QtGui.QLabel("Modeler geometry name:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_modeler_geometry_name_.move(10, self.SolverSettingsBox.textInput_modeler_part_name_.y()+30)
+        self.SolverSettingsBox.textInput_modeler_geometry_name_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_modeler_geometry_name_.setPlaceholderText("NurbsVolume")
+        self.SolverSettingsBox.textInput_modeler_geometry_name_.setFixedWidth(300)
+        self.SolverSettingsBox.textInput_modeler_geometry_name_.move(10, self.SolverSettingsBox.label_modeler_geometry_name_.y()+20)
+
+
+        #Material properties head
+        self.SolverSettingsBox.label_main_ = QtGui.QLabel("Material Properties:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_modeler_geometry_name_.y()+45)
+       
+        self.SolverSettingsBox.label_main_.setFont(boldUnderlinedFont)
+        self.SolverSettingsBox.label_main_.setPalette(blueFont)
+
+        #Density
+        self.SolverSettingsBox.label_density_ = QtGui.QLabel("Density:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_density_.move(10, self.SolverSettingsBox.label_main_.y()+30)
+        self.SolverSettingsBox.textInput_density_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_density_.setPlaceholderText("1.0")
+        self.SolverSettingsBox.textInput_density_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_density_.move(10, self.SolverSettingsBox.label_density_.y()+20)
+
+        #Young Modulus
+        self.SolverSettingsBox.label_young_modulus_ = QtGui.QLabel("Young Modulus:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_young_modulus_.move(200, self.SolverSettingsBox.label_main_.y()+30)
+        self.SolverSettingsBox.textInput_young_modulus_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_young_modulus_.setPlaceholderText("100")
+        self.SolverSettingsBox.textInput_young_modulus_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_young_modulus_.move(200, self.SolverSettingsBox.label_young_modulus_.y()+20)
+
+        #Poisson Ratio
+        self.SolverSettingsBox.label_poisson_ratio_ = QtGui.QLabel("Poisson Ratio:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_poisson_ratio_.move(10, self.SolverSettingsBox.textInput_young_modulus_.y()+30)
+        self.SolverSettingsBox.textInput_poisson_ratio_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_poisson_ratio_.setPlaceholderText("0.0")
+        self.SolverSettingsBox.textInput_poisson_ratio_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_poisson_ratio_.move(10, self.SolverSettingsBox.label_poisson_ratio_.y()+20)
+
+        #Properties id
+        self.SolverSettingsBox.label_properties_id_ = QtGui.QLabel("Properties ID:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_properties_id_.move(200, self.SolverSettingsBox.textInput_young_modulus_.y()+30)
+        self.SolverSettingsBox.textInput_properties_id_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_properties_id_.setPlaceholderText("1")
+        self.SolverSettingsBox.textInput_properties_id_.setFixedWidth(100)
+        self.SolverSettingsBox.textInput_properties_id_.move(200, self.SolverSettingsBox.label_properties_id_.y()+20)
+
+        #Constitutive law
+        self.SolverSettingsBox.label_constitutive_id_ = QtGui.QLabel("Constitutive law name:", self.SolverSettingsBox)
+        self.SolverSettingsBox.label_constitutive_id_.move(10, self.SolverSettingsBox.textInput_properties_id_.y()+30)
+        self.SolverSettingsBox.textInput_constitutive_id_ = QtGui.QLineEdit(self.SolverSettingsBox)
+        self.SolverSettingsBox.textInput_constitutive_id_.setPlaceholderText("LinearElastic3DLaw")
+        self.SolverSettingsBox.textInput_constitutive_id_.setFixedWidth(150)
+        self.SolverSettingsBox.textInput_constitutive_id_.move(10, self.SolverSettingsBox.label_constitutive_id_.y()+20)
+
+
+        # cancel button
+        SolverSettingsBox_cancelButton = QtGui.QPushButton('Cancel', self.SolverSettingsBox)
+        SolverSettingsBox_cancelButton.clicked.connect(self.SolverSettingsBox_onCancel)
+        SolverSettingsBox_cancelButton.setFixedWidth(80)
+        # OK button
+        SolverSettingsBox_okButton = QtGui.QPushButton('OK', self.SolverSettingsBox)
+        SolverSettingsBox_okButton.clicked.connect(self.SolverSettingsBox_okButton)
+        SolverSettingsBox_okButton.setAutoDefault(True)
+        SolverSettingsBox_okButton.setFixedWidth(80)
+        
+        self.SolverSettingsBox_container_okCancel = QtGui.QWidget(self.SolverSettingsBox)
+        self.SolverSettingsBox_container_okCancel.setContentsMargins(0, 0, 0, 0)
+    
+        SolverSettingsBox_layout_okCancel = QtGui.QHBoxLayout(self.SolverSettingsBox_container_okCancel)
+        SolverSettingsBox_layout_okCancel.setContentsMargins(0, 0, 0,0)
+        SolverSettingsBox_layout_okCancel.addWidget(SolverSettingsBox_okButton)
+        SolverSettingsBox_layout_okCancel.addWidget(SolverSettingsBox_cancelButton)
+        SolverSettingsBox_layout_okCancel.setSpacing(40)
+
+        self.SolverSettingsBox_container_okCancel.move(0.5*width - SolverSettingsBox_okButton.geometry().width() - 0.5*SolverSettingsBox_layout_okCancel.spacing(), 
+                                     self.SolverSettingsBox.textInput_constitutive_id_.y()+70)
+    
+    def SolverSettingsBox_okButton(self):
+        self.CreateDirectory()
+        self.result = "Ok"
+        self.SolverSettingsBox.close()
+
+
+        KratosParam = \
+        {
+            "problem_data"    : {
+                "parallel_type" : self.SolverSettingsBox.textInput_parallel_type_.text(),
+                "echo_level"    : int(self.SolverSettingsBox.textInput_echo_level2_.text()),
+                "start_time"    : float(self.SolverSettingsBox.textInput_start_time_.text()),
+                "end_time"      : float(self.SolverSettingsBox.textInput_end_time_.text())
+            },
+            "solver_settings" : {
+                "solver_type"              : self.SolverSettingsBox.textInput_solver_type_.text(),
+                "analysis_type"            : self.SolverSettingsBox.popup_analysis_type_.currentText(),
+                "model_part_name"          : self.SolverSettingsBox.textInput_model_part_name_.text(),
+                "echo_level"               : int(self.SolverSettingsBox.textInput_echo_level3_.text()),
+                "domain_size"              : 3,
+                "model_import_settings"    : {
+                    "input_type"     : self.SolverSettingsBox.textInput_input_type_.text()
+                },
+                "material_import_settings"        : {
+                    "materials_filename" : "StructuralMaterials.json"
+                },
+                "time_stepping"            : {
+                    "time_step" : 1.1       
+                },
+                "linear_solver_settings":{
+                    "preconditioner_type" : self.SolverSettingsBox.textInput_preconditioner_type_.text(),
+                    "solver_type": self.SolverSettingsBox.textInput_solver_type2_.text(),
+                    "max_iteration" : 5000,
+                    "tolerance" : float(self.SolverSettingsBox.textInput_tolerance_.text())
+                },
+                "rotation_dofs"            : self.SolverSettingsBox.popup_rotation_dofs_.currentText(),
+                "builder_and_solver_settings" : {
+                    "use_block_builder" : self.SolverSettingsBox.popup_block_builder_.currentText()
+                },
+                "residual_relative_tolerance"        : float(self.SolverSettingsBox.textInput_relative_tolerance_.text())
+            },
+            "modelers" : [{
+                        "modeler_name": self.SolverSettingsBox.textInput_modeler_name_.text(),
+                        "Parameters": {
+                            "model_part_name" : self.SolverSettingsBox.textInput_modeler_part_name_.text(),
+                            "geometry_name"   : self.SolverSettingsBox.textInput_modeler_geometry_name_.text()}
+                    }]
+        }
+
+
+
+        # Creating KratosParameters.json file:
+        with open('KratosParameters.json', 'w') as f:
+            json.dump(KratosParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
+            pass
+
+
+        StructuralMat = \
+        {
+            "properties" : [{
+                "model_part_name" : self.SolverSettingsBox.textInput_modeler_part_name_.text(),
+                "properties_id"   : int(self.SolverSettingsBox.textInput_properties_id_.text()),
+                "Material"        : {
+                    "constitutive_law" : {
+                        "name" : self.SolverSettingsBox.textInput_constitutive_id_.text()
+                    },
+                    "Variables"        : {
+                        "DENSITY"       : float(self.SolverSettingsBox.textInput_density_.text()),
+                        "YOUNG_MODULUS" : float(self.SolverSettingsBox.textInput_young_modulus_.text()),
+                        "POISSON_RATIO" : float(self.SolverSettingsBox.textInput_poisson_ratio_.text())
+                    },
+                    "Tables"           : {}
+                }
+            }]
+        }
+
+
+        # Creating KratosParameters.json file:
+        with open('StructuralMaterials.json', 'w') as f:
+            json.dump(StructuralMat, f, indent=4, separators=(", ", ": "), sort_keys=False)
+            pass
+
+        #Return to main directory 
+        os.chdir(self.data_dir)
+
+            
+    def SolverSettingsBox_onCancel(self):
+        self.result = "Cancel"
+        self.SolverSettingsBox.close()
 
 
     def onNeumannBC(self):

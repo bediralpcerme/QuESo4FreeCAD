@@ -1,0 +1,12 @@
+﻿################################################################################
+# Ten plik .gitignore został utworzony automatycznie przez Microsoft(R) Visual Studio.
+################################################################################
+
+/__pycache__/TibraParameters.cpython-38.pyc
+/__pycache__/StlExportManager.cpython-38.pyc
+/__pycache__/MyCommands.cpython-38.pyc
+/FreeCAD_PySide/__pycache__/__init__.cpython-38.pyc
+/FreeCAD_PySide/__pycache__/QtUiTools.cpython-38.pyc
+/FreeCAD_PySide/__pycache__/QtSvg.cpython-38.pyc
+/FreeCAD_PySide/__pycache__/QtGui.cpython-38.pyc
+/FreeCAD_PySide/__pycache__/QtCore.cpython-38.pyc
