@@ -418,6 +418,7 @@ class TibraParameters(QtGui.QDialog):
                                                     [float(self.NeumannBCBox_obj.x_val),\
                                                      float(self.NeumannBCBox_obj.y_val),\
                                                      float(self.NeumannBCBox_obj.z_val)]
+        print(str(self.neumann_force_arr))
         Gui.Selection.clearSelection()
 
     def getMouseClick_NeumannBCBox(self, event_cb):
@@ -534,7 +535,7 @@ class TibraParameters(QtGui.QDialog):
                 json.dump(TibraParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
 
-            for i in range (int(len(self.NeumannSelectionList))):
+            for i in range (int(len(self.neumann_force_arr))):
                 out_arr = list(self.neumann_force_arr[i])
                 neumann_json = {"neumann": {
                     "filename" : str(self.json_dir) + "N" + str(i+1) + ".stl",
@@ -548,7 +549,7 @@ class TibraParameters(QtGui.QDialog):
                 Neumann_STL_Face_Object = [(FreeCAD.getDocument(self.ActiveDocument_Name).getObject(faceObject_Name))]
                 Mesh.export(Neumann_STL_Face_Object, self.work_dir + faceObject_Name + '.stl')
 
-            for i in range (int(len(self.DirichletSelectionList))):
+            for i in range (int(len(self.dirichlet_displacement_arr))):
                 out_arr = list(self.dirichlet_displacement_arr[i])
                 dirichlet_jason = {"dirichlet": {
                     "filename" : str(self.json_dir) + "D" + str(i+1) + ".stl",
@@ -824,7 +825,7 @@ class DirichletBCBox(QtGui.QDialog):
         event.accept()
 
     def okButton_DirichletBCBox(self):
-        print("Mouse Click " + str(self.dirichlet_count))
+        #print("Mouse Click " + str(self.dirichlet_count))
         self.dirichlet_count = self.dirichlet_count + 1
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
@@ -897,7 +898,7 @@ class NeumannBCBox(QtGui.QDialog):
         event.accept()
 
     def okButton_NeumannBCBox(self):
-        print("Mouse Click " + str(self.neumann_count))
+        #print("Mouse Click " + str(self.neumann_count))
         self.neumann_count = self.neumann_count + 1
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
