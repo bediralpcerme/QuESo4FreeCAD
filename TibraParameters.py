@@ -2,12 +2,11 @@ from FreeCAD_PySide import QtGui, QtCore
 import os
 import FreeCAD
 import FreeCADGui as Gui
-import Draft, Sketcher, Mesh
+import Draft, Sketcher, Mesh, Part
 import json
 from pivy import coin
 import numpy as np
 from collections import OrderedDict
-import FreeCADGui, Draft, Part, PySide
 
 ##################
 
@@ -23,19 +22,26 @@ class TibraParameters(QtGui.QDialog):
     def __init__(self):
         super(TibraParameters, self).__init__()
         self.initUI()
+        self.visulizerun=0
+        self.gridList=[]
 
     def initUI(self):
 
         #position and geometry of the dialog box
-        width = 360 
-        height = 720
+        width = 340
+        height = 650
+
         self.centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+        std_validate = QtGui.QIntValidator()
+        scientific_validate = QtGui.QDoubleValidator()
+        scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation)
         self.setGeometry(self.centerPoint.x()-0.5*width, self.centerPoint.y()-0.5*height, width, height)
         self.setWindowTitle("Tibra Parameters")
         self.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, on = True)
+
         # self.setWindowFlags(QtCore.Qt.WindowMinimizeButtonHint)
 
 
@@ -43,6 +49,7 @@ class TibraParameters(QtGui.QDialog):
         self.work_dir = FreeCAD.ActiveDocument.FileName
         self.work_dir = self.work_dir.replace(self.docName,"")
         self.json_dir = self.work_dir
+        self.ActiveDocument_Name = FreeCAD.ActiveDocument.Name # string
 
         #Initial Parameters input:
 
@@ -82,6 +89,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_echo_ = QtGui.QLineEdit(self)
         self.textInput_echo_.setPlaceholderText("1")
         self.textInput_echo_.setFixedWidth(50)
+        self.textInput_echo_.setValidator(std_validate)
         self.textInput_echo_.move(10, self.label_echo_.y()+20)
 
         #mesh head
@@ -100,6 +108,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_polynomialOrder_x_ = QtGui.QLineEdit(self)
         self.textInput_polynomialOrder_x_.setPlaceholderText("1")
         self.textInput_polynomialOrder_x_.setFixedWidth(60)
+        self.textInput_polynomialOrder_x_.setValidator(std_validate)
         self.textInput_polynomialOrder_x_.move(25, self.label_polynomialOrder_.y()+20)
 
         self.label_polynomialOrder_y_ = QtGui.QLabel("y: ", self)
@@ -107,6 +116,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_polynomialOrder_y_ = QtGui.QLineEdit(self)
         self.textInput_polynomialOrder_y_.setPlaceholderText("2")
         self.textInput_polynomialOrder_y_.setFixedWidth(60)
+        self.textInput_polynomialOrder_y_.setValidator(std_validate)
         self.textInput_polynomialOrder_y_.move(125, self.label_polynomialOrder_.y()+20)
 
         self.label_polynomialOrder_z_ = QtGui.QLabel("z: ", self)
@@ -114,6 +124,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_polynomialOrder_z_ = QtGui.QLineEdit(self)
         self.textInput_polynomialOrder_z_.setPlaceholderText("3")
         self.textInput_polynomialOrder_z_.setFixedWidth(60)
+        self.textInput_polynomialOrder_z_.setValidator(std_validate)
         self.textInput_polynomialOrder_z_.move(225, self.label_polynomialOrder_.y()+20)
 
         #number of elements
@@ -126,6 +137,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_nElements_x_ = QtGui.QLineEdit(self)
         self.textInput_nElements_x_.setPlaceholderText("10")
         self.textInput_nElements_x_.setFixedWidth(60)
+        self.textInput_nElements_x_.setValidator(std_validate)
         self.textInput_nElements_x_.move(25, self.label_nElements_.y()+20)
 
         self.label_nElements_y_ = QtGui.QLabel("y: ", self)
@@ -133,6 +145,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_nElements_y_ = QtGui.QLineEdit(self)
         self.textInput_nElements_y_.setPlaceholderText("20")
         self.textInput_nElements_y_.setFixedWidth(60)
+        self.textInput_nElements_y_.setValidator(std_validate)
         self.textInput_nElements_y_.move(125, self.label_nElements_.y()+20)
 
         self.label_nElements_z_ = QtGui.QLabel("z: ", self)
@@ -140,11 +153,18 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_nElements_z_ = QtGui.QLineEdit(self)
         self.textInput_nElements_z_.setPlaceholderText("30")
         self.textInput_nElements_z_.setFixedWidth(60)
+        self.textInput_nElements_z_.setValidator(std_validate)
         self.textInput_nElements_z_.move(225, self.label_nElements_.y()+20)
+
+        # visulize button
+        self.visualizeButton = QtGui.QCheckBox('Visualize Grids', self)
+        self.visualizeButton.stateChanged.connect(self.onVisualize)
+
+        self.visualizeButton.move(10, self.textInput_nElements_z_.y()+45)
 
         #solution settings head
         self.label_main_ = QtGui.QLabel("Solution Settings:", self)
-        self.label_main_.move(10, self.textInput_nElements_z_.y()+45)
+        self.label_main_.move(10, self.visualizeButton.y()+45)
         self.label_main_.setFont(boldUnderlinedFont)
         self.label_main_.setPalette(blueFont)
 
@@ -154,6 +174,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_residual_ = QtGui.QLineEdit(self)
         self.textInput_residual_.setPlaceholderText("1e-6")
         self.textInput_residual_.setFixedWidth(50)
+        self.textInput_residual_.setValidator(scientific_validate)
         self.textInput_residual_.move(10, self.label_residual_.y()+20)
 
         # min_element_volume ratio
@@ -162,6 +183,7 @@ class TibraParameters(QtGui.QDialog):
         self.textInput__min_el_vol_rat = QtGui.QLineEdit(self)
         self.textInput__min_el_vol_rat.setPlaceholderText("1e-3")
         self.textInput__min_el_vol_rat.setFixedWidth(50)
+        self.textInput__min_el_vol_rat.setValidator(scientific_validate)
         self.textInput__min_el_vol_rat.move(10, self.label_min_el_vol_rat.y()+20)
 
 
@@ -214,10 +236,12 @@ class TibraParameters(QtGui.QDialog):
         self.SolverSettingsButton.setAutoDefault(False)
         self.SolverSettingsButton.move(10, self.label_SolverSettings_.y()+30)
 
+
         # cancel button
         cancelButton = QtGui.QPushButton('Cancel', self)
         cancelButton.clicked.connect(self.onCancel)
         cancelButton.setFixedWidth(80)
+       
         # OK button
         saveButton = QtGui.QPushButton('Save', self)
         saveButton.clicked.connect(self.onSave)
@@ -254,6 +278,8 @@ class TibraParameters(QtGui.QDialog):
 
         self.dirichlet_displacement_arr = []
         self.neumann_force_arr = []
+        self.DirichletSelectionList = []
+        self.NeumannSelectionList = []
         self.show()
 
     #################################################################################################################################
@@ -322,10 +348,6 @@ class TibraParameters(QtGui.QDialog):
                                                     [float(self.DirichletBCBox_obj.x_val),\
                                                      float(self.DirichletBCBox_obj.y_val),\
                                                      float(self.DirichletBCBox_obj.z_val)]
-        Gui.Selection.clearSelection()
-
-
-
 
 
 
@@ -351,56 +373,13 @@ class TibraParameters(QtGui.QDialog):
                     print(str(self.dirichlet_displacement_arr))
                     self.DirichletFacesList_Obj.listwidget.addItem(element_list.get('Component'))
 
-        Gui.Selection.clearSelection()
-
-    # #Sketch of the selected face (will be used for STL export later)
-        #if (Gui.Selection.hasSelection()):
-    #         for sel in Gui.Selection.getSelectionEx():
-    #             face = sel.SubObjects[0]
-    #             face.translate(face.Placement.Base.negative())
-    #             sketch = self.face2sketch([face],'mySketch4STL')
-    #             self.Constraints_Fun(sketch)
-    #             sketch.MapMode ='FlatFace'
-    #             sketch.MapReversed = False
-    #             nVector = face.normalAt(1,1)
-    #             pVector = face.findPlane().Position
-    #             dVector = nVector.multiply(nVector.dot(pVector))
-    #             sketch.Placement.move(dVector)
-    #             # try :
-    #                 # Gui.ActiveDocument.setEdit(sketch,0)
-    #             # except :
-    #                 # pass
-    #             Gui.Selection.clearSelection()
-
-    # ## Exporting the face as STL
-    #             FreeCAD.activeDocument().addObject('PartDesign::Body','Body4STL')
-    #             features_ = [FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL')]
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').addObjects(features_)
-    #             del features_
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').newObject('PartDesign::Pad','Pad4STL')
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Profile = FreeCAD.getDocument(element_list.get('Document')).getObject('mySketch4STL')
-    #             Gui.getDocument(element_list.get('Document')).setEdit(FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL'),0,'Pad')
-    #             FreeCAD.ActiveDocument.recompute()
-
-    # ##Extruding the sketch as 3D object with very small thickness
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Length = 0.0001
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').UseCustomVector = 0
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Direction = (1, 1, 1)
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Type = 0
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').UpToFace = None
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Reversed = 0
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Midplane = 1
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL').Offset = 0
-    #             FreeCAD.getDocument(element_list.get('Document')).recompute()
-    #             Gui.getDocument(element_list.get('Document')).resetEdit()
-
-    #             object = []
-    #             object.append(FreeCAD.getDocument(element_list.get('Document')).getObject('Pad4STL'))
-    #             Mesh.export(object, self.work_dir + "D" + str(self.DirichletBCBox_obj.dirichlet_count-1) + ".stl")
-    #             FreeCAD.getDocument(element_list.get('Document')).getObject('Body4STL').removeObjectsFromDocument()
-    #             FreeCAD.getDocument(element_list.get('Document')).removeObject('Body4STL')
-    #             FreeCAD.getDocument(element_list.get('Document')).recompute()
-    #             del object
+                    Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
+                                               element_list.get('Component'), element_list.get('x'), element_list.get('y'))
+                    sel = Gui.Selection.getSelectionEx()
+                    # object = Draft.makeFacebinder(sel, 'D' + str(self.DirichletBCBox_obj.dirichlet_count))
+                    self.DirichletSelectionList.append(sel)
+                    Gui.Selection.clearSelection()
+                                        
 
 
     def onSolverSettingsButton(self):
@@ -810,6 +789,7 @@ class TibraParameters(QtGui.QDialog):
                                                     [float(self.NeumannBCBox_obj.x_val),\
                                                      float(self.NeumannBCBox_obj.y_val),\
                                                      float(self.NeumannBCBox_obj.z_val)]
+        print(str(self.neumann_force_arr))
         Gui.Selection.clearSelection()
 
     def getMouseClick_NeumannBCBox(self, event_cb):
@@ -832,35 +812,20 @@ class TibraParameters(QtGui.QDialog):
                     print(str(self.neumann_force_arr))
                     self.NeumannFacesList_Obj.listwidget.addItem(element_list.get('Component'))
 
-        Gui.Selection.clearSelection()
+                    Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
+                                               element_list.get('Component'), element_list.get('x'), element_list.get('y'))
+                    sel = Gui.Selection.getSelectionEx()
+                    # object = Draft.makeFacebinder(sel, 'D' + str(self.DirichletBCBox_obj.dirichlet_count))
+                    self.NeumannSelectionList.append(sel)
+                    Gui.Selection.clearSelection()
 
+    def onVisualize(self):
+            
+            if (self.visualizeButton.isChecked()):
+                self.VisualizeGrid_Fun()
+            else:
+                self.deVisualizeGrid_Fun()
 
-
-    def face2sketch(self, face_list, name):
-        try:
-            sketch = Draft.makeSketch(face_list, autoconstraints=True, addTo=None, delete=False, name=name,  \
-                     radiusPrecision=-1, tol=1e-3)
-            return sketch
-        except:
-            sketch = Draft.makeSketch(face_list, autoconstraints=False, addTo=None, delete=False, name=name,  \
-                     radiusPrecision=-1, tol=1e-3)
-            return sketch
-
-    def Constraints_Fun(self, sketch) :
-        geoList = sketch.Geometry
-        Lines = []
-        Arcs  = []
-        Circles = []
-        for i in range(sketch.GeometryCount):
-            if geoList[i].TypeId == 'Part::GeomLineSegment':
-               Lines.append([i,geoList[i]])
-            elif geoList[i].TypeId == 'Part::GeomArcOfCircle':
-               Arcs .append([i,geoList[i]])
-            elif geoList[i].TypeId == 'Part::GeomCircle':
-               Circles.append([i,geoList[i]])
-        for i in range(len(Circles)):
-            sketch.addConstraint(Sketcher.Constraint('Radius', \
-                 Circles[i][0],Circles[i][1].Radius))
 
     def onSave(self):
         #bounds
@@ -883,15 +848,6 @@ class TibraParameters(QtGui.QDialog):
             self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
             self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
             self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
-
-
-            #bounds without 0.1 offset in total
-            # self.lowerbound_x_=mybounds[0]
-            # self.lowerbound_y_=mybounds[1]
-            # self.lowerbound_z_=mybounds[2]
-            # self.upperbound_x_=mybounds[3]
-            # self.upperbound_y_=mybounds[4]
-            # self.upperbound_z_=mybounds[5]
 
 
             #  Creating TIBRA directory:
@@ -942,12 +898,15 @@ class TibraParameters(QtGui.QDialog):
                 ]
             }
 
-            # Creating TibraParameters.json file:
+            print(self.work_dir)
+
+            # Creating TibraParameters.json file and Exporting surface STL files:
+
             with open('TIBRAParameters.json', 'w') as f:
                 json.dump(TibraParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
 
-            for i in range (int(self.neumann_faces)):
+            for i in range (int(len(self.neumann_force_arr))):
                 out_arr = list(self.neumann_force_arr[i])
                 neumann_json = {"neumann": {
                     "filename" : str(self.json_dir) + "N" + str(i+1) + ".stl",
@@ -956,7 +915,12 @@ class TibraParameters(QtGui.QDialog):
                 }
                 self.append_json(neumann_json)
 
-            for i in range (int(self.dirichlet_faces)):
+                faceObject_Name = ('N' + str(i+1))
+                Draft.makeFacebinder(self.NeumannSelectionList[i], faceObject_Name)
+                Neumann_STL_Face_Object = [(FreeCAD.getDocument(self.ActiveDocument_Name).getObject(faceObject_Name))]
+                Mesh.export(Neumann_STL_Face_Object, self.work_dir + faceObject_Name + '.stl')
+
+            for i in range (int(len(self.dirichlet_displacement_arr))):
                 out_arr = list(self.dirichlet_displacement_arr[i])
                 dirichlet_jason = {"dirichlet": {
                     "filename" : str(self.json_dir) + "D" + str(i+1) + ".stl",
@@ -965,6 +929,11 @@ class TibraParameters(QtGui.QDialog):
                     }
                 }
                 self.append_json(dirichlet_jason)
+
+                faceObject_Name = ('D' + str(i+1))
+                Draft.makeFacebinder(self.DirichletSelectionList[i], faceObject_Name)
+                Dirichlet_STL_Face_Object = [(FreeCAD.getDocument(self.ActiveDocument_Name).getObject(faceObject_Name))]
+                Mesh.export(Dirichlet_STL_Face_Object, self.work_dir + faceObject_Name + '.stl')
 
 
             # Creating Tibra_main.py file:
@@ -983,128 +952,75 @@ if __name__ == "__main__":
                 pass
 
 
-        #BOUNDINGBOX&GRID
+            #BOUNDINGBOX&GRID
 
-        red   = 1.0  # 1 = 255
-        green = 0.0  #
-        blue  = 0.0  #
+            if self.visulizerun>0:
+                FreeCAD.activeDocument().removeObject('Grid')
+                #FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
+                for i in self.gridList:
+                    FreeCAD.activeDocument().removeObject(i)
+                self.gridList=[]
+            BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
+            conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
 
-        BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
-        BDvol.Length.Value = (self.upperbound_x_-self.lowerbound_x_)
-        BDvol.Width.Value  = (self.upperbound_y_-self.lowerbound_y_)
-        BDvol.Height.Value = (self.upperbound_z_-self.lowerbound_z_)
-        BDvol.Placement = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
-        BDPl = BDvol.Placement
-        oripl_X=BDvol.Placement.Base.x
-        oripl_Y=BDvol.Placement.Base.y
-        oripl_Z=BDvol.Placement.Base.z
-        FreeCADGui.ActiveDocument.getObject(BDvol.Name).LineColor  = (red, green, blue)
-        FreeCADGui.ActiveDocument.getObject(BDvol.Name).PointColor = (red, green, blue)
-        FreeCADGui.ActiveDocument.getObject(BDvol.Name).ShapeColor = (red, green, blue)
-        FreeCADGui.ActiveDocument.getObject(BDvol.Name).Transparency = 90
-
-        conteneurRectangle = []
-        del conteneurRectangle[:]
-        conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
-
-        if (mybounds[6] and mybounds[7]) > 0.0:
-            pl_0 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
-            #pl_0 = adjustedGlobalPlacement(objs[0], boundBoxLocation)
-            duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_0,face=False,support=None) #OK
-            duble.Label = "_BoundBoxRectangle_Bo"
-            FreeCADGui.activeDocument().activeObject().LineColor = (1.0, 1.0, blue)
-            conteneurRectangle.addObject(duble)
-
-            pl_1 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
-            #pl_1 =adjustedGlobalPlacement(objs[0], boundBoxLocation + FreeCAD.Vector(0,0,boundBoxLZ))
-            duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_1,face=False,support=None) #Ok
-            duble.Label = "_BoundBoxRectangle_To"
-            FreeCADGui.activeDocument().activeObject().LineColor = (1.0, 1.0, blue)
-            conteneurRectangle.addObject(duble)
-
-            pl_z_first=[]
-            pl_z_sec=[]
-            stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.textInput_nElements_z_.text())
-
-            for i in range(int(self.textInput_nElements_z_.text())-1):
-                #pl_z_first.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i+1)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
-                #duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_first[i],face=False,support=None) #Ok
-                #duble.Label = "_BoundBoxRectangle_z_line"+str(i+1)
-                #conteneurRectangle.addObject(duble)
-
-                pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i+1)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
-                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_z_fill"+str(i+1)
-                FreeCADGui.activeDocument().activeObject().LineColor = (1.0 , 1.0, blue)
-                conteneurRectangle.addObject(duble)
+            Gui.ActiveDocument.getObject(BDvol.Name).Transparency = 100
+            BDvol.Length.Value = (self.upperbound_x_-self.lowerbound_x_)
+            BDvol.Width.Value  = (self.upperbound_y_-self.lowerbound_y_)
+            BDvol.Height.Value = (self.upperbound_z_-self.lowerbound_z_)
+            BDvol.Placement = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
+            BDPl = BDvol.Placement
+            oripl_X=BDvol.Placement.Base.x
+            oripl_Y=BDvol.Placement.Base.y
+            oripl_Z=BDvol.Placement.Base.z
 
 
-        if (mybounds[6] and mybounds[8]) > 0.0:
-            pl_2 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90))
-            #pl_2 = pl_0.multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
-            duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_2,face=False,support=None) #Ok
-            duble.Label = "_BoundBoxRectangle_Fr"
-            FreeCADGui.activeDocument().activeObject().LineColor = (0.0, 1.0, blue)
-            conteneurRectangle.addObject(duble)
-            pl_3 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.upperbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90))
-            #pl_3 = adjustedGlobalPlacement(objs[0], boundBoxLocation+App.Vector(0, boundBoxLY, 0)).multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
-            duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_3,face=False,support=None) #Ok
-            duble.Label = "_BoundBoxRectangle_Re"
-            FreeCADGui.activeDocument().activeObject().LineColor = (0.0, 1.0, blue)
-            conteneurRectangle.addObject(duble)
-
-
-            pl_y_first=[]
-            pl_y_sec=[]
-            stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.textInput_nElements_y_.text())
-
-            for i in range(int(self.textInput_nElements_y_.text())-1):
-                #pl_y_first.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
-                #duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_y_first[i],face=False,support=None) #Ok
-                #duble.Label = "_BoundBoxRectangle_y_line"+str(i+1)
-                #conteneurRectangle.addObject(duble)
-
-                pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(1+i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
-                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_y_fill"+str(i+1)
-                FreeCADGui.activeDocument().activeObject().LineColor = (0.0 , 1.0, blue)
-                conteneurRectangle.addObject(duble)
-
-        if (mybounds[7] and mybounds[8]) > 0.0:
-            pl_4 = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90))
-            #pl_2 = pl_0.multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
-            duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_4,face=False,support=None) #Ok
-            duble.Label = "_BoundBoxRectangle_Le"
-            FreeCADGui.activeDocument().activeObject().LineColor = (0.0, 0.0, 1.0)
-            conteneurRectangle.addObject(duble)
-
-            pl_5= FreeCAD.Placement(FreeCAD.Vector(self.upperbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90))
-            #pl_3 = adjustedGlobalPlacement(objs[0], boundBoxLocation+App.Vector(0, boundBoxLY, 0)).multiply(App.Placement(App.Vector(0.,0.,0.),App.Rotation(0.0,0.0,90)))
-            duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_5,face=False,support=None) #Ok
-            duble.Label = "_BoundBoxRectangle_Ri"
-            FreeCADGui.activeDocument().activeObject().LineColor = (0.0, 0.0, 1.0)
-            conteneurRectangle.addObject(duble)
-
-            pl_x_first=[]
-            pl_x_sec=[]
-            stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.textInput_nElements_x_.text())
-
-            for i in range(int(self.textInput_nElements_x_.text())-1):
-                #pl_y_first.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
-                #duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_y_first[i],face=False,support=None) #Ok
-                #duble.Label = "_BoundBoxRectangle_y_line"+str(i+1)
-                #conteneurRectangle.addObject(duble)
-
-                pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(1+i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
-                duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_x_fill"+str(i+1)
-                FreeCADGui.activeDocument().activeObject().LineColor = (0.0 , 0.0, 1.0)
-                conteneurRectangle.addObject(duble)
-
-        FreeCAD.ActiveDocument.recompute()
-
-        self.result = "Ok"
-        self.close()
+            if (mybounds[6] and mybounds[7]) > 0.0:
+                pl_z_first=[]
+                pl_z_sec=[]
+                stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.textInput_nElements_z_.text())
+                
+                for i in range(int(self.textInput_nElements_z_.text())+1):
+    
+                    pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
+                    duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
+                    self.gridList.append(duble.Name)
+                    duble.Label = "_BoundBoxRectangle_z_fill"+str(i)
+                    Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
+                    conteneurRectangle.addObject(duble)
+    
+    
+            if (mybounds[6] and mybounds[8]) > 0.0:
+                pl_y_first=[]
+                pl_y_sec=[]
+                stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.textInput_nElements_y_.text())
+    
+                for i in range(int(self.textInput_nElements_y_.text())+1):
+    
+                    pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
+                    duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
+                    duble.Label = "_BoundBoxRectangle_y_fill"+str(i)
+                    self.gridList.append(duble.Name)
+                    Gui.activeDocument().activeObject().LineColor = (0.0 , 1.0, 0.0)
+                    conteneurRectangle.addObject(duble)
+    
+            if (mybounds[7] and mybounds[8]) > 0.0:
+                pl_x_first=[]
+                pl_x_sec=[]
+                stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.textInput_nElements_x_.text())
+    
+                for i in range(int(self.textInput_nElements_x_.text())+1):
+    
+                    pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
+                    duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
+                    duble.Label = "_BoundBoxRectangle_x_fill"+str(i)
+                    self.gridList.append(duble.Name)
+                    Gui.activeDocument().activeObject().LineColor = (0.0 , 0.0, 1.0)
+                    conteneurRectangle.addObject(duble)
+    
+            FreeCAD.ActiveDocument.recompute()
+            FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
+            self.result = "Ok"
+            self.close()
 
     def onCancel(self):
         self.result = "Cancel"
@@ -1130,6 +1046,97 @@ if __name__ == "__main__":
         boundBoxLZ=boundBox_.ZLength
 
         return [boundBoxXMin, boundBoxYMin, boundBoxZMin, boundBoxXMax, boundBoxYMax, boundBoxZMax, boundBoxLX, boundBoxLY, boundBoxLZ]
+    
+    def VisualizeGrid_Fun(self):
+
+        mybounds=self.bounds()
+        self.visulizerun=self.visulizerun+1
+        #bounds with 0.1 offset in total
+        self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
+        self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
+        self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
+        self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
+        self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
+        self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
+        #BOUNDINGBOX&GRID
+        #if vizualize run for the first time
+        '''
+        if self.visulizerun>1:
+            FreeCAD.activeDocument().removeObject('Grid')
+            for i in self.gridList:
+                FreeCAD.activeDocument().removeObject(i)
+            self.gridList=[]
+        '''
+        BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
+        conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
+            
+        
+        BDvol.Length.Value = (self.upperbound_x_-self.lowerbound_x_)
+        BDvol.Width.Value  = (self.upperbound_y_-self.lowerbound_y_)
+        BDvol.Height.Value = (self.upperbound_z_-self.lowerbound_z_)
+        BDvol.Placement = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
+        BDPl = BDvol.Placement
+        oripl_X=BDvol.Placement.Base.x
+        oripl_Y=BDvol.Placement.Base.y
+        oripl_Z=BDvol.Placement.Base.z
+        Gui.ActiveDocument.getObject(BDvol.Name).Transparency = 100
+        
+
+        if (mybounds[6] and mybounds[7]) > 0.0:
+            pl_z_first=[]
+            pl_z_sec=[]
+            stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.textInput_nElements_z_.text())
+            
+            for i in range(int(self.textInput_nElements_z_.text())+1):
+
+                pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_z_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
+                conteneurRectangle.addObject(duble)
+
+
+        if (mybounds[6] and mybounds[8]) > 0.0:
+            pl_y_first=[]
+            pl_y_sec=[]
+            stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.textInput_nElements_y_.text())
+
+            for i in range(int(self.textInput_nElements_y_.text())+1):
+
+                pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_y_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (0.0 , 1.0, 0.0)
+                conteneurRectangle.addObject(duble)
+
+        if (mybounds[7] and mybounds[8]) > 0.0:
+            pl_x_first=[]
+            pl_x_sec=[]
+            stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.textInput_nElements_x_.text())
+
+            for i in range(int(self.textInput_nElements_x_.text())+1):
+
+                pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_x_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (0.0 , 0.0, 1.0)
+                conteneurRectangle.addObject(duble)
+
+        FreeCAD.ActiveDocument.recompute()
+        FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
+
+    def deVisualizeGrid_Fun(self):
+
+        ######### INSERT YOUR CODE HERE #########
+        if self.visulizerun>0:
+            FreeCAD.activeDocument().removeObject('Grid')
+            for i in self.gridList:
+                FreeCAD.activeDocument().removeObject(i)
+            self.gridList=[]
+
 
     def append_json(self, entry, filename='TIBRAParameters.json'):
             with open(filename, "r") as file:
@@ -1151,6 +1158,8 @@ class DirichletBCBox(QtGui.QDialog):
     def initUI(self):
             width = 350
             height = 120
+            std_validate = QtGui.QDoubleValidator()
+            std_validate.setNotation(QtGui.QDoubleValidator.StandardNotation)
             centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
             self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
             self.setWindowTitle("Apply Dirichlet Boundary Condition")
@@ -1165,18 +1174,21 @@ class DirichletBCBox(QtGui.QDialog):
             self.label_x_constraint.move(10,48)
             self.text_x_constraint = QtGui.QLineEdit(self)
             self.text_x_constraint.setFixedWidth(80)
+            self.text_x_constraint.setValidator(std_validate)
             self.text_x_constraint.move(30, 45)
 
             self.label_y_constraint = QtGui.QLabel("y: ", self)
             self.label_y_constraint.move(120,48)
             self.text_y_constraint = QtGui.QLineEdit(self)
             self.text_y_constraint.setFixedWidth(80)
+            self.text_y_constraint.setValidator(std_validate)
             self.text_y_constraint.move(140, 45)
 
             self.label_z_constraint = QtGui.QLabel("z: ", self)
             self.label_z_constraint.move(230, 48)
             self.text_z_constraint = QtGui.QLineEdit(self)
             self.text_z_constraint.setFixedWidth(80)
+            self.text_z_constraint.setValidator(std_validate)
             self.text_z_constraint.move(250, 45)
 
             okButton_DirichletBCBox = QtGui.QPushButton('OK', self)
@@ -1191,14 +1203,17 @@ class DirichletBCBox(QtGui.QDialog):
         event.accept()
 
     def okButton_DirichletBCBox(self):
-        print("Mouse Click " + str(self.dirichlet_count))
+        #print("Mouse Click " + str(self.dirichlet_count))
         self.dirichlet_count = self.dirichlet_count + 1
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
         self.z_val = self.text_z_constraint.text()
+        if (self.x_val == '') or (self.y_val == '') or (self.z_val == ''):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error: Dirichlet Boundary Condition","Displacement constraint values cannot be blank!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+        
         self.resetInputValues()
-        Gui.Selection.addSelection(self.element_list.get('Document'), self.element_list.get('Object'), \
-                                   self.element_list.get('Component'), self.element_list.get('x'), self.element_list.get('y'))
         self.okButton_Flag = True
         self.close()
 
@@ -1216,6 +1231,8 @@ class NeumannBCBox(QtGui.QDialog):
     def initUI(self):
             width = 350
             height = 120
+            std_validate = QtGui.QDoubleValidator()
+            std_validate.setNotation(QtGui.QDoubleValidator.StandardNotation)
             centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
             self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
             self.setWindowTitle("Apply Neumann Boundary Condition")
@@ -1226,23 +1243,25 @@ class NeumannBCBox(QtGui.QDialog):
             self.y_val = 0
             self.z_val = 0
 
-
             self.label_x_constraint = QtGui.QLabel("x: ", self)
             self.label_x_constraint.move(10,48)
             self.text_x_constraint = QtGui.QLineEdit(self)
             self.text_x_constraint.setFixedWidth(80)
+            self.text_x_constraint.setValidator(std_validate)
             self.text_x_constraint.move(30, 45)
 
             self.label_y_constraint = QtGui.QLabel("y: ", self)
             self.label_y_constraint.move(120,48)
             self.text_y_constraint = QtGui.QLineEdit(self)
             self.text_y_constraint.setFixedWidth(80)
+            self.text_y_constraint.setValidator(std_validate)
             self.text_y_constraint.move(140, 45)
 
             self.label_z_constraint = QtGui.QLabel("z: ", self)
             self.label_z_constraint.move(230, 48)
             self.text_z_constraint = QtGui.QLineEdit(self)
             self.text_z_constraint.setFixedWidth(80)
+            self.text_z_constraint.setValidator(std_validate)
             self.text_z_constraint.move(250, 45)
 
             okButton_NeumannBCBox = QtGui.QPushButton('OK', self)
@@ -1257,14 +1276,17 @@ class NeumannBCBox(QtGui.QDialog):
         event.accept()
 
     def okButton_NeumannBCBox(self):
-        print("Mouse Click " + str(self.neumann_count))
+        #print("Mouse Click " + str(self.neumann_count))
         self.neumann_count = self.neumann_count + 1
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
         self.z_val = self.text_z_constraint.text()
+        if (self.x_val == '') or (self.y_val == '') or (self.z_val == ''):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error: Neumann Boundary Condition","Force values cannot be blank!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+        
         self.resetInputValues()
-        Gui.Selection.addSelection(self.element_list.get('Document'), self.element_list.get('Object'), \
-                                   self.element_list.get('Component'), self.element_list.get('x'), self.element_list.get('y'))
         self.okButton_Flag = True
         self.close()
 
