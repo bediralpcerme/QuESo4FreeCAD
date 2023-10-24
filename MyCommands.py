@@ -88,7 +88,6 @@ class RunTibra_Class():
                 'ToolTip' : "Run Tibra"}
 
     def Activated(self):
-        
         tibra = RunTibra.RunTibra()
         tibra.exec_()
         return

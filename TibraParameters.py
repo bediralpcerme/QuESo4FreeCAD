@@ -15,7 +15,9 @@ from collections import OrderedDict
 ##################
 
 #TO DO LIST:
-# - Font size in pop-up windows could be greater a bit
+# - Normalization of the force direction
+# - Visual improvements and name changes
+
 
 class TibraParameters(QtGui.QDialog):
     """"""
@@ -28,15 +30,15 @@ class TibraParameters(QtGui.QDialog):
     def initUI(self):
 
         #position and geometry of the dialog box
-        width = 340
-        height = 650
+        width = 500
+        height = 790
 
         self.centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         std_validate = QtGui.QIntValidator()
         scientific_validate = QtGui.QDoubleValidator()
         scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation)
         self.setGeometry(self.centerPoint.x()-0.5*width, self.centerPoint.y()-0.5*height, width, height)
-        self.setWindowTitle("Tibra Parameters")
+        self.setWindowTitle("QuESo Parameters")
         self.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, on = True)
@@ -82,10 +84,41 @@ class TibraParameters(QtGui.QDialog):
         self.fileBrowseButton.setAutoDefault(False)
         self.fileBrowseButton.move(220, self.textInput_pathname_.y())
 
+        #path to the QuESo
+        self.label_QuESo_ = QtGui.QLabel("Directory of the QuESo:", self)
+        self.label_QuESo_.move(10, self.textInput_pathname_.y()+30)
+
+        #Text edit of QuESo
+        self.textInput_QuESo_ = QtGui.QLineEdit(self)
+        self.textInput_QuESo_.setText("")
+        self.textInput_QuESo_.setFixedWidth(200)
+        self.textInput_QuESo_.move(10, self.label_QuESo_.y()+20)
+
+        #file browser button QuESo
+        self.fileBrowseButton_QuESo = QtGui.QPushButton('Browse files',self)
+        self.fileBrowseButton_QuESo.clicked.connect(self.onBrowseButton_QuESodirectory)
+        self.fileBrowseButton_QuESo.setAutoDefault(False)
+        self.fileBrowseButton_QuESo.move(220, self.textInput_QuESo_.y())
+
+        #path to the Kratos
+        self.label_Kratos_ = QtGui.QLabel("Directory of the Kratos:", self)
+        self.label_Kratos_.move(10, self.textInput_QuESo_.y()+30)
+
+        #Text edit of Kratos
+        self.textInput_Kratos_ = QtGui.QLineEdit(self)
+        self.textInput_Kratos_.setText("")
+        self.textInput_Kratos_.setFixedWidth(200)
+        self.textInput_Kratos_.move(10, self.label_Kratos_.y()+20)
+
+        #file browser button Kratos
+        self.fileBrowseButton_Kratos = QtGui.QPushButton('Browse files',self)
+        self.fileBrowseButton_Kratos.clicked.connect(self.onBrowseButton_Kratosdirectory)
+        self.fileBrowseButton_Kratos.setAutoDefault(False)
+        self.fileBrowseButton_Kratos.move(220, self.textInput_Kratos_.y())
 
         #label text
         self.label_echo_ = QtGui.QLabel("Echo level:", self)
-        self.label_echo_.move(10, self.textInput_pathname_.y()+30)
+        self.label_echo_.move(10, self.textInput_Kratos_.y()+30)
         self.textInput_echo_ = QtGui.QLineEdit(self)
         self.textInput_echo_.setPlaceholderText("1")
         self.textInput_echo_.setFixedWidth(50)
@@ -178,18 +211,18 @@ class TibraParameters(QtGui.QDialog):
         self.textInput_residual_.move(10, self.label_residual_.y()+20)
 
         # min_element_volume ratio
-        self.label_min_el_vol_rat = QtGui.QLabel("Minimum element volume ratio:", self)
-        self.label_min_el_vol_rat.move(10, self.textInput_residual_.y()+30)
-        self.textInput__min_el_vol_rat = QtGui.QLineEdit(self)
-        self.textInput__min_el_vol_rat.setPlaceholderText("1e-3")
-        self.textInput__min_el_vol_rat.setFixedWidth(50)
-        self.textInput__min_el_vol_rat.setValidator(scientific_validate)
-        self.textInput__min_el_vol_rat.move(10, self.label_min_el_vol_rat.y()+20)
+        ### self.label_min_el_vol_rat = QtGui.QLabel("Minimum element volume ratio:", self)
+        ### self.label_min_el_vol_rat.move(10, self.textInput_residual_.y()+30)
+        ### self.textInput__min_el_vol_rat = QtGui.QLineEdit(self)
+        ### self.textInput__min_el_vol_rat.setPlaceholderText("1e-3")
+        ### self.textInput__min_el_vol_rat.setFixedWidth(50)
+        ### self.textInput__min_el_vol_rat.setValidator(scientific_validate)
+        ### self.textInput__min_el_vol_rat.move(10, self.label_min_el_vol_rat.y()+20)
 
 
         #integration method setting
         self.label_integration_ = QtGui.QLabel("Integration method:", self)
-        self.label_integration_.move(10, self.textInput__min_el_vol_rat.y()+30)
+        self.label_integration_.move(10, self.textInput_residual_.y()+30)
         self.popup_integration = QtGui.QComboBox(self)
         self.popup_integration_items = ("Gauss","Gauss_Reduced1","Gauss_Reduced2","GGQ_Optimal","GGQ_Reduced1", "GGQ_Reduced2")
         self.popup_integration.addItems(self.popup_integration_items)
@@ -202,31 +235,31 @@ class TibraParameters(QtGui.QDialog):
         self.label_ApplyBC_.setFont(boldUnderlinedFont)
         self.label_ApplyBC_.setPalette(blueFont)
 
-        self.button_Dirichlet_ = QtGui.QPushButton('Apply Dirichlet B.C.',self)
-        self.button_Dirichlet_.clicked.connect(self.onDirichletBC)
-        self.button_Dirichlet_.setAutoDefault(False)
-        self.button_Dirichlet_.setFixedWidth(155)
+        self.button_PenaltySupport_ = QtGui.QPushButton('Apply Penalty Support Condition',self)
+        self.button_PenaltySupport_.clicked.connect(self.onPenaltySupportBC)
+        self.button_PenaltySupport_.setAutoDefault(False)
+        self.button_PenaltySupport_.setFixedWidth(230)
 
-        self.button_Neumann_ = QtGui.QPushButton('Apply Neumann B.C.',self)
-        self.button_Neumann_.clicked.connect(self.onNeumannBC)
-        self.button_Neumann_.setAutoDefault(False)
-        self.button_Neumann_.setFixedWidth(155)
+        self.button_SurfaceLoad_ = QtGui.QPushButton('Apply Surface Load Condition',self)
+        self.button_SurfaceLoad_.clicked.connect(self.onSurfaceLoadBC)
+        self.button_SurfaceLoad_.setAutoDefault(False)
+        self.button_SurfaceLoad_.setFixedWidth(230)
 
-        self.container_DirichletNeumann = QtGui.QWidget(self)
-        self.container_DirichletNeumann.setContentsMargins(0, 0, 0, 0)
+        self.container_PenaltySupportSurfaceLoad = QtGui.QWidget(self)
+        self.container_PenaltySupportSurfaceLoad.setContentsMargins(0, 0, 0, 0)
 
-        layout_DirichletNeumann = QtGui.QHBoxLayout(self.container_DirichletNeumann)
-        layout_DirichletNeumann.setContentsMargins(0, 0, 0, 0)
-        layout_DirichletNeumann.addWidget(self.button_Dirichlet_)
-        layout_DirichletNeumann.addWidget(self.button_Neumann_)
-        layout_DirichletNeumann.setSpacing(10)
+        layout_PenaltySupportSurfaceLoad = QtGui.QHBoxLayout(self.container_PenaltySupportSurfaceLoad)
+        layout_PenaltySupportSurfaceLoad.setContentsMargins(0, 0, 0, 0)
+        layout_PenaltySupportSurfaceLoad.addWidget(self.button_PenaltySupport_)
+        layout_PenaltySupportSurfaceLoad.addWidget(self.button_SurfaceLoad_)
+        layout_PenaltySupportSurfaceLoad.setSpacing(10)
 
-        self.container_DirichletNeumann.move(0.5*width - self.button_Dirichlet_.geometry().width() -
-                                             0.5*layout_DirichletNeumann.spacing(), self.label_ApplyBC_.y()+25)
+        self.container_PenaltySupportSurfaceLoad.move(0.5*width - self.button_PenaltySupport_.geometry().width() -
+                                             0.5*layout_PenaltySupportSurfaceLoad.spacing(), self.label_ApplyBC_.y()+25)
 
         #Solver settings button
         self.label_SolverSettings_ = QtGui.QLabel("Solver Settings:", self)
-        self.label_SolverSettings_.move(10, self.container_DirichletNeumann.y()+45)
+        self.label_SolverSettings_.move(10, self.container_PenaltySupportSurfaceLoad.y()+45)
         self.label_SolverSettings_.setFont(boldUnderlinedFont)
         self.label_SolverSettings_.setPalette(blueFont)
         
@@ -234,7 +267,16 @@ class TibraParameters(QtGui.QDialog):
         self.SolverSettingsButton = QtGui.QPushButton('Apply Solver Settings',self)
         self.SolverSettingsButton.clicked.connect(self.onSolverSettingsButton)
         self.SolverSettingsButton.setAutoDefault(False)
-        self.SolverSettingsButton.move(10, self.label_SolverSettings_.y()+30)
+        self.SolverSettingsButton.setFixedWidth(155)
+
+        self.container_SolverSettingsButton = QtGui.QWidget(self)
+        self.container_SolverSettingsButton.setContentsMargins(0, 0, 0, 0)
+
+        layout_SolverSettingsButton = QtGui.QHBoxLayout(self.container_SolverSettingsButton)
+        layout_SolverSettingsButton.setContentsMargins(0, 0, 0, 0)
+        layout_SolverSettingsButton.addWidget(self.SolverSettingsButton)
+
+        self.container_SolverSettingsButton.move(10, self.label_SolverSettings_.y()+25)
 
 
         # cancel button
@@ -258,28 +300,29 @@ class TibraParameters(QtGui.QDialog):
         layout_saveCancel.setSpacing(40)
 
         self.container_saveCancel.move(0.5*width - saveButton.geometry().width() - 0.5*layout_saveCancel.spacing(),
-                                     self.SolverSettingsButton.y()+70)
+                                     self.container_SolverSettingsButton.y()+60)
 
         # show the dialog box and creates instances of other required classes
-        self.DirichletBCBox_obj = DirichletBCBox()
-        self.NeumannBCBox_obj = NeumannBCBox()
+        self.PenaltySupportBCBox_obj = PenaltySupportBCBox()
+        self.SurfaceLoadBCBox_obj = SurfaceLoadBCBox()
 
-        self.DirichletFacesList_Obj = DirichletFacesList()
-        self.DirichletFacesList_Obj.Modify_button.clicked.connect(self.ModifyButtonClicked_DirichletFacesList)
-        self.DirichletFacesList_Obj.Delete_button.clicked.connect(self.DeleteButtonClicked_DirichletFacesList)
-        self.DirichletFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_DirichletFacesList)
-        self.DirichletFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_DirichletFacesList)
+        self.PenaltySupportFacesList_Obj = PenaltySupportFacesList()
+        self.PenaltySupportFacesList_Obj.Modify_button.clicked.connect(self.ModifyButtonClicked_PenaltySupportFacesList)
+        self.PenaltySupportFacesList_Obj.Delete_button.clicked.connect(self.DeleteButtonClicked_PenaltySupportFacesList)
+        self.PenaltySupportFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_PenaltySupportFacesList)
+        self.PenaltySupportFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_PenaltySupportFacesList)
 
-        self.NeumannFacesList_Obj = NeumannFacesList()
-        self.NeumannFacesList_Obj.Modify_button.clicked.connect(self.ModifyButtonClicked_NeumannFacesList)
-        self.NeumannFacesList_Obj.Delete_button.clicked.connect(self.DeleteButtonClicked_NeumannFacesList)
-        self.NeumannFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_NeumannFacesList)
-        self.NeumannFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_NeumannFacesList)
+        self.SurfaceLoadFacesList_Obj = SurfaceLoadFacesList()
+        self.SurfaceLoadFacesList_Obj.Modify_button.clicked.connect(self.ModifyButtonClicked_SurfaceLoadFacesList)
+        self.SurfaceLoadFacesList_Obj.Delete_button.clicked.connect(self.DeleteButtonClicked_SurfaceLoadFacesList)
+        self.SurfaceLoadFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_SurfaceLoadFacesList)
+        self.SurfaceLoadFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_SurfaceLoadFacesList)
 
-        self.dirichlet_displacement_arr = []
-        self.neumann_force_arr = []
-        self.DirichletSelectionList = []
-        self.NeumannSelectionList = []
+        self.PenaltySupport_displacement_arr = []
+        self.SurfaceLoad_modulus_arr=[]
+        self.SurfaceLoad_force_arr = []
+        self.PenaltySupportSelectionList = []
+        self.SurfaceLoadSelectionList = []
         self.show()
 
     #################################################################################################################################
@@ -299,61 +342,72 @@ class TibraParameters(QtGui.QDialog):
             path_name_list = self.browseWindow.selectedFiles()
             self.textInput_pathname_.setText(path_name_list[0])
 
+    def onBrowseButton_QuESodirectory(self):
+        self.QuESo_directory = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory", self.work_dir, QtGui.QFileDialog.ShowDirsOnly)
+        self.textInput_QuESo_.setText(self.QuESo_directory)
+        self.QuESo_lib_directory = self.QuESo_directory + '/libs'
+    
+    def onBrowseButton_Kratosdirectory(self):
+        self.Kratos_directory = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory", self.work_dir, QtGui.QFileDialog.ShowDirsOnly)
+        self.textInput_Kratos_.setText(self.Kratos_directory)
+        self.Kratos_directory = self.Kratos_directory + '/bin/Release'
+        self.Kratos_lib_directory = self.Kratos_directory + '/libs'
 
-    def onDirichletBC(self):
-        infoBox = QtGui.QMessageBox.information(self, "Apply Dirichlet Boundary Conditions", \
-                                                "Please select faces subject to Dirichlet BC one by one!")
+
+    def onPenaltySupportBC(self):
+        infoBox = QtGui.QMessageBox.information(self, "Apply PenaltySupport Boundary Conditions", \
+                                                "Please select faces subject to PenaltySupport BC one by one!")
 
         if infoBox == QtGui.QMessageBox.StandardButton.Ok:
             self.view = Gui.ActiveDocument.ActiveView
-            self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_DirichletBCBox)
+            self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_PenaltySupportBCBox)
             self.setVisible(False)
-            self.DirichletFacesList_Obj.show()
+            self.PenaltySupportFacesList_Obj.show()
 
-            ############################ DIRICHLET FACES LIST FUNCTIONS #################################
+            ############################ PenaltySupport FACES LIST FUNCTIONS #################################
 
-    def okButtonClicked_DirichletFacesList(self):
+    def okButtonClicked_PenaltySupportFacesList(self):
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
-        self.DirichletFacesList_Obj.result = True
-        self.DirichletFacesList_Obj.close()
+        self.PenaltySupportFacesList_Obj.result = True
+        self.PenaltySupportFacesList_Obj.close()
 
-    def DiscardButtonClicked_DirichletFacesList(self):
+    def DiscardButtonClicked_PenaltySupportFacesList(self):
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
-        self.DirichletFacesList_Obj.result = False
-        self.dirichlet_displacement_arr = []
-        self.DirichletFacesList_Obj.close()
+        self.PenaltySupportFacesList_Obj.result = False
+        self.PenaltySupport_displacement_arr = []
+        self.PenaltySupportFacesList_Obj.close()
 
-    def DeleteButtonClicked_DirichletFacesList(self):
-        current_Item = self.DirichletFacesList_Obj.listwidget.currentItem()
-        indexToDel = self.DirichletFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        del self.dirichlet_displacement_arr[indexToDel]
-        print(str(self.dirichlet_displacement_arr))
-        self.DirichletFacesList_Obj.listwidget.takeItem(self.DirichletFacesList_Obj.listwidget.row(current_Item))
+    def DeleteButtonClicked_PenaltySupportFacesList(self):
+        current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
+        indexToDel = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        del self.PenaltySupport_displacement_arr[indexToDel]
+        print(str(self.PenaltySupport_displacement_arr))
+        self.PenaltySupportFacesList_Obj.listwidget.takeItem(self.PenaltySupportFacesList_Obj.listwidget.row(current_Item))
 
-    def ModifyButtonClicked_DirichletFacesList(self):
-        current_Item = self.DirichletFacesList_Obj.listwidget.currentItem()
-        indexToMod = self.DirichletFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        prev_vals = self.dirichlet_displacement_arr[indexToMod]
+    def ModifyButtonClicked_PenaltySupportFacesList(self):
+        current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
+        indexToMod = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        prev_vals = self.PenaltySupport_displacement_arr[indexToMod]
         prev_x = prev_vals[0]
         prev_y = prev_vals[1]
         prev_z = prev_vals[2]
-        self.DirichletBCBox_obj.text_x_constraint.setText(str(prev_x))
-        self.DirichletBCBox_obj.text_y_constraint.setText(str(prev_y))
-        self.DirichletBCBox_obj.text_z_constraint.setText(str(prev_z))
-        self.DirichletBCBox_obj.exec_()
+        self.PenaltySupportBCBox_obj.text_x_constraint.setText(str(prev_x))
+        self.PenaltySupportBCBox_obj.text_y_constraint.setText(str(prev_y))
+        self.PenaltySupportBCBox_obj.text_z_constraint.setText(str(prev_z))
+        self.PenaltySupportBCBox_obj.exec_()
 
-        self.dirichlet_displacement_arr[indexToMod] = \
-                                                    [float(self.DirichletBCBox_obj.x_val),\
-                                                     float(self.DirichletBCBox_obj.y_val),\
-                                                     float(self.DirichletBCBox_obj.z_val)]
+        self.PenaltySupport_displacement_arr[indexToMod] = \
+                                                    [float(self.PenaltySupportBCBox_obj.x_val),\
+                                                     float(self.PenaltySupportBCBox_obj.y_val),\
+                                                     float(self.PenaltySupportBCBox_obj.z_val)]
 
 
 
-                                                ##### Dirichlet Event Button #####
+                                                ##### PenaltySupport Event Button #####
 
-    def getMouseClick_DirichletBCBox(self, event_cb):
+    def getMouseClick_PenaltySupportBCBox(self, event_cb):
         event = event_cb.getEvent()
 
         if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
@@ -362,22 +416,22 @@ class TibraParameters(QtGui.QDialog):
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
             print(str(element_list))
             if(element_list != None):
-                self.DirichletBCBox_obj.element_list = element_list
-                self.DirichletBCBox_obj.okButton_Flag = False
-                self.DirichletBCBox_obj.exec_()
-                if(self.DirichletBCBox_obj.okButton_Flag):
-                    self.dirichlet_displacement_arr.append(\
-                                                                [float(self.DirichletBCBox_obj.x_val), \
-                                                                 float(self.DirichletBCBox_obj.y_val), \
-                                                                 float(self.DirichletBCBox_obj.z_val)])
-                    print(str(self.dirichlet_displacement_arr))
-                    self.DirichletFacesList_Obj.listwidget.addItem(element_list.get('Component'))
+                self.PenaltySupportBCBox_obj.element_list = element_list
+                self.PenaltySupportBCBox_obj.okButton_Flag = False
+                self.PenaltySupportBCBox_obj.exec_()
+                if(self.PenaltySupportBCBox_obj.okButton_Flag):
+                    self.PenaltySupport_displacement_arr.append(\
+                                                                [float(self.PenaltySupportBCBox_obj.x_val), \
+                                                                 float(self.PenaltySupportBCBox_obj.y_val), \
+                                                                 float(self.PenaltySupportBCBox_obj.z_val)])
+                    print(str(self.PenaltySupport_displacement_arr))
+                    self.PenaltySupportFacesList_Obj.listwidget.addItem(element_list.get('Component'))
 
                     Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
                                                element_list.get('Component'), element_list.get('x'), element_list.get('y'))
                     sel = Gui.Selection.getSelectionEx()
-                    # object = Draft.makeFacebinder(sel, 'D' + str(self.DirichletBCBox_obj.dirichlet_count))
-                    self.DirichletSelectionList.append(sel)
+                    # object = Draft.makeFacebinder(sel, 'D' + str(self.PenaltySupportBCBox_obj.PenaltySupport_count))
+                    self.PenaltySupportSelectionList.append(sel)
                     Gui.Selection.clearSelection()
                                         
 
@@ -386,7 +440,7 @@ class TibraParameters(QtGui.QDialog):
         self.SolverSettingsBox_Fun()
         self.SolverSettingsBox.exec_()
 
-                                                     ############### SOLVER SETTINGS WINDOW ###################
+                                    ############### SOLVER SETTINGS WINDOW ###################
     def SolverSettingsBox_Fun(self):
 
         self.SolverSettingsBox = QtGui.QDialog(self)
@@ -443,9 +497,9 @@ class TibraParameters(QtGui.QDialog):
         self.SolverSettingsBox.textInput_end_time_.setFixedWidth(100)
         self.SolverSettingsBox.textInput_end_time_.move(200, self.SolverSettingsBox.label_end_time_.y()+20)
 
-         #Solver settings head
+        #Solver settings head
         self.SolverSettingsBox.label_main_ = QtGui.QLabel("Solver settings:", self.SolverSettingsBox)
-        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_end_time_.y()+45)
+        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_end_time_.y()+40)
         self.SolverSettingsBox.label_main_.setFont(boldUnderlinedFont)
         self.SolverSettingsBox.label_main_.setPalette(blueFont)
 
@@ -492,7 +546,7 @@ class TibraParameters(QtGui.QDialog):
 
         #linear solver settings head
         self.SolverSettingsBox.label_main_ = QtGui.QLabel("Linear solver settings:", self.SolverSettingsBox)
-        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_input_type_.y()+45)
+        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_input_type_.y()+40)
        
         self.SolverSettingsBox.label_main_.setFont(boldUnderlinedFont)
         self.SolverSettingsBox.label_main_.setPalette(blueFont)
@@ -550,7 +604,7 @@ class TibraParameters(QtGui.QDialog):
 
         #Modelers head
         self.SolverSettingsBox.label_main_ = QtGui.QLabel("Modelers:", self.SolverSettingsBox)
-        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_relative_tolerance_.y()+45)
+        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_relative_tolerance_.y()+40)
        
         self.SolverSettingsBox.label_main_.setFont(boldUnderlinedFont)
         self.SolverSettingsBox.label_main_.setPalette(blueFont)
@@ -582,7 +636,7 @@ class TibraParameters(QtGui.QDialog):
 
         #Material properties head
         self.SolverSettingsBox.label_main_ = QtGui.QLabel("Material Properties:", self.SolverSettingsBox)
-        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_modeler_geometry_name_.y()+45)
+        self.SolverSettingsBox.label_main_.move(10, self.SolverSettingsBox.textInput_modeler_geometry_name_.y()+30)
        
         self.SolverSettingsBox.label_main_.setFont(boldUnderlinedFont)
         self.SolverSettingsBox.label_main_.setPalette(blueFont)
@@ -648,15 +702,14 @@ class TibraParameters(QtGui.QDialog):
         SolverSettingsBox_layout_okCancel.setSpacing(40)
 
         self.SolverSettingsBox_container_okCancel.move(0.5*width - SolverSettingsBox_okButton.geometry().width() - 0.5*SolverSettingsBox_layout_okCancel.spacing(), 
-                                     self.SolverSettingsBox.textInput_constitutive_id_.y()+70)
+                                     self.SolverSettingsBox.textInput_constitutive_id_.y()+50)
     
     def SolverSettingsBox_okButton(self):
-        self.CreateDirectory()
         self.result = "Ok"
         self.SolverSettingsBox.close()
 
 
-        KratosParam = \
+        self.KratosParam = \
         {
             "problem_data"    : {
                 "parallel_type" : self.SolverSettingsBox.textInput_parallel_type_.text(),
@@ -700,14 +753,7 @@ class TibraParameters(QtGui.QDialog):
         }
 
 
-
-        # Creating KratosParameters.json file:
-        with open('KratosParameters.json', 'w') as f:
-            json.dump(KratosParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
-            pass
-
-
-        StructuralMat = \
+        self.StructuralMat = \
         {
             "properties" : [{
                 "model_part_name" : self.SolverSettingsBox.textInput_modeler_part_name_.text(),
@@ -726,73 +772,68 @@ class TibraParameters(QtGui.QDialog):
             }]
         }
 
-
-        # Creating KratosParameters.json file:
-        with open('StructuralMaterials.json', 'w') as f:
-            json.dump(StructuralMat, f, indent=4, separators=(", ", ": "), sort_keys=False)
-            pass
-
-        #Return to main directory 
-        os.chdir(self.data_dir)
-
             
     def SolverSettingsBox_onCancel(self):
         self.result = "Cancel"
         self.SolverSettingsBox.close()
 
 
-    def onNeumannBC(self):
-        infoBox = QtGui.QMessageBox.information(self, "Apply Neumann Boundary Conditions", \
-                                                "Please select faces subject to Neumann BC one by one!")
+    def onSurfaceLoadBC(self):
+        infoBox = QtGui.QMessageBox.information(self, "Apply SurfaceLoad Boundary Conditions", \
+                                                "Please select faces subject to SurfaceLoad BC one by one!")
 
         if infoBox == QtGui.QMessageBox.StandardButton.Ok:
             self.view = Gui.ActiveDocument.ActiveView
-            self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_NeumannBCBox)
+            self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_SurfaceLoadBCBox)
             self.setVisible(False)
-            self.NeumannFacesList_Obj.show()
+            self.SurfaceLoadFacesList_Obj.show()
 
-            ############################ NEUMANN FACES LIST FUNCTIONS #################################
+            ############################ SurfaceLoad FACES LIST FUNCTIONS #################################
 
-    def okButtonClicked_NeumannFacesList(self):
+    def okButtonClicked_SurfaceLoadFacesList(self):
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
-        self.NeumannFacesList_Obj.result = True
-        self.NeumannFacesList_Obj.close()
+        self.SurfaceLoadFacesList_Obj.result = True
+        self.SurfaceLoadFacesList_Obj.close()
 
-    def DiscardButtonClicked_NeumannFacesList(self):
+    def DiscardButtonClicked_SurfaceLoadFacesList(self):
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
-        self.NeumannFacesList_Obj.result = False
-        self.neumann_force_arr = []
-        self.NeumannFacesList_Obj.close()
+        self.SurfaceLoadFacesList_Obj.result = False
+        self.SurfaceLoad_force_arr = []
+        self.SurfaceLoad_modulus_arr=[]
+        self.SurfaceLoadFacesList_Obj.close()
 
-    def DeleteButtonClicked_NeumannFacesList(self):
-        current_Item = self.NeumannFacesList_Obj.listwidget.currentItem()
-        indexToDel = self.NeumannFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        del self.neumann_force_arr[indexToDel]
-        print(str(self.neumann_force_arr))
-        self.NeumannFacesList_Obj.listwidget.takeItem(self.NeumannFacesList_Obj.listwidget.row(current_Item))
+    def DeleteButtonClicked_SurfaceLoadFacesList(self):
+        current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
+        indexToDel = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        del self.SurfaceLoad_force_arr[indexToDel]
+        print(str(self.SurfaceLoad_force_arr))
+        self.SurfaceLoadFacesList_Obj.listwidget.takeItem(self.SurfaceLoadFacesList_Obj.listwidget.row(current_Item))
 
-    def ModifyButtonClicked_NeumannFacesList(self):
-        current_Item = self.NeumannFacesList_Obj.listwidget.currentItem()
-        indexToMod = self.NeumannFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        prev_vals = self.neumann_force_arr[indexToMod]
-        prev_x = prev_vals[0]
-        prev_y = prev_vals[1]
-        prev_z = prev_vals[2]
-        self.NeumannBCBox_obj.text_x_constraint.setText(str(prev_x))
-        self.NeumannBCBox_obj.text_y_constraint.setText(str(prev_y))
-        self.NeumannBCBox_obj.text_z_constraint.setText(str(prev_z))
-        self.NeumannBCBox_obj.exec_()
+    def ModifyButtonClicked_SurfaceLoadFacesList(self):
+        current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
+        indexToMod = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        prev_vals_direction = self.SurfaceLoad_force_arr[indexToMod]
+        prev_vals_modulus = self.SurfaceLoad_modulus_arr[indexToMod]
+        prev_x = prev_vals_direction[0]
+        prev_y = prev_vals_direction[1]
+        prev_z = prev_vals_direction[2]
+        self.SurfaceLoadBCBox_obj.text_x_constraint.setText(str(prev_x))
+        self.SurfaceLoadBCBox_obj.text_y_constraint.setText(str(prev_y))
+        self.SurfaceLoadBCBox_obj.text_z_constraint.setText(str(prev_z))
+        self.SurfaceLoadBCBox_obj.text_SurfaceLoad_modulus.setText(str(prev_vals_modulus))
+        self.SurfaceLoadBCBox_obj.exec_()
 
-        self.neumann_force_arr[indexToMod] = \
-                                                    [float(self.NeumannBCBox_obj.x_val),\
-                                                     float(self.NeumannBCBox_obj.y_val),\
-                                                     float(self.NeumannBCBox_obj.z_val)]
-        print(str(self.neumann_force_arr))
+        self.SurfaceLoad_force_arr[indexToMod] = \
+                                                    [float(self.SurfaceLoadBCBox_obj.x_val),\
+                                                     float(self.SurfaceLoadBCBox_obj.y_val),\
+                                                     float(self.SurfaceLoadBCBox_obj.z_val)]
+        self.SurfaceLoad_modulus_arr = float(self.SurfaceLoadBCBox_obj.modulus_val)
+        print(str(self.SurfaceLoad_force_arr))
         Gui.Selection.clearSelection()
 
-    def getMouseClick_NeumannBCBox(self, event_cb):
+    def getMouseClick_SurfaceLoadBCBox(self, event_cb):
         event = event_cb.getEvent()
 
         if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
@@ -801,22 +842,24 @@ class TibraParameters(QtGui.QDialog):
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
             print(str(element_list))
             if(element_list != None):
-                self.NeumannBCBox_obj.element_list = element_list
-                self.NeumannBCBox_obj.okButton_Flag = False
-                self.NeumannBCBox_obj.exec_()
-                if(self.NeumannBCBox_obj.okButton_Flag):
-                    self.neumann_force_arr.append(\
-                                                                [float(self.NeumannBCBox_obj.x_val), \
-                                                                 float(self.NeumannBCBox_obj.y_val), \
-                                                                 float(self.NeumannBCBox_obj.z_val)])
-                    print(str(self.neumann_force_arr))
-                    self.NeumannFacesList_Obj.listwidget.addItem(element_list.get('Component'))
+                self.SurfaceLoadBCBox_obj.element_list = element_list
+                self.SurfaceLoadBCBox_obj.okButton_Flag = False
+                self.SurfaceLoadBCBox_obj.exec_()
+                if(self.SurfaceLoadBCBox_obj.okButton_Flag):
+                    self.SurfaceLoad_force_arr.append(\
+                                                                [float(self.SurfaceLoadBCBox_obj.x_val), \
+                                                                 float(self.SurfaceLoadBCBox_obj.y_val), \
+                                                                 float(self.SurfaceLoadBCBox_obj.z_val)])
+                    self.SurfaceLoad_modulus_arr.append(\
+                                                                float(self.SurfaceLoadBCBox_obj.modulus_val))
+                    print(str(self.SurfaceLoad_force_arr))
+                    self.SurfaceLoadFacesList_Obj.listwidget.addItem(element_list.get('Component'))
 
                     Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
                                                element_list.get('Component'), element_list.get('x'), element_list.get('y'))
                     sel = Gui.Selection.getSelectionEx()
-                    # object = Draft.makeFacebinder(sel, 'D' + str(self.DirichletBCBox_obj.dirichlet_count))
-                    self.NeumannSelectionList.append(sel)
+                    # object = Draft.makeFacebinder(sel, 'D' + str(self.PenaltySupportBCBox_obj.PenaltySupport_count))
+                    self.SurfaceLoadSelectionList.append(sel)
                     Gui.Selection.clearSelection()
 
     def onVisualize(self):
@@ -830,7 +873,7 @@ class TibraParameters(QtGui.QDialog):
     def onSave(self):
         #bounds
 
-        reply = QtGui.QMessageBox.question(self, "Tibra Parameters", "Upon Yes, the TibraParameters.json file and all STL files related to boundary conditions will be saved. If you want to modify Tibra Parameters, you will need to set them up from scratch. \n \n"
+        reply = QtGui.QMessageBox.question(self, "QuESo Parameters", "Upon Yes, the QuESoParameters.json file and all STL files related to boundary conditions will be saved. If you want to modify QuESo Parameters, you will need to set them up from scratch. \n \n"
                                            "Are you sure you want to continue?", QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
 
         if reply ==  QtGui.QMessageBox.No:
@@ -873,23 +916,23 @@ class TibraParameters(QtGui.QDialog):
                 self.data_dir = self.data_dir + '/data'
                 os.chdir(self.data_dir)
 
-            TibraParam = \
+            QuESoParam = \
             {
 
                 "general_settings"   : {
                     "input_filename"  :  self.textInput_pathname_.text(),
-                    "postprocess_filename" : self.data_dir + "/postprocess_STL.stl",
                     "echo_level"      :  int(self.textInput_echo_.text())
                 },
                 "mesh_settings"     : {
-                    "lower_bound": list([self.lowerbound_x_, self.lowerbound_y_, self.lowerbound_z_]),
-                    "upper_bound": list([self.upperbound_x_, self.upperbound_y_, self.upperbound_z_]),
+                    "lower_bound_xyz": list([self.lowerbound_x_, self.lowerbound_y_, self.lowerbound_z_]),
+                    "upper_bound_xyz": list([self.upperbound_x_, self.upperbound_y_, self.upperbound_z_]),
+                    "lower_bound_uvw": list([self.lowerbound_x_, self.lowerbound_y_, self.lowerbound_z_]),
+                    "upper_bound_uvw": list([self.upperbound_x_, self.upperbound_y_, self.upperbound_z_]),
                     "polynomial_order" : list([int(self.textInput_polynomialOrder_x_.text()), int(self.textInput_polynomialOrder_y_.text()), int(self.textInput_polynomialOrder_z_.text())]),
                     "number_of_elements" : list([int(self.textInput_nElements_x_.text()),  int(self.textInput_nElements_y_.text()), int(self.textInput_nElements_z_.text())])
                 },
                 "trimmed_quadrature_rule_settings"     : {
-                    "moment_fitting_residual": float(self.textInput_residual_.text()),
-                    "min_element_volume_ratio": float(self.textInput__min_el_vol_rat.text())
+                    "moment_fitting_residual": float(self.textInput_residual_.text())
                 },
                 "non_trimmed_quadrature_rule_settings" : {
                     "integration_method" : self.popup_integration.currentText()
@@ -898,57 +941,88 @@ class TibraParameters(QtGui.QDialog):
                 ]
             }
 
-            print(self.work_dir)
+            self.DirectoryInfo = \
+            {
+                "STL_directory"         : self.textInput_pathname_.text(),
+                "QuESo_directory"       : self.QuESo_directory,
+                "QuESo_lib_directory"   : self.QuESo_lib_directory,
+                "kratos_directory"      : self.Kratos_directory,
+                "kratos_lib_directory"  : self.Kratos_lib_directory
+            }
 
-            # Creating TibraParameters.json file and Exporting surface STL files:
 
-            with open('TIBRAParameters.json', 'w') as f:
-                json.dump(TibraParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
+            # Creating QuESoParameters.json file and Exporting surface STL files:
+
+            with open('QuESoParameters.json', 'w') as f:
+                json.dump(QuESoParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
 
-            for i in range (int(len(self.neumann_force_arr))):
-                out_arr = list(self.neumann_force_arr[i])
-                neumann_json = {"neumann": {
-                    "filename" : str(self.json_dir) + "N" + str(i+1) + ".stl",
-                    "force" : out_arr,
+            for i in range (int(len(self.SurfaceLoad_force_arr))):
+                force_direction = list(self.SurfaceLoad_force_arr[i])
+                magnitude = self.SurfaceLoad_modulus_arr[i]
+                SurfaceLoad_json = {"SurfaceLoadCondition": {
+                    "input_filename" : str(self.json_dir) + "N" + str(i+1) + ".stl",
+                    "modulus"        : magnitude,
+                    "direction"          : force_direction,
                     }
                 }
-                self.append_json(neumann_json)
+                self.append_json(SurfaceLoad_json)
 
                 faceObject_Name = ('N' + str(i+1))
-                Draft.makeFacebinder(self.NeumannSelectionList[i], faceObject_Name)
-                Neumann_STL_Face_Object = [(FreeCAD.getDocument(self.ActiveDocument_Name).getObject(faceObject_Name))]
-                Mesh.export(Neumann_STL_Face_Object, self.work_dir + faceObject_Name + '.stl')
+                Draft.makeFacebinder(self.SurfaceLoadSelectionList[i], faceObject_Name)
+                SurfaceLoad_STL_Face_Object = [(FreeCAD.getDocument(self.ActiveDocument_Name).getObject(faceObject_Name))]
+                Mesh.export(SurfaceLoad_STL_Face_Object, self.work_dir + faceObject_Name + '.stl')
 
-            for i in range (int(len(self.dirichlet_displacement_arr))):
-                out_arr = list(self.dirichlet_displacement_arr[i])
-                dirichlet_jason = {"dirichlet": {
-                    "filename" : str(self.json_dir) + "D" + str(i+1) + ".stl",
-                    "displacement" : out_arr,
+            for i in range (int(len(self.PenaltySupport_displacement_arr))):
+                out_arr = list(self.PenaltySupport_displacement_arr[i])
+                PenaltySupport_jason = {"PenaltySupportCondition": {
+                    "input_filename" : str(self.json_dir) + "D" + str(i+1) + ".stl",
+                    "value" : out_arr,
                     "penalty_factor" : 1e10
                     }
                 }
-                self.append_json(dirichlet_jason)
+                self.append_json(PenaltySupport_jason)
 
                 faceObject_Name = ('D' + str(i+1))
-                Draft.makeFacebinder(self.DirichletSelectionList[i], faceObject_Name)
-                Dirichlet_STL_Face_Object = [(FreeCAD.getDocument(self.ActiveDocument_Name).getObject(faceObject_Name))]
-                Mesh.export(Dirichlet_STL_Face_Object, self.work_dir + faceObject_Name + '.stl')
+                Draft.makeFacebinder(self.PenaltySupportSelectionList[i], faceObject_Name)
+                PenaltySupport_STL_Face_Object = [(FreeCAD.getDocument(self.ActiveDocument_Name).getObject(faceObject_Name))]
+                Mesh.export(PenaltySupport_STL_Face_Object, self.work_dir + faceObject_Name + '.stl')
 
+            # Creating KratosParameters.json file:
+            with open('KratosParameters.json', 'w') as f:
+                json.dump(self.KratosParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
+                pass
+            
+            # Creating StructuralMaterials.json file:
+            with open('StructuralMaterials.json', 'w') as f:
+                json.dump(self.StructuralMat, f, indent=4, separators=(", ", ": "), sort_keys=False)
+                pass
 
-            # Creating Tibra_main.py file:
-            with open('TIBRA_main.py', 'w') as f:
-                f.write('''
-# Project imports
-from TIBRA_PythonApplication.PyTIBRA import PyTIBRA
+            # Creating DirectoryInfo.json file:
+            with open('DirectoryInfo.json', 'w') as f:
+                json.dump(self.DirectoryInfo, f, indent=4, separators=(", ", ": "), sort_keys=False)
+                pass
+
+            QuESo_main_script = \
+            '''env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir} /usr/bin/python3.10 -x QuESo_main.py {data_dir}
+            
+import sys
+
+sys.path.append("{QuESo_dir}")
+sys.path.append("{kratos_dir}")
+
+from QuESo_PythonApplication.PyQuESo import PyQuESo
 
 def main():
-    pytibra = PyTIBRA("TIBRAParameters.json")
-    pytibra.Run()
+    pyqueso = PyQuESo("{QuESo_param_json}")
+    pyqueso.Run()
 
 if __name__ == "__main__":
-    main()''')
+    main()'''.format(kratos_lib_dir=self.Kratos_lib_directory, QuESo_lib_dir=self.QuESo_lib_directory, data_dir=self.data_dir, QuESo_dir=self.QuESo_directory, kratos_dir=self.Kratos_directory, QuESo_param_json="QuESoParameters.json")
 
+            # Creating QuESo_main.py file:
+            with open('QuESo_main.py', 'w') as f:
+                f.write(QuESo_main_script)
                 pass
 
 
@@ -1020,6 +1094,7 @@ if __name__ == "__main__":
             FreeCAD.ActiveDocument.recompute()
             FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
             self.result = "Ok"
+            os.chdir(self.work_dir)
             self.close()
 
     def onCancel(self):
@@ -1136,9 +1211,10 @@ if __name__ == "__main__":
             for i in self.gridList:
                 FreeCAD.activeDocument().removeObject(i)
             self.gridList=[]
+            self.visulizerun = 0
 
 
-    def append_json(self, entry, filename='TIBRAParameters.json'):
+    def append_json(self, entry, filename='QuESoParameters.json'):
             with open(filename, "r") as file:
                 data = json.load(file, object_pairs_hook=OrderedDict)
                 # Update json object
@@ -1149,10 +1225,10 @@ if __name__ == "__main__":
 
 ################################## OTHER REQUIRED CLASS DEFINITIONS #############################################
 
-class DirichletBCBox(QtGui.QDialog):
+class PenaltySupportBCBox(QtGui.QDialog):
     """"""
     def __init__(self):
-        super(DirichletBCBox, self).__init__()
+        super(PenaltySupportBCBox, self).__init__()
         self.initUI()
 
     def initUI(self):
@@ -1162,9 +1238,9 @@ class DirichletBCBox(QtGui.QDialog):
             std_validate.setNotation(QtGui.QDoubleValidator.StandardNotation)
             centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
             self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
-            self.setWindowTitle("Apply Dirichlet Boundary Condition")
-            self.label_dirichlet = QtGui.QLabel("Please enter the displacement constraint values:", self)
-            self.label_dirichlet.move(10, 20)
+            self.setWindowTitle("Apply PenaltySupport Boundary Condition")
+            self.label_PenaltySupport = QtGui.QLabel("Please enter the displacement constraint values:", self)
+            self.label_PenaltySupport.move(10, 20)
             self.element_list = []
             self.x_val = 0
             self.y_val = 0
@@ -1191,25 +1267,25 @@ class DirichletBCBox(QtGui.QDialog):
             self.text_z_constraint.setValidator(std_validate)
             self.text_z_constraint.move(250, 45)
 
-            okButton_DirichletBCBox = QtGui.QPushButton('OK', self)
-            okButton_DirichletBCBox.move(140, 85)
-            okButton_DirichletBCBox.clicked.connect(self.okButton_DirichletBCBox)
-            okButton_DirichletBCBox.setAutoDefault(True)
+            okButton_PenaltySupportBCBox = QtGui.QPushButton('OK', self)
+            okButton_PenaltySupportBCBox.move(140, 85)
+            okButton_PenaltySupportBCBox.clicked.connect(self.okButton_PenaltySupportBCBox)
+            okButton_PenaltySupportBCBox.setAutoDefault(True)
 
-            self.dirichlet_count = 0
+            self.PenaltySupport_count = 0
 
     def closeEvent(self, event):
         self.resetInputValues()
         event.accept()
 
-    def okButton_DirichletBCBox(self):
-        #print("Mouse Click " + str(self.dirichlet_count))
-        self.dirichlet_count = self.dirichlet_count + 1
+    def okButton_PenaltySupportBCBox(self):
+        #print("Mouse Click " + str(self.PenaltySupport_count))
+        self.PenaltySupport_count = self.PenaltySupport_count + 1
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
         self.z_val = self.text_z_constraint.text()
         if (self.x_val == '') or (self.y_val == '') or (self.z_val == ''):
-            errorMsg = QtGui.QMessageBox.critical(self, "Error: Dirichlet Boundary Condition","Displacement constraint values cannot be blank!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            errorMsg = QtGui.QMessageBox.critical(self, "Error: PenaltySupport Boundary Condition","Displacement constraint values cannot be blank!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
             if errorMsg == QtGui.QMessageBox.Ok:
                 return
         
@@ -1222,67 +1298,76 @@ class DirichletBCBox(QtGui.QDialog):
         self.text_y_constraint.setText("")
         self.text_z_constraint.setText("")
 
-class NeumannBCBox(QtGui.QDialog):
+class SurfaceLoadBCBox(QtGui.QDialog):
     """"""
     def __init__(self):
-        super(NeumannBCBox, self).__init__()
+        super(SurfaceLoadBCBox, self).__init__()
         self.initUI()
 
     def initUI(self):
             width = 350
-            height = 120
+            height = 175
             std_validate = QtGui.QDoubleValidator()
             std_validate.setNotation(QtGui.QDoubleValidator.StandardNotation)
             centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
             self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
-            self.setWindowTitle("Apply Neumann Boundary Condition")
-            self.label_neumann = QtGui.QLabel("Please enter the force constraint values:", self)
-            self.label_neumann.move(10, 20)
+            self.setWindowTitle("Apply SurfaceLoad Boundary Condition")
+
+            self.label_SurfaceLoad_modulus = QtGui.QLabel("Please enter the magnitude of the load:", self)
+            self.label_SurfaceLoad_modulus.move(10, 20)
+            self.text_SurfaceLoad_modulus = QtGui.QLineEdit(self)
+            self.text_SurfaceLoad_modulus.setValidator(std_validate)
+            self.text_SurfaceLoad_modulus.setFixedWidth(80)
+            self.text_SurfaceLoad_modulus.move(140, self.label_SurfaceLoad_modulus.y()+25)
+
+            self.label_SurfaceLoad_direction = QtGui.QLabel("Please enter the acting direction of the force :", self)
+            self.label_SurfaceLoad_direction.move(10, self.text_SurfaceLoad_modulus.y()+30)
             self.element_list = []
             self.x_val = 0
             self.y_val = 0
             self.z_val = 0
 
             self.label_x_constraint = QtGui.QLabel("x: ", self)
-            self.label_x_constraint.move(10,48)
+            self.label_x_constraint.move(10,self.label_SurfaceLoad_direction.y()+28)
             self.text_x_constraint = QtGui.QLineEdit(self)
             self.text_x_constraint.setFixedWidth(80)
             self.text_x_constraint.setValidator(std_validate)
-            self.text_x_constraint.move(30, 45)
+            self.text_x_constraint.move(30, self.label_x_constraint.y()-3)
 
             self.label_y_constraint = QtGui.QLabel("y: ", self)
-            self.label_y_constraint.move(120,48)
+            self.label_y_constraint.move(120,self.label_x_constraint.y())
             self.text_y_constraint = QtGui.QLineEdit(self)
             self.text_y_constraint.setFixedWidth(80)
             self.text_y_constraint.setValidator(std_validate)
-            self.text_y_constraint.move(140, 45)
+            self.text_y_constraint.move(140, self.text_x_constraint.y())
 
             self.label_z_constraint = QtGui.QLabel("z: ", self)
-            self.label_z_constraint.move(230, 48)
+            self.label_z_constraint.move(230, self.label_x_constraint.y())
             self.text_z_constraint = QtGui.QLineEdit(self)
             self.text_z_constraint.setFixedWidth(80)
             self.text_z_constraint.setValidator(std_validate)
-            self.text_z_constraint.move(250, 45)
+            self.text_z_constraint.move(250, self.text_x_constraint.y())
 
-            okButton_NeumannBCBox = QtGui.QPushButton('OK', self)
-            okButton_NeumannBCBox.move(140, 85)
-            okButton_NeumannBCBox.clicked.connect(self.okButton_NeumannBCBox)
-            okButton_NeumannBCBox.setAutoDefault(True)
+            okButton_SurfaceLoadBCBox = QtGui.QPushButton('OK', self)
+            okButton_SurfaceLoadBCBox.move(140, self.text_x_constraint.y()+40)
+            okButton_SurfaceLoadBCBox.clicked.connect(self.okButton_SurfaceLoadBCBox)
+            okButton_SurfaceLoadBCBox.setAutoDefault(True)
 
-            self.neumann_count = 1
+            self.SurfaceLoad_count = 1
 
     def closeEvent(self, event):
         self.resetInputValues()
         event.accept()
 
-    def okButton_NeumannBCBox(self):
-        #print("Mouse Click " + str(self.neumann_count))
-        self.neumann_count = self.neumann_count + 1
+    def okButton_SurfaceLoadBCBox(self):
+        #print("Mouse Click " + str(self.SurfaceLoad_count))
+        self.SurfaceLoad_count = self.SurfaceLoad_count + 1
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
         self.z_val = self.text_z_constraint.text()
+        self.modulus_val = self.text_SurfaceLoad_modulus.text()
         if (self.x_val == '') or (self.y_val == '') or (self.z_val == ''):
-            errorMsg = QtGui.QMessageBox.critical(self, "Error: Neumann Boundary Condition","Force values cannot be blank!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            errorMsg = QtGui.QMessageBox.critical(self, "Error: SurfaceLoad Boundary Condition","Force direction cannot be blank!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
             if errorMsg == QtGui.QMessageBox.Ok:
                 return
         
@@ -1295,7 +1380,7 @@ class NeumannBCBox(QtGui.QDialog):
         self.text_y_constraint.setText("")
         self.text_z_constraint.setText("")
 
-class DirichletFacesList(QtGui.QWidget):
+class PenaltySupportFacesList(QtGui.QWidget):
     """"""
     def __init__(self):
         QtGui.QWidget.__init__(self)
@@ -1305,7 +1390,7 @@ class DirichletFacesList(QtGui.QWidget):
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, on = True)
         layout = QtGui.QGridLayout()
 
-        FaceID_label = QtGui.QLabel("Faces Under Dirichlet BC:", self)
+        FaceID_label = QtGui.QLabel("Faces Under PenaltySupport BC:", self)
         layout.addWidget(FaceID_label, 0, 0, 1, 1)
 
         layout.setColumnMinimumWidth(1, 10)
@@ -1352,7 +1437,7 @@ class DirichletFacesList(QtGui.QWidget):
             self.listwidget.clear()
             event.accept()
 
-class NeumannFacesList(QtGui.QWidget):
+class SurfaceLoadFacesList(QtGui.QWidget):
     """"""
     def __init__(self):
         QtGui.QWidget.__init__(self)
@@ -1362,7 +1447,7 @@ class NeumannFacesList(QtGui.QWidget):
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, on = True)
         layout = QtGui.QGridLayout()
 
-        FaceID_label = QtGui.QLabel("Faces Under Neumann BC:", self)
+        FaceID_label = QtGui.QLabel("Faces Under SurfaceLoad BC:", self)
         layout.addWidget(FaceID_label, 0, 0, 1, 1)
 
         layout.setColumnMinimumWidth(1, 10)

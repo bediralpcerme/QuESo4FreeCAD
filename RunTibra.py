@@ -1,10 +1,8 @@
 from FreeCAD_PySide import *
-import os
 import subprocess
 import FreeCAD
-
-import sys
-import os
+import sys, os, stat
+import json
 
 
 class RunTibra(QtGui.QDialog):
@@ -42,19 +40,35 @@ class RunTibra(QtGui.QDialog):
         self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
         self.work_dir = FreeCAD.ActiveDocument.FileName
         self.work_dir = self.work_dir.replace(self.docName,"")
-        self.work_dir = self.work_dir + '/TIBRA/data'
+        self.data_dir = self.work_dir + 'TIBRA/data'
 
-        os.chdir(self.work_dir)
+        os.chdir(self.data_dir)
 
-        #TIBRA is run with parameters and B.C.s
-        from TIBRA_PythonApplication.PyTIBRA import PyTIBRA
-        pytibra = PyTIBRA("TIBRAParameters.json")
-        pytibra.Run()
-        # Direct Analysis with kratos
-        if( os.path.exists(self.work_dir+'\StructuralMaterials.json') and os.path.exists(self.work_dir+'\KratosParameters.json')):
-            pytibra.RunKratosAnalysis()
-            pytibra.PostProcess()
+        with open('DirectoryInfo.json', 'r') as myfile:
+            mydata = json.load(myfile)
 
+        kratos_dirOrg = mydata['kratos_directory']
+        kratos_lib_dirOrg = mydata['kratos_lib_directory']
+        QuESo_dirOrg = mydata['QuESo_directory']
+        QuESo_lib_dirOrg = mydata['QuESo_lib_directory']
+
+        Run_script = \
+        '''gnome-terminal --title="Running QuESo and Kratos" -- bash -c "cd {dir}; env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir} /usr/bin/python3.10 -x QuESo_main.py {dir}"'''.format(dir=self.data_dir, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
+
+        with open("RunTibra_Shell.sh", "w") as rtsh:
+            rtsh.write(Run_script)
+            pass
+
+        rtsh.close()
+
+        RunTibra_Shell_dir = self.data_dir + "/RunTibra_Shell.sh"
+
+        current_st = os.stat(RunTibra_Shell_dir)
+
+        os.chmod(RunTibra_Shell_dir, current_st.st_mode | stat.S_IEXEC)
+
+        subprocess.run(RunTibra_Shell_dir, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
+        
 
         self.close()
 
