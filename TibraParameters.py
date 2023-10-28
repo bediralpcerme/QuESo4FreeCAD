@@ -1004,21 +1004,14 @@ class TibraParameters(QtGui.QDialog):
                 pass
 
             QuESo_main_script = \
-            '''env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir} /usr/bin/python3.10 -x QuESo_main.py {data_dir}
-            
-import sys
-
-sys.path.append("{QuESo_dir}")
-sys.path.append("{kratos_dir}")
-
-from QuESo_PythonApplication.PyQuESo import PyQuESo
+            '''from QuESo_PythonApplication.PyQuESo import PyQuESo
 
 def main():
     pyqueso = PyQuESo("{QuESo_param_json}")
     pyqueso.Run()
 
 if __name__ == "__main__":
-    main()'''.format(kratos_lib_dir=self.Kratos_lib_directory, QuESo_lib_dir=self.QuESo_lib_directory, data_dir=self.data_dir, QuESo_dir=self.QuESo_directory, kratos_dir=self.Kratos_directory, QuESo_param_json="QuESoParameters.json")
+    main()'''.format(QuESo_param_json="QuESoParameters.json")
 
             # Creating QuESo_main.py file:
             with open('QuESo_main.py', 'w') as f:

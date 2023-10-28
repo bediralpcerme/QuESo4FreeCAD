@@ -55,7 +55,20 @@ class RunTibra(QtGui.QDialog):
         if platform.system() == 'Linux':
 
             Run_script = \
-            '''gnome-terminal --title="Running QuESo and Kratos" -- bash -c "cd {dir}; env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir} /usr/bin/python3.10 -x QuESo_main.py {dir}"'''.format(dir=self.data_dir, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
+            '''#!/bin/bash
+
+source ~/.bashrc
+
+cd {dir}
+
+export PYTHONPATH=$PYTHONPATH:{kratos_dir}:{QuESo_dir}
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir}
+
+python3 QuESo_main.py
+
+echo 'Press any key to exit'
+
+read'''.format(dir=self.data_dir, kratos_dir=kratos_dirOrg, QuESo_dir=QuESo_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
 
             with open("RunTibra_Shell.sh", "w") as rtsh:
                 rtsh.write(Run_script)
@@ -74,7 +87,7 @@ class RunTibra(QtGui.QDialog):
         elif platform.system() == 'Windows':
             
             Run_script = \
-            '''Start %SystemRoot%\System32\cmd.exe /K "cd {dir} & set PYTHONPATH=%PYTHONPATH%;{QuESo_dir};{kratos_dir} & set PATH=%PATH%;{QuESo_lib_dir};{kratos_lib_dir}"'''.format(dir=self.data_dir, QuESo_dir=QuESo_dirOrg, kratos_dir=kratos_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
+            '''Start %SystemRoot%\System32\cmd.exe /K "cd {dir} & set PYTHONPATH=%PYTHONPATH%;{QuESo_dir};{kratos_dir} & set PATH=%PATH%;{QuESo_lib_dir};{kratos_lib_dir} & python3 QuESo_main.py"'''.format(dir=self.data_dir, QuESo_dir=QuESo_dirOrg, kratos_dir=kratos_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
             
             with open("RunTibra_Shell.bat", "w") as rtsh:
                 rtsh.write(Run_script)
