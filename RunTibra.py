@@ -57,18 +57,7 @@ class RunTibra(QtGui.QDialog):
             Run_script = \
             '''#!/bin/bash
 
-source ~/.bashrc
-
-cd {dir}
-
-export PYTHONPATH=$PYTHONPATH:{kratos_dir}:{QuESo_dir}
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir}
-
-python3 QuESo_main.py
-
-echo 'Press any key to exit'
-
-read'''.format(dir=self.data_dir, kratos_dir=kratos_dirOrg, QuESo_dir=QuESo_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
+gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; cd /home/bediralp/STLtrialproject/TIBRA/data; export PYTHONPATH=$PYTHONPATH:/home/bediralp/.FreeCAD/Mod/TIBRA4FreeCAD/Kratos/bin/Release:/home/bediralp/.FreeCAD/Mod/TIBRA4FreeCAD/QuESo; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/bediralp/.FreeCAD/Mod/TIBRA4FreeCAD/Kratos/bin/Release/libs:/home/bediralp/.FreeCAD/Mod/TIBRA4FreeCAD/QuESo/libs; python3 QuESo_main.py; echo 'Press ENTER to exit'; read"'''.format(dir=self.data_dir, kratos_dir=kratos_dirOrg, QuESo_dir=QuESo_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
 
             with open("RunTibra_Shell.sh", "w") as rtsh:
                 rtsh.write(Run_script)
