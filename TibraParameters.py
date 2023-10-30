@@ -2,7 +2,7 @@ from FreeCAD_PySide import QtGui, QtCore
 import os
 import FreeCAD
 import FreeCADGui as Gui
-import Draft, Sketcher, Mesh, Part
+import Draft, Mesh
 import json
 from pivy import coin
 import numpy as np
@@ -20,19 +20,21 @@ from collections import OrderedDict
 
 
 class TibraParameters(QtGui.QDialog):
-    """"""
+
     def __init__(self):
+
         super(TibraParameters, self).__init__()
         self.initUI()
         self.visulizerun=0
-        self.gridList=[]
+        self.gridList=[]     
+            
 
     def initUI(self):
 
         #position and geometry of the dialog box
-        width = 500
+        width = 350
         height = 790
-
+        
         self.centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         std_validate = QtGui.QIntValidator()
         scientific_validate = QtGui.QDoubleValidator()
@@ -47,17 +49,24 @@ class TibraParameters(QtGui.QDialog):
         # self.setWindowFlags(QtCore.Qt.WindowMinimizeButtonHint)
 
 
-        self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
-        self.work_dir = FreeCAD.ActiveDocument.FileName
-        self.work_dir = self.work_dir.replace(self.docName,"")
-        self.json_dir = self.work_dir
-        self.ActiveDocument_Name = FreeCAD.ActiveDocument.Name # string
+        # self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
+        # self.work_dir = FreeCAD.ActiveDocument.FileName
+        # self.work_dir = self.work_dir.replace(self.docName,"")
+        # self.json_dir = self.work_dir
+        # self.ActiveDocument_Name = FreeCAD.ActiveDocument.Name # string
 
         #Initial Parameters input:
 
+        self.goback_button = QtGui.QPushButton("Go Back", self)
+        left_arrow = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowBack)
+        self.goback_button.setIcon(left_arrow)
+        self.goback_button.move(10,10)
+        self.goback_button.clicked.connect(self.onGoBackButton)
+        
+
         #main (general) head
         self.label_main_ = QtGui.QLabel("General settings:", self)
-        self.label_main_.move(10, 10)
+        self.label_main_.move(10, 40)
         boldFont=QtGui.QFont()
         boldFont.setBold(True)
         boldUnderlinedFont=QtGui.QFont()
@@ -68,25 +77,9 @@ class TibraParameters(QtGui.QDialog):
         self.label_main_.setFont(boldUnderlinedFont)
         self.label_main_.setPalette(blueFont)
 
-        #path to the file
-        self.label_pathname_ = QtGui.QLabel("Path to the STL file:", self)
-        self.label_pathname_.move(10, self.label_main_.y()+30)
-
-        #Text edit of pathname
-        self.textInput_pathname_ = QtGui.QLineEdit(self)
-        self.textInput_pathname_.setText("")
-        self.textInput_pathname_.setFixedWidth(200)
-        self.textInput_pathname_.move(10, self.label_pathname_.y()+20)
-
-        #file browser button
-        self.fileBrowseButton = QtGui.QPushButton('Browse files',self)
-        self.fileBrowseButton.clicked.connect(self.onBrowseButton)
-        self.fileBrowseButton.setAutoDefault(False)
-        self.fileBrowseButton.move(220, self.textInput_pathname_.y())
-
         #path to the QuESo
         self.label_QuESo_ = QtGui.QLabel("Directory of the QuESo:", self)
-        self.label_QuESo_.move(10, self.textInput_pathname_.y()+30)
+        self.label_QuESo_.move(10, self.label_main_.y()+30)
 
         #Text edit of QuESo
         self.textInput_QuESo_ = QtGui.QLineEdit(self)
@@ -248,18 +241,17 @@ class TibraParameters(QtGui.QDialog):
         self.container_PenaltySupportSurfaceLoad = QtGui.QWidget(self)
         self.container_PenaltySupportSurfaceLoad.setContentsMargins(0, 0, 0, 0)
 
-        layout_PenaltySupportSurfaceLoad = QtGui.QHBoxLayout(self.container_PenaltySupportSurfaceLoad)
+        layout_PenaltySupportSurfaceLoad = QtGui.QVBoxLayout(self.container_PenaltySupportSurfaceLoad)
         layout_PenaltySupportSurfaceLoad.setContentsMargins(0, 0, 0, 0)
         layout_PenaltySupportSurfaceLoad.addWidget(self.button_PenaltySupport_)
         layout_PenaltySupportSurfaceLoad.addWidget(self.button_SurfaceLoad_)
         layout_PenaltySupportSurfaceLoad.setSpacing(10)
 
-        self.container_PenaltySupportSurfaceLoad.move(0.5*width - self.button_PenaltySupport_.geometry().width() -
-                                             0.5*layout_PenaltySupportSurfaceLoad.spacing(), self.label_ApplyBC_.y()+25)
+        self.container_PenaltySupportSurfaceLoad.move(10, self.label_ApplyBC_.y()+25)
 
         #Solver settings button
         self.label_SolverSettings_ = QtGui.QLabel("Solver Settings:", self)
-        self.label_SolverSettings_.move(10, self.container_PenaltySupportSurfaceLoad.y()+45)
+        self.label_SolverSettings_.move(10, self.container_PenaltySupportSurfaceLoad.y()+80)
         self.label_SolverSettings_.setFont(boldUnderlinedFont)
         self.label_SolverSettings_.setPalette(blueFont)
         
@@ -305,6 +297,7 @@ class TibraParameters(QtGui.QDialog):
         # show the dialog box and creates instances of other required classes
         self.PenaltySupportBCBox_obj = PenaltySupportBCBox()
         self.SurfaceLoadBCBox_obj = SurfaceLoadBCBox()
+        self.projectNameWindow_obj = projectNameWindow()
 
         self.PenaltySupportFacesList_Obj = PenaltySupportFacesList()
         self.PenaltySupportFacesList_Obj.Modify_button.clicked.connect(self.ModifyButtonClicked_PenaltySupportFacesList)
@@ -323,7 +316,17 @@ class TibraParameters(QtGui.QDialog):
         self.SurfaceLoad_force_arr = []
         self.PenaltySupportSelectionList = []
         self.SurfaceLoadSelectionList = []
-        self.show()
+        
+        self.projectNameWindow_obj.exec_()
+        self.work_dir = self.projectNameWindow_obj.project_dir
+        self.json_dir = self.work_dir
+        self.ActiveDocument_Name = FreeCAD.ActiveDocument.Name
+
+        if (self.projectNameWindow_obj.project_Name != "") and (self.projectNameWindow_obj.project_dir != "") and (self.projectNameWindow_obj.okFlag == True):
+            self.show()
+        else:
+            pass
+
 
     #################################################################################################################################
                             ############################# FUNCTION DEFINITIONS #############################
@@ -331,16 +334,23 @@ class TibraParameters(QtGui.QDialog):
 
                                                 ##### Browse Files Function #####
 
-    def onBrowseButton(self):
-        self.browseWindow = QtGui.QFileDialog(self)
-        self.browseWindow.setFileMode(QtGui.QFileDialog.ExistingFile)
-        self.browseWindow.setNameFilter(str("*.stl"))
-        self.browseWindow.setViewMode(QtGui.QFileDialog.Detail)
-        self.browseWindow.setDirectory(self.work_dir)
 
-        if self.browseWindow.exec_():
-            path_name_list = self.browseWindow.selectedFiles()
-            self.textInput_pathname_.setText(path_name_list[0])
+    def onGoBackButton(self):
+
+        self.projectNameWindow_obj.textInput_dir.setText(self.projectNameWindow_obj.project_dir)
+        self.projectNameWindow_obj.textInput_name.setText(self.projectNameWindow_obj.project_Name)
+        self.hide()
+        self.projectNameWindow_obj.exec_()
+
+        self.work_dir = self.projectNameWindow_obj.project_dir
+        self.json_dir = self.work_dir
+        self.ActiveDocument_Name = FreeCAD.ActiveDocument.Name
+
+        if (self.projectNameWindow_obj.project_Name != "") and (self.projectNameWindow_obj.project_dir != "") and (self.projectNameWindow_obj.okFlag == True):
+            self.show()
+        else:
+            pass
+
 
     def onBrowseButton_QuESodirectory(self):
         self.QuESo_directory = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory", self.work_dir, QtGui.QFileDialog.ShowDirsOnly)
@@ -873,13 +883,42 @@ class TibraParameters(QtGui.QDialog):
     def onSave(self):
         #bounds
 
-        reply = QtGui.QMessageBox.question(self, "QuESo Parameters", "Upon Yes, the QuESoParameters.json file and all STL files related to boundary conditions will be saved. If you want to modify QuESo Parameters, you will need to set them up from scratch. \n \n"
+        reply = QtGui.QMessageBox.question(self, "QuESo Parameters", "Upon Yes, all files related to the project will be saved. \n \n"
                                            "Are you sure you want to continue?", QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
 
         if reply ==  QtGui.QMessageBox.No:
             pass
 
         elif reply == QtGui.QMessageBox.Yes:
+
+            #  Creating Project and data directories (changing to project directory):
+            os.chdir(self.work_dir)
+
+            if os.path.isdir(os.getcwd() + "/" + self.projectNameWindow_obj.project_Name):
+                self.work_dir = os.getcwd() + "/" + self.projectNameWindow_obj.project_Name
+                os.chdir(self.work_dir)
+
+                if os.path.isdir(os.getcwd() + "/data"):
+                    self.data_dir = os.getcwd() + "/data"
+
+                else:
+                    os.mkdir(os.getcwd() + "/data")
+                    self.data_dir = os.getcwd() + "/data"
+            
+            else:
+                os.mkdir(os.getcwd() + "/" + self.projectNameWindow_obj.project_Name)
+                self.work_dir = os.getcwd() + "/" + self.projectNameWindow_obj.project_Name
+                os.chdir(self.work_dir)
+                os.mkdir(os.getcwd() + "/data")
+                self.data_dir = os.getcwd() + "/data"
+
+            temp_name = FreeCAD.ActiveDocument.Name
+            FreeCAD.getDocument(temp_name).saveAs(self.work_dir + "/" + self.projectNameWindow_obj.project_Name + ".FCStd")
+
+            self.STL_directory = self.data_dir + "/" + self.projectNameWindow_obj.project_Name + ".stl"
+            object = []
+            object.append(FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(FreeCAD.ActiveDocument.Objects[0].Name))
+            Mesh.export(object, self.STL_directory)
 
             mybounds=self.bounds()
 
@@ -893,34 +932,11 @@ class TibraParameters(QtGui.QDialog):
             self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
 
 
-            #  Creating TIBRA directory:
-            os.chdir(self.work_dir)
-
-            if os.path.isdir(os.getcwd() + '/TIBRA'):
-                self.data_dir = os.getcwd() + '/TIBRA'
-                os.chdir(self.data_dir)
-
-                if os.path.isdir(self.data_dir + '/data'):
-                    self.data_dir = self.data_dir + '/data'
-                    os.chdir(self.data_dir)
-                else:
-                    os.mkdir('data')
-                    self.data_dir = self.data_dir + '/data'
-                    os.chdir(self.data_dir)
-
-            else:
-                os.mkdir('TIBRA')
-                self.data_dir = os.getcwd() + '/TIBRA'
-                os.chdir(self.data_dir)
-                os.mkdir('data')
-                self.data_dir = self.data_dir + '/data'
-                os.chdir(self.data_dir)
-
             QuESoParam = \
             {
 
                 "general_settings"   : {
-                    "input_filename"  :  self.textInput_pathname_.text(),
+                    "input_filename"  :  self.STL_directory,
                     "echo_level"      :  int(self.textInput_echo_.text())
                 },
                 "mesh_settings"     : {
@@ -943,7 +959,8 @@ class TibraParameters(QtGui.QDialog):
 
             self.DirectoryInfo = \
             {
-                "STL_directory"         : self.textInput_pathname_.text(),
+                "working_directory"     : self.work_dir,
+                "STL_directory"         : self.STL_directory,
                 "QuESo_directory"       : self.QuESo_directory,
                 "QuESo_lib_directory"   : self.QuESo_lib_directory,
                 "kratos_directory"      : self.Kratos_directory,
@@ -961,9 +978,9 @@ class TibraParameters(QtGui.QDialog):
                 force_direction = list(self.SurfaceLoad_force_arr[i])
                 magnitude = self.SurfaceLoad_modulus_arr[i]
                 SurfaceLoad_json = {"SurfaceLoadCondition": {
-                    "input_filename" : str(self.json_dir) + "N" + str(i+1) + ".stl",
+                    "input_filename" : str(self.data_dir) + "/" + "N" + str(i+1) + ".stl",
                     "modulus"        : magnitude,
-                    "direction"          : force_direction,
+                    "direction"      : force_direction,
                     }
                 }
                 self.append_json(SurfaceLoad_json)
@@ -971,13 +988,13 @@ class TibraParameters(QtGui.QDialog):
                 faceObject_Name = ('N' + str(i+1))
                 Draft.makeFacebinder(self.SurfaceLoadSelectionList[i], faceObject_Name)
                 SurfaceLoad_STL_Face_Object = [(FreeCAD.getDocument(self.ActiveDocument_Name).getObject(faceObject_Name))]
-                Mesh.export(SurfaceLoad_STL_Face_Object, self.work_dir + faceObject_Name + '.stl')
+                Mesh.export(SurfaceLoad_STL_Face_Object, self.data_dir + "/" + faceObject_Name + '.stl')
 
             for i in range (int(len(self.PenaltySupport_displacement_arr))):
                 out_arr = list(self.PenaltySupport_displacement_arr[i])
                 PenaltySupport_jason = {"PenaltySupportCondition": {
-                    "input_filename" : str(self.json_dir) + "D" + str(i+1) + ".stl",
-                    "value" : out_arr,
+                    "input_filename" : str(self.data_dir)+ "/" + "D" + str(i+1) + ".stl",
+                    "value"          : out_arr,
                     "penalty_factor" : 1e10
                     }
                 }
@@ -986,7 +1003,7 @@ class TibraParameters(QtGui.QDialog):
                 faceObject_Name = ('D' + str(i+1))
                 Draft.makeFacebinder(self.PenaltySupportSelectionList[i], faceObject_Name)
                 PenaltySupport_STL_Face_Object = [(FreeCAD.getDocument(self.ActiveDocument_Name).getObject(faceObject_Name))]
-                Mesh.export(PenaltySupport_STL_Face_Object, self.work_dir + faceObject_Name + '.stl')
+                Mesh.export(PenaltySupport_STL_Face_Object, self.data_dir + "/" + faceObject_Name + '.stl')
 
             # Creating KratosParameters.json file:
             with open('KratosParameters.json', 'w') as f:
@@ -1096,10 +1113,23 @@ if __name__ == "__main__":
 
 
     def bounds(self):
-        mesh = Mesh.Mesh(self.textInput_pathname_.text())
+        try:
+            mesh = Mesh.Mesh(self.STL_directory)
+
+        except:
+            object = []
+            object.append(FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(FreeCAD.ActiveDocument.Objects[0].Name))
+            STL_temp_directory = self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name + "_temp.stl"
+            Mesh.export(object, STL_temp_directory)
+            mesh = Mesh.Mesh(STL_temp_directory)
 
         # boundBox
         boundBox_    = mesh.BoundBox
+
+        try:
+            os.remove(STL_temp_directory)
+        except:
+            pass
 
         boundBoxXMin = boundBox_.XMin
         boundBoxYMin = boundBox_.YMin
@@ -1119,6 +1149,7 @@ if __name__ == "__main__":
 
         mybounds=self.bounds()
         self.visulizerun=self.visulizerun+1
+
         #bounds with 0.1 offset in total
         self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
         self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
@@ -1199,12 +1230,14 @@ if __name__ == "__main__":
     def deVisualizeGrid_Fun(self):
 
         ######### INSERT YOUR CODE HERE #########
+
         if self.visulizerun>0:
             FreeCAD.activeDocument().removeObject('Grid')
             for i in self.gridList:
                 FreeCAD.activeDocument().removeObject(i)
             self.gridList=[]
             self.visulizerun = 0
+            
 
 
     def append_json(self, entry, filename='QuESoParameters.json'):
@@ -1217,6 +1250,81 @@ if __name__ == "__main__":
                 json.dump(data, file, indent = 4, separators=(", ", ": "), sort_keys=False)
 
 ################################## OTHER REQUIRED CLASS DEFINITIONS #############################################
+
+class projectNameWindow(QtGui.QDialog):
+
+    def __init__(self):
+        super(projectNameWindow, self).__init__()
+        self.initUI()
+        self.project_Name = ""
+        self.project_dir = ""
+        self.okFlag = False
+
+    def initUI(self):
+        width = 340
+        height = 185
+        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+        self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
+        self.setWindowTitle("Project Name")
+        self.label_name = QtGui.QLabel("Please give your project a name:", self)
+        self.label_name.move(10, 10)
+        self.textInput_name = QtGui.QLineEdit(self)
+        self.textInput_name.setPlaceholderText("e.g: Cantilever, Knuckle ... ")
+        self.textInput_name.setFixedWidth(210)
+        self.textInput_name.move(10, self.label_name.y()+20)
+
+        self.label_dir1 = QtGui.QLabel("Please give the directory where the project will", self)
+        self.label_dir1.move(10, self.textInput_name.y()+40)
+        self.label_dir2 = QtGui.QLabel("be saved:", self)
+        self.label_dir2.move(10, self.label_dir1.y()+20)
+
+        self.textInput_dir = QtGui.QLineEdit(self)
+        self.textInput_dir.setFixedWidth(210)
+        self.textInput_dir.move(10, self.label_dir2.y()+20)
+
+        browseButton = QtGui.QPushButton('Browse Files', self)
+        browseButton.move(230, self.textInput_dir.y())
+        browseButton.clicked.connect(self.onBrowseButton)
+
+        # cancel button
+        cancelButton = QtGui.QPushButton('Cancel', self)
+        cancelButton.clicked.connect(self.onCancelButton)
+        cancelButton.setFixedWidth(80)
+       
+        # OK button
+        okButton = QtGui.QPushButton('Next', self)
+        okButton.clicked.connect(self.onOkButton)
+        okButton.setAutoDefault(True)
+        okButton.setFixedWidth(80)
+
+        self.container_okCancel = QtGui.QWidget(self)
+        self.container_okCancel.setContentsMargins(0, 0, 0, 0)
+
+        layout_okCancel = QtGui.QHBoxLayout(self.container_okCancel)
+        layout_okCancel.setContentsMargins(0, 0, 0,0)
+        layout_okCancel.addWidget(okButton)
+        layout_okCancel.addWidget(cancelButton)
+        layout_okCancel.setSpacing(40)
+        
+
+        self.container_okCancel.move(0.5*width - okButton.geometry().width() - 0.5*layout_okCancel.spacing(),
+                                     height-35)
+
+    def onOkButton(self):
+        self.okFlag = True
+        self.project_Name = self.textInput_name.text()
+        self.project_dir = self.textInput_dir.text()
+        self.close()
+    
+    def onCancelButton(self):
+        self.okFlag = False
+        self.setResult(0)
+        self.close()
+
+    def onBrowseButton(self):
+        project_dir = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory",os.getcwd(), QtGui.QFileDialog.ShowDirsOnly)
+        self.textInput_dir.setText(project_dir)
+
 
 class PenaltySupportBCBox(QtGui.QDialog):
     """"""

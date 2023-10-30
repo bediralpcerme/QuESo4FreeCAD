@@ -37,12 +37,12 @@ class RunTibra(QtGui.QDialog):
     def onOk(self):
        
         #By subprocess
-        self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
-        self.work_dir = FreeCAD.ActiveDocument.FileName
-        self.work_dir = self.work_dir.replace(self.docName,"")
-        self.data_dir = self.work_dir + 'TIBRA/data'
 
-        os.chdir(self.data_dir)
+        docName =  "/" + FreeCAD.ActiveDocument.Label + ".FCStd"
+        work_dir = FreeCAD.ActiveDocument.FileName
+        work_dir = work_dir.replace(docName,"")
+
+        os.chdir(work_dir)
 
         with open('DirectoryInfo.json', 'r') as myfile:
             mydata = json.load(myfile)
@@ -52,12 +52,14 @@ class RunTibra(QtGui.QDialog):
         QuESo_dirOrg = mydata['QuESo_directory']
         QuESo_lib_dirOrg = mydata['QuESo_lib_directory']
 
+        os.chdir(work_dir)
+
         if platform.system() == 'Linux':
 
             Run_script = \
             '''#!/bin/bash
 
-gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; cd /home/bediralp/STLtrialproject/TIBRA/data; export PYTHONPATH=$PYTHONPATH:/home/bediralp/.FreeCAD/Mod/TIBRA4FreeCAD/Kratos/bin/Release:/home/bediralp/.FreeCAD/Mod/TIBRA4FreeCAD/QuESo; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/bediralp/.FreeCAD/Mod/TIBRA4FreeCAD/Kratos/bin/Release/libs:/home/bediralp/.FreeCAD/Mod/TIBRA4FreeCAD/QuESo/libs; python3 QuESo_main.py; echo 'Press ENTER to exit'; read"'''.format(dir=self.data_dir, kratos_dir=kratos_dirOrg, QuESo_dir=QuESo_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
+gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; cd {dir}; export PYTHONPATH=$PYTHONPATH:{kratos_dir}:{QuESo_dir}; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir}; python3 QuESo_main.py; echo 'Press ENTER to exit'; read"'''.format(dir=work_dir, kratos_dir=kratos_dirOrg, QuESo_dir=QuESo_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
 
             with open("RunTibra_Shell.sh", "w") as rtsh:
                 rtsh.write(Run_script)
@@ -65,7 +67,7 @@ gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; 
 
             rtsh.close()
 
-            RunTibra_Shell_dir = self.data_dir + "/RunTibra_Shell.sh"
+            RunTibra_Shell_dir = work_dir + "/RunTibra_Shell.sh"
             
             current_st = os.stat(RunTibra_Shell_dir)
 
@@ -84,7 +86,7 @@ gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; 
 
             rtsh.close()
             
-            RunTibra_Shell_dir = self.data_dir + "/RunTibra_Shell.bat"
+            RunTibra_Shell_dir = work_dir + "/RunTibra_Shell.bat"
             
             current_st = os.stat(RunTibra_Shell_dir)
 
