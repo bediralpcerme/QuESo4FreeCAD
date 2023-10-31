@@ -346,8 +346,17 @@ class TibraParameters(QtGui.QDialog):
             QuESo_dirOrg = mydata_directory['QuESo_directory']
             STL_dir = mydata_directory['STL_directory']
 
+            self.textInput_QuESo_.setText(QuESo_dirOrg)
+            self.textInput_Kratos_.setText(kratos_dirOrg)
+
+        except:
+            pass
+
                         ## Setting Up QuESo Parameters and changing values on the pop-up screen ##
 
+        try:
+            os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
+            work_dir = os.getcwd()
             with open('QuESoParameters.json', 'r') as myfile:
                 mydata_QuESo = json.load(myfile)
 
@@ -386,8 +395,6 @@ class TibraParameters(QtGui.QDialog):
             #######
 
             self.textInput_echo_.setText(echo_level)
-            self.textInput_QuESo_.setText(QuESo_dirOrg)
-            self.textInput_Kratos_.setText(kratos_dirOrg)
             self.textInput_polynomialOrder_x_.setText(polynomial_order_x)
             self.textInput_polynomialOrder_y_.setText(polynomial_order_y)
             self.textInput_polynomialOrder_z_.setText(polynomial_order_z)
@@ -397,8 +404,14 @@ class TibraParameters(QtGui.QDialog):
             self.textInput_residual_.setText(moment_fitting_residual)
             self.popup_integration.setCurrentText(integration_method)
 
-                        ## Setting Up Kratos Parameters and changing values on the pop-up screen ##
+        except:
+            pass
 
+                        ## Setting Up Kratos Parameters and changing values on the pop-up screen ##
+        
+        try:
+            os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
+            work_dir = os.getcwd()
             with open('KratosParameters.json', 'r') as myfile:
                 mydata_Kratos = json.load(myfile)
 
@@ -458,8 +471,14 @@ class TibraParameters(QtGui.QDialog):
             self.SolverSettingsBox_obj.textInput_modeler_part_name_.setText(model_part_name_modelers)
             self.SolverSettingsBox_obj.textInput_modeler_geometry_name_.setText(geometry_name)
 
+        except:
+            pass
+
             ## Setting Up Structural Materials Parameters and changing values on the pop-up screen ##
 
+        try:
+            os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
+            work_dir = os.getcwd()
             with open('StructuralMaterials.json', 'r') as myfile:
                 mydata_StMat = json.load(myfile)
 
