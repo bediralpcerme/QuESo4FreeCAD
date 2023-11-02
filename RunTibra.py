@@ -78,7 +78,7 @@ gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; 
         elif platform.system() == 'Windows':
             
             Run_script = \
-            '''Start %SystemRoot%\System32\cmd.exe /K "cd {dir} & set PYTHONPATH=%PYTHONPATH%;{QuESo_dir};{kratos_dir} & set PATH=%PATH%;{QuESo_lib_dir};{kratos_lib_dir} & python3 QuESo_main.py"'''.format(dir=self.data_dir, QuESo_dir=QuESo_dirOrg, kratos_dir=kratos_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
+            '''Start %SystemRoot%\System32\cmd.exe /K "cd {dir} & set PYTHONPATH=%PYTHONPATH%;{QuESo_dir};{kratos_dir} & set PATH=%PATH%;{QuESo_lib_dir};{kratos_lib_dir} & python3 QuESo_main.py & pause && exit"'''.format(dir=self.data_dir, QuESo_dir=QuESo_dirOrg, kratos_dir=kratos_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
             
             with open("RunTibra_Shell.bat", "w") as rtsh:
                 rtsh.write(Run_script)
