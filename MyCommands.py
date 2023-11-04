@@ -5,7 +5,6 @@ from FreeCAD_PySide import *
 
 import TibraParameters
 import RunTibra
-import StlExportManager
 import __main__
     
 class SetTibraParameters():
