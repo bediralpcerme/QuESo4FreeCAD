@@ -1,10 +1,8 @@
 from FreeCAD_PySide import *
-import os
 import subprocess
 import FreeCAD
-
-import sys
-import os
+import sys, os, stat, platform
+import json
 
 
 class RunTibra(QtGui.QDialog):
@@ -39,17 +37,63 @@ class RunTibra(QtGui.QDialog):
     def onOk(self):
        
         #By subprocess
-        self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
-        self.work_dir = FreeCAD.ActiveDocument.FileName
-        self.work_dir = self.work_dir.replace(self.docName,"")
-        self.work_dir = self.work_dir + '/TIBRA/data'
 
-        os.chdir(self.work_dir)
-        #Idk how to automatize this but python in freecad doesnt see the path in the system so you add it again
-        sys.path.append("D:\COMPUTATIONAL MECHANICS\SOFTWARE_LAB\TIBRA")
-        from TIBRA_PythonApplication.PyTIBRA import PyTIBRA
-        pytibra = PyTIBRA("TIBRAParameters.json")
-        pytibra.Run()
+        docName =  "/" + FreeCAD.ActiveDocument.Label + ".FCStd"
+        work_dir = FreeCAD.ActiveDocument.FileName
+        work_dir = work_dir.replace(docName,"")
+
+        os.chdir(work_dir)
+
+        with open('DirectoryInfo.json', 'r') as myfile:
+            mydata = json.load(myfile)
+
+        kratos_dirOrg = mydata['kratos_directory']
+        kratos_lib_dirOrg = mydata['kratos_lib_directory']
+        QuESo_dirOrg = mydata['QuESo_directory']
+        QuESo_lib_dirOrg = mydata['QuESo_lib_directory']
+
+        os.chdir(work_dir)
+
+        if platform.system() == 'Linux':
+
+            Run_script = \
+            '''#!/bin/bash
+
+gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; cd {dir}; export PYTHONPATH=$PYTHONPATH:{kratos_dir}:{QuESo_dir}; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir}; python3 QuESo_main.py; echo 'Press ENTER to exit'; read"'''.format(dir=work_dir, kratos_dir=kratos_dirOrg, QuESo_dir=QuESo_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
+
+            with open("RunTibra_Shell.sh", "w") as rtsh:
+                rtsh.write(Run_script)
+                pass
+
+            rtsh.close()
+
+            RunTibra_Shell_dir = work_dir + "/RunTibra_Shell.sh"
+            
+            current_st = os.stat(RunTibra_Shell_dir)
+
+            os.chmod(RunTibra_Shell_dir, current_st.st_mode | stat.S_IEXEC)
+
+            subprocess.run(RunTibra_Shell_dir, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
+        
+        elif platform.system() == 'Windows':
+            
+            Run_script = \
+            '''Start %SystemRoot%\System32\cmd.exe /K "cd {dir} & set PYTHONPATH=%PYTHONPATH%;{QuESo_dir};{kratos_dir} & set PATH=%PATH%;{QuESo_lib_dir};{kratos_lib_dir} & python3 QuESo_main.py & pause && exit"'''.format(dir=work_dir, QuESo_dir=QuESo_dirOrg, kratos_dir=kratos_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
+            
+            with open("RunTibra_Shell.bat", "w") as rtsh:
+                rtsh.write(Run_script)
+                pass
+
+            rtsh.close()
+            
+            RunTibra_Shell_dir = work_dir + "/RunTibra_Shell.bat"
+            
+            current_st = os.stat(RunTibra_Shell_dir)
+
+            os.chmod(RunTibra_Shell_dir, current_st.st_mode | stat.S_IEXEC)
+            
+            subprocess.run('RunTibra_Shell.bat', cwd=work_dir, shell=True, text=True)
+        
 
         self.close()
 

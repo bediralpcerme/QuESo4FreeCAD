@@ -21,7 +21,7 @@ class StlExportManager(QtGui.QDialog):
         self.label_ = QtGui.QLabel("Please enter the file name:", self)
         self.label_.move(10, 20)
         self.textInput_ = QtGui.QLineEdit(self)
-        self.textInput_.setText("Appear Trial")
+        self.textInput_.setPlaceholderText("myBoxObject")
         self.textInput_.setFixedWidth(200)
         self.textInput_.move(10, 50)
 
