@@ -5,7 +5,7 @@ import sys, os, stat, platform
 import json
 
 
-class RunTibra(QtGui.QDialog):
+class RunQuESo(QtGui.QDialog):
 
     def __init__(self):
         super().__init__()
@@ -18,10 +18,10 @@ class RunTibra(QtGui.QDialog):
         height = 160
         centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
-        self.setWindowTitle("Run Tibra?")
+        self.setWindowTitle("Run QuESo?")
 
         #label text
-        self.label_ = QtGui.QLabel("Run Tibra?", self)
+        self.label_ = QtGui.QLabel("Run QuESo?", self)
         self.label_.move(100, 20)
 
         # cancel button
@@ -61,38 +61,38 @@ class RunTibra(QtGui.QDialog):
 
 gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; cd {dir}; export PYTHONPATH=$PYTHONPATH:{kratos_dir}:{QuESo_dir}; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir}; python3 QuESo_main.py; echo 'Press ENTER to exit'; read"'''.format(dir=work_dir, kratos_dir=kratos_dirOrg, QuESo_dir=QuESo_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
 
-            with open("RunTibra_Shell.sh", "w") as rtsh:
+            with open("RunQuESo_Shell.sh", "w") as rtsh:
                 rtsh.write(Run_script)
                 pass
 
             rtsh.close()
 
-            RunTibra_Shell_dir = work_dir + "/RunTibra_Shell.sh"
+            RunQuESo_Shell_dir = work_dir + "/RunQuESo_Shell.sh"
             
-            current_st = os.stat(RunTibra_Shell_dir)
+            current_st = os.stat(RunQuESo_Shell_dir)
 
-            os.chmod(RunTibra_Shell_dir, current_st.st_mode | stat.S_IEXEC)
+            os.chmod(RunQuESo_Shell_dir, current_st.st_mode | stat.S_IEXEC)
 
-            subprocess.run(RunTibra_Shell_dir, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
+            subprocess.run(RunQuESo_Shell_dir, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
         
         elif platform.system() == 'Windows':
             
             Run_script = \
             '''Start %SystemRoot%\System32\cmd.exe /K "cd {dir} & set PYTHONPATH=%PYTHONPATH%;{QuESo_dir};{kratos_dir} & set PATH=%PATH%;{QuESo_lib_dir};{kratos_lib_dir} & python3 QuESo_main.py & pause && exit"'''.format(dir=work_dir, QuESo_dir=QuESo_dirOrg, kratos_dir=kratos_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
             
-            with open("RunTibra_Shell.bat", "w") as rtsh:
+            with open("RunQuESo_Shell.bat", "w") as rtsh:
                 rtsh.write(Run_script)
                 pass
 
             rtsh.close()
             
-            RunTibra_Shell_dir = work_dir + "/RunTibra_Shell.bat"
+            RunQuESo_Shell_dir = work_dir + "/RunQuESo_Shell.bat"
             
-            current_st = os.stat(RunTibra_Shell_dir)
+            current_st = os.stat(RunQuESo_Shell_dir)
 
-            os.chmod(RunTibra_Shell_dir, current_st.st_mode | stat.S_IEXEC)
+            os.chmod(RunQuESo_Shell_dir, current_st.st_mode | stat.S_IEXEC)
             
-            subprocess.run('RunTibra_Shell.bat', cwd=work_dir, shell=True, text=True)
+            subprocess.run('RunQuESo_Shell.bat', cwd=work_dir, shell=True, text=True)
         
 
         self.close()

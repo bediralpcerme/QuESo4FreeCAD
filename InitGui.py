@@ -5,10 +5,10 @@ import FreeCADGui as Gui
 
 
 
-class Tibra4FreeCAD (Workbench):
+class TIBRA4FreeCAD (Workbench):
 
-    MenuText = "Tibra4FreeCAD"
-    ToolTip = "Tibra4FreeCAD Workbench"
+    MenuText = "TIBRA4FreeCAD"
+    ToolTip = "TIBRA4FreeCAD Workbench"
     Icon = """
 			/* XPM */
 			static const char *test_icon[]={
@@ -44,7 +44,7 @@ class Tibra4FreeCAD (Workbench):
     def Initialize(self):
         """This function is executed when FreeCAD starts"""
         import MyCommands#, MyModuleB # import here all the needed files that create your FreeCAD commands
-        self.list = ["Set Tibra Parameters", 'Run Tibra' ] # A list of command names created in the line above
+        self.list = ["Set QuESo Parameters", 'Run QuESo' ] # A list of command names created in the line above
         self.appendToolbar("My Commands",self.list) # creates a new toolbar with your commands
         self.appendMenu("Example Menu",self.list) # creates a new menu
         self.appendMenu(["An existing Menu","My submenu"],self.list) # appends a submenu to an existing menu
@@ -69,4 +69,4 @@ class Tibra4FreeCAD (Workbench):
         # This is not a template, the returned string should be exactly "Gui::PythonWorkbench"
         return "Gui::PythonWorkbench"
        
-Gui.addWorkbench(Tibra4FreeCAD())
+Gui.addWorkbench(TIBRA4FreeCAD())

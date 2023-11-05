@@ -3,21 +3,21 @@ import FreeCAD
 from random import *
 from FreeCAD_PySide import *
 
-import TibraParameters
-import RunTibra
+import QuESoParameters
+import RunQuESo
 import __main__
     
-class SetTibraParameters():
+class SetQuESoParameters():
     """My new command"""
 
     def GetResources(self):
         icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/set_parameter.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
-                'MenuText': "Tibra Parameters",
-                'ToolTip' : "Set TIBRA Parameters"}
+                'MenuText': "QuESo Parameters",
+                'ToolTip' : "Set QuESo Parameters"}
 
     def Activated(self):
-        __main__.form = TibraParameters.TibraParameters()
+        __main__.form = QuESoParameters.QuESoParameters()
         return
 
     def IsActive(self):
@@ -26,18 +26,18 @@ class SetTibraParameters():
         return True
 
 
-class RunTibra_Class():
+class RunQuESo_Class():
   
 
     def GetResources(self):
         icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/run_icon.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
-                'MenuText': "Run Tibra",
-                'ToolTip' : "Run Tibra"}
+                'MenuText': "Run QuESo",
+                'ToolTip' : "Run QuESo"}
 
     def Activated(self):
-        tibra = RunTibra.RunTibra()
-        tibra.exec_()
+        QuESo = RunQuESo.RunQuESo()
+        QuESo.exec_()
         return
 
     def IsActive(self):
@@ -46,5 +46,5 @@ class RunTibra_Class():
         return True
 
 
-FreeCADGui.addCommand('Set Tibra Parameters',SetTibraParameters())
-FreeCADGui.addCommand('Run Tibra',RunTibra_Class())
+FreeCADGui.addCommand('Set QuESo Parameters',SetQuESoParameters())
+FreeCADGui.addCommand('Run QuESo',RunQuESo_Class())
