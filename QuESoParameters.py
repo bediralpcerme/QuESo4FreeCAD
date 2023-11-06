@@ -51,12 +51,15 @@ class QuESoParameters(QtGui.QDialog):
         boldUnderlinedFont.setUnderline(True)
         blueFont = QtGui.QPalette()
         blueFont.setColor(QtGui.QPalette.WindowText, QtGui.QColor('#005293'))
+        back_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowBack)
+        cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
+        save_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogSaveButton)
+        browse_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DirOpenIcon)
 
         ## BEGINNING OF GENERAL SETTINGS ##
 
         self.goback_button = QtGui.QPushButton("Go Back", self)
-        left_arrow = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowBack)
-        self.goback_button.setIcon(left_arrow)
+        self.goback_button.setIcon(back_arrow_icon)
         layout_main.addWidget(self.goback_button, 0, 0, QtCore.Qt.AlignLeft)
 
         layout_main.setRowMinimumHeight(1, 10)
@@ -80,6 +83,7 @@ class QuESoParameters(QtGui.QDialog):
         layout_QuESo_text.addWidget(self.textInput_QuESo_)
 
         self.fileBrowseButton_QuESo = QtGui.QPushButton('Browse files',self)
+        self.fileBrowseButton_QuESo.setIcon(browse_icon)
         self.fileBrowseButton_QuESo.setAutoDefault(False)
         layout_QuESo_text.addWidget(self.fileBrowseButton_QuESo)
 
@@ -99,6 +103,7 @@ class QuESoParameters(QtGui.QDialog):
         layout_kratos_text.addWidget(self.textInput_Kratos_)
 
         self.fileBrowseButton_Kratos = QtGui.QPushButton('Browse files',self)
+        self.fileBrowseButton_Kratos.setIcon(browse_icon)
         self.fileBrowseButton_Kratos.setAutoDefault(False)
         layout_kratos_text.addWidget(self.fileBrowseButton_Kratos)
 
@@ -323,7 +328,9 @@ class QuESoParameters(QtGui.QDialog):
 
         layout_saveCancel = QtGui.QHBoxLayout()
         cancelButton = QtGui.QPushButton("Cancel", self)
+        cancelButton.setIcon(cancel_icon)
         saveButton = QtGui.QPushButton("Save", self)
+        saveButton.setIcon(save_icon)
         layout_saveCancel.addWidget(saveButton)
         layout_saveCancel.addWidget(cancelButton)
         layout_saveCancel.setSpacing(40)
@@ -1150,7 +1157,7 @@ class projectNameWindow(QtGui.QDialog):
         self.okFlag = False
 
     def initUI(self):
-        width = 340
+        width = 350
         height = 210
         centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
@@ -1163,6 +1170,10 @@ class projectNameWindow(QtGui.QDialog):
         self.textInput_name.setPlaceholderText("e.g: Cantilever, Knuckle ... ")
         self.textInput_name.setFixedWidth(210)
         self.textInput_name.move(10, self.label_name2.y()+25)
+        forward_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowForward)
+        cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
+        browse_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DirOpenIcon)
+
 
         self.label_dir1 = QtGui.QLabel("Please give the directory where the project will", self)
         self.label_dir1.move(10, self.textInput_name.y()+40)
@@ -1174,18 +1185,21 @@ class projectNameWindow(QtGui.QDialog):
         self.textInput_dir.move(10, self.label_dir2.y()+25)
 
         browseButton = QtGui.QPushButton('Browse Files', self)
+        browseButton.setIcon(browse_icon)
         browseButton.move(230, self.textInput_dir.y())
         browseButton.clicked.connect(self.onBrowseButton)
 
         # cancel button
         cancelButton = QtGui.QPushButton('Cancel', self)
         cancelButton.clicked.connect(self.onCancelButton)
+        cancelButton.setIcon(cancel_icon)
         cancelButton.setFixedWidth(80)
        
         # OK button
         okButton = QtGui.QPushButton('Next', self)
         okButton.clicked.connect(self.onOkButton)
         okButton.setAutoDefault(True)
+        okButton.setIcon(forward_arrow_icon)
         okButton.setFixedWidth(80)
 
         self.container_okCancel = QtGui.QWidget(self)
@@ -1381,6 +1395,8 @@ class PenaltySupportFacesList(QtGui.QWidget):
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, on = True)
         layout = QtGui.QGridLayout()
+        discard_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogDiscardButton)
+        ok_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogApplyButton)
 
         FaceID_label = QtGui.QLabel("Faces Under Penalty Support BC:", self)
         layout.addWidget(FaceID_label, 0, 0, 1, 1)
@@ -1405,10 +1421,12 @@ class PenaltySupportFacesList(QtGui.QWidget):
         layout.setRowMinimumHeight(5, 10)
 
         self.okButton = QtGui.QPushButton('OK', self)
+        self.okButton.setIcon(ok_icon)
         self.okButton.setAutoDefault(True)
         self.okButton.setFixedWidth(80)
 
         self.DiscardButton = QtGui.QPushButton('Discard', self)
+        self.DiscardButton.setIcon(discard_icon)
         self.DiscardButton.setFixedWidth(80)
 
         layout4OkDiscard = QtGui.QHBoxLayout()
@@ -1438,6 +1456,8 @@ class SurfaceLoadFacesList(QtGui.QWidget):
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, on = True)
         layout = QtGui.QGridLayout()
+        discard_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogDiscardButton)
+        ok_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogApplyButton)
 
         FaceID_label = QtGui.QLabel("Faces Under Surface Load BC:", self)
         layout.addWidget(FaceID_label, 0, 0, 1, 1)
@@ -1462,10 +1482,12 @@ class SurfaceLoadFacesList(QtGui.QWidget):
         layout.setRowMinimumHeight(5, 10)
 
         self.okButton = QtGui.QPushButton('OK', self)
+        self.okButton.setIcon(ok_icon)
         self.okButton.setAutoDefault(True)
         self.okButton.setFixedWidth(80)
 
         self.DiscardButton = QtGui.QPushButton('Discard', self)
+        self.DiscardButton.setIcon(discard_icon)
         self.DiscardButton.setFixedWidth(80)
 
         layout4OkDiscard = QtGui.QHBoxLayout()
