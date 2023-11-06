@@ -5,7 +5,7 @@ import sys, os, stat, platform
 import json
 
 
-class RunTibra(QtGui.QDialog):
+class RunQuESo(QtGui.QDialog):
 
     def __init__(self):
         super().__init__()
@@ -14,25 +14,37 @@ class RunTibra(QtGui.QDialog):
     def initUI(self):
 
         #position and geometry of the dialog box
-        width = 300
-        height = 160
-        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
-        self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
-        self.setWindowTitle("Run Tibra?")
+        self.setWindowTitle("Run QuESo")
+        layout = QtGui.QGridLayout()
+        cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
+        ok_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogApplyButton)
 
         #label text
-        self.label_ = QtGui.QLabel("Run Tibra?", self)
-        self.label_.move(100, 20)
+        self.label_ = QtGui.QLabel("Are you sure you want to run QuESo?", self)
+        layout.addWidget(self.label_, 0, 0, QtCore.Qt.AlignCenter)
+
+        layout.setRowMinimumHeight(1, 20)
 
         # cancel button
         cancelButton = QtGui.QPushButton('Cancel', self)
+        cancelButton.setIcon(cancel_icon)
         cancelButton.clicked.connect(self.onCancel)
-        cancelButton.move(10, 90)
         # OK button
         okButton = QtGui.QPushButton('OK', self)
+        okButton.setIcon(ok_icon)
         okButton.clicked.connect(self.onOk)
         okButton.setAutoDefault(True)
-        okButton.move(170, 90)
+
+        # Sublayout for Ok-Cancel
+
+        layout_okCancel = QtGui.QHBoxLayout()
+        layout_okCancel.addWidget(okButton)
+        layout_okCancel.addWidget(cancelButton)
+        layout_okCancel.setSpacing(40)
+
+        layout.addLayout(layout_okCancel, 2, 0, QtCore.Qt.AlignCenter)
+
+        self.setLayout(layout)
 
     def onOk(self):
        
@@ -61,38 +73,38 @@ class RunTibra(QtGui.QDialog):
 
 gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; cd {dir}; export PYTHONPATH=$PYTHONPATH:{kratos_dir}:{QuESo_dir}; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir}; python3 QuESo_main.py; echo 'Press ENTER to exit'; read"'''.format(dir=work_dir, kratos_dir=kratos_dirOrg, QuESo_dir=QuESo_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
 
-            with open("RunTibra_Shell.sh", "w") as rtsh:
+            with open("RunQuESo_Shell.sh", "w") as rtsh:
                 rtsh.write(Run_script)
                 pass
 
             rtsh.close()
 
-            RunTibra_Shell_dir = work_dir + "/RunTibra_Shell.sh"
+            RunQuESo_Shell_dir = work_dir + "/RunQuESo_Shell.sh"
             
-            current_st = os.stat(RunTibra_Shell_dir)
+            current_st = os.stat(RunQuESo_Shell_dir)
 
-            os.chmod(RunTibra_Shell_dir, current_st.st_mode | stat.S_IEXEC)
+            os.chmod(RunQuESo_Shell_dir, current_st.st_mode | stat.S_IEXEC)
 
-            subprocess.run(RunTibra_Shell_dir, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
+            subprocess.run(RunQuESo_Shell_dir, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
         
         elif platform.system() == 'Windows':
             
             Run_script = \
             '''Start %SystemRoot%\System32\cmd.exe /K "cd {dir} & set PYTHONPATH=%PYTHONPATH%;{QuESo_dir};{kratos_dir} & set PATH=%PATH%;{QuESo_lib_dir};{kratos_lib_dir} & python3 QuESo_main.py & pause && exit"'''.format(dir=work_dir, QuESo_dir=QuESo_dirOrg, kratos_dir=kratos_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
             
-            with open("RunTibra_Shell.bat", "w") as rtsh:
+            with open("RunQuESo_Shell.bat", "w") as rtsh:
                 rtsh.write(Run_script)
                 pass
 
             rtsh.close()
             
-            RunTibra_Shell_dir = work_dir + "/RunTibra_Shell.bat"
+            RunQuESo_Shell_dir = work_dir + "/RunQuESo_Shell.bat"
             
-            current_st = os.stat(RunTibra_Shell_dir)
+            current_st = os.stat(RunQuESo_Shell_dir)
 
-            os.chmod(RunTibra_Shell_dir, current_st.st_mode | stat.S_IEXEC)
+            os.chmod(RunQuESo_Shell_dir, current_st.st_mode | stat.S_IEXEC)
             
-            subprocess.run('RunTibra_Shell.bat', cwd=work_dir, shell=True, text=True)
+            subprocess.run('RunQuESo_Shell.bat', cwd=work_dir, shell=True, text=True)
         
 
         self.close()

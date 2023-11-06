@@ -19,11 +19,11 @@ from collections import OrderedDict
 # - Visual improvements and name changes
 
 
-class TibraParameters(QtGui.QDialog):
+class QuESoParameters(QtGui.QDialog):
 
     def __init__(self):
 
-        super(TibraParameters, self).__init__()
+        super(QuESoParameters, self).__init__()
         self.initUI()
         self.visulizerun=0
         self.gridList=[]     
@@ -31,267 +31,327 @@ class TibraParameters(QtGui.QDialog):
 
     def initUI(self):
 
-        #position and geometry of the dialog box
-        width = 350
-        height = 790
+        # Basic settings of the QuESo Parameters Window
         
+        layout_main = QtGui.QGridLayout()
+
         self.centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         std_validate = QtGui.QIntValidator()
         scientific_validate = QtGui.QDoubleValidator()
         scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation)
-        self.setGeometry(self.centerPoint.x()-0.5*width, self.centerPoint.y()-0.5*height, width, height)
         self.setWindowTitle("QuESo Parameters")
         self.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, on = True)
-
-        # self.setWindowFlags(QtCore.Qt.WindowMinimizeButtonHint)
-
-
-        # self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
-        # self.work_dir = FreeCAD.ActiveDocument.FileName
-        # self.work_dir = self.work_dir.replace(self.docName,"")
-        # self.ActiveDocument_Name = FreeCAD.ActiveDocument.Name # string
-
-        # Go back button to project name and directory:
-
-        self.goback_button = QtGui.QPushButton("Go Back", self)
-        left_arrow = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowBack)
-        self.goback_button.setIcon(left_arrow)
-        self.goback_button.move(10,10)
-        self.goback_button.clicked.connect(self.onGoBackButton)
-        
-
-        #main (general) head
-        self.label_main_ = QtGui.QLabel("General settings:", self)
-        self.label_main_.move(10, 40)
-        boldFont=QtGui.QFont()
+        boldFont = QtGui.QFont()
         boldFont.setBold(True)
-        boldUnderlinedFont=QtGui.QFont()
+        boldUnderlinedFont = QtGui.QFont()
         boldUnderlinedFont.setBold(True)
         boldUnderlinedFont.setUnderline(True)
         blueFont = QtGui.QPalette()
         blueFont.setColor(QtGui.QPalette.WindowText, QtGui.QColor('#005293'))
+        back_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowBack)
+        cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
+        save_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogSaveButton)
+        browse_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DirOpenIcon)
+
+        ## BEGINNING OF GENERAL SETTINGS ##
+
+        self.goback_button = QtGui.QPushButton("Go Back", self)
+        self.goback_button.setIcon(back_arrow_icon)
+        layout_main.addWidget(self.goback_button, 0, 0, QtCore.Qt.AlignLeft)
+
+        layout_main.setRowMinimumHeight(1, 10)
+
+        self.label_main_ = QtGui.QLabel("General settings", self)
         self.label_main_.setFont(boldUnderlinedFont)
         self.label_main_.setPalette(blueFont)
+        layout_main.addWidget(self.label_main_, 2, 0, QtCore.Qt.AlignHCenter)
 
-        #path to the QuESo
+        layout_main.setRowMinimumHeight(3, 5)
+
         self.label_QuESo_ = QtGui.QLabel("Directory of the QuESo:", self)
-        self.label_QuESo_.move(10, self.label_main_.y()+30)
+        layout_main.addWidget(self.label_QuESo_, 4, 0, QtCore.Qt.AlignLeft)
 
-        #Text edit of QuESo
+        layout_main.setRowMinimumHeight(5, 0)
+
+        layout_QuESo_text = QtGui.QHBoxLayout()
         self.textInput_QuESo_ = QtGui.QLineEdit(self)
         self.textInput_QuESo_.setText("")
-        self.textInput_QuESo_.setFixedWidth(200)
-        self.textInput_QuESo_.move(10, self.label_QuESo_.y()+20)
+        self.textInput_QuESo_.setMinimumWidth(200)
+        layout_QuESo_text.addWidget(self.textInput_QuESo_)
 
-        #file browser button QuESo
         self.fileBrowseButton_QuESo = QtGui.QPushButton('Browse files',self)
-        self.fileBrowseButton_QuESo.clicked.connect(self.onBrowseButton_QuESodirectory)
+        self.fileBrowseButton_QuESo.setIcon(browse_icon)
         self.fileBrowseButton_QuESo.setAutoDefault(False)
-        self.fileBrowseButton_QuESo.move(220, self.textInput_QuESo_.y())
+        layout_QuESo_text.addWidget(self.fileBrowseButton_QuESo)
 
-        #path to the Kratos
-        self.label_Kratos_ = QtGui.QLabel("Directory of the Kratos:", self)
-        self.label_Kratos_.move(10, self.textInput_QuESo_.y()+30)
+        layout_main.addLayout(layout_QuESo_text, 6, 0, 1, -1)
 
-        #Text edit of Kratos
+        layout_main.setRowMinimumHeight(7, 5)
+
+        self.label_kratos_ = QtGui.QLabel("Directory of the Kratos:", self)
+        layout_main.addWidget(self.label_kratos_, 8, 0, QtCore.Qt.AlignLeft)
+
+        layout_main.setRowMinimumHeight(9, 0)
+
+        layout_kratos_text = QtGui.QHBoxLayout()
         self.textInput_Kratos_ = QtGui.QLineEdit(self)
         self.textInput_Kratos_.setText("")
-        self.textInput_Kratos_.setFixedWidth(200)
-        self.textInput_Kratos_.move(10, self.label_Kratos_.y()+20)
+        self.textInput_Kratos_.setMinimumWidth(200)
+        layout_kratos_text.addWidget(self.textInput_Kratos_)
 
-        #file browser button Kratos
         self.fileBrowseButton_Kratos = QtGui.QPushButton('Browse files',self)
-        self.fileBrowseButton_Kratos.clicked.connect(self.onBrowseButton_Kratosdirectory)
+        self.fileBrowseButton_Kratos.setIcon(browse_icon)
         self.fileBrowseButton_Kratos.setAutoDefault(False)
-        self.fileBrowseButton_Kratos.move(220, self.textInput_Kratos_.y())
+        layout_kratos_text.addWidget(self.fileBrowseButton_Kratos)
 
-        #label text
+        layout_main.addLayout(layout_kratos_text, 10, 0, 1, -1)
+
+        layout_main.setRowMinimumHeight(11, 5)
+
         self.label_echo_ = QtGui.QLabel("Echo level:", self)
-        self.label_echo_.move(10, self.textInput_Kratos_.y()+30)
+        layout_main.addWidget(self.label_echo_, 12, 0, QtCore.Qt.AlignLeft)
+
+        layout_main.setRowMinimumHeight(13, 0)
+
         self.textInput_echo_ = QtGui.QLineEdit(self)
         self.textInput_echo_.setPlaceholderText("1")
         self.textInput_echo_.setFixedWidth(50)
         self.textInput_echo_.setValidator(std_validate)
-        self.textInput_echo_.move(10, self.label_echo_.y()+20)
 
-        #mesh head
-        self.label_main_ = QtGui.QLabel("Mesh settings:", self)
-        self.label_main_.move(10, self.textInput_echo_.y()+45)
+        layout_main.addWidget(self.textInput_echo_, 14, 0, QtCore.Qt.AlignLeft)
+
+        ## END OF GENERAL SETTINGS ##
+
+        layout_main.setRowMinimumHeight(15, 10)
+
+        self.label_main_ = QtGui.QLabel("Mesh Settings", self)
         self.label_main_.setFont(boldUnderlinedFont)
         self.label_main_.setPalette(blueFont)
+        layout_main.addWidget(self.label_main_, 16, 0, QtCore.Qt.AlignHCenter)
 
-        #polynomial order
+        layout_main.setRowMinimumHeight(17, 5)
+
         self.label_polynomialOrder_ = QtGui.QLabel("Polynomial order:", self)
-        self.label_polynomialOrder_.move(10, self.label_main_.y()+30)
         self.label_polynomialOrder_.setFont(boldFont)
+        layout_main.addWidget(self.label_polynomialOrder_, 18, 0, QtCore.Qt.AlignLeft)
+
+        layout_main.setRowMinimumHeight(19, 0)
+
+        # Creating SubLayout for Polynomial Order
+
+        layout_poly_xyz = QtGui.QGridLayout()
 
         self.label_polynomialOrder_x_ = QtGui.QLabel("x: ", self)
-        self.label_polynomialOrder_x_.move(10, self.label_polynomialOrder_.y()+25)
+        layout_poly_xyz.addWidget(self.label_polynomialOrder_x_, 0, 0, QtCore.Qt.AlignLeft)
+
+        layout_poly_xyz.setColumnMinimumWidth(1, 0)
+
         self.textInput_polynomialOrder_x_ = QtGui.QLineEdit(self)
         self.textInput_polynomialOrder_x_.setPlaceholderText("1")
-        self.textInput_polynomialOrder_x_.setFixedWidth(60)
+        self.textInput_polynomialOrder_x_.setFixedWidth(50)
         self.textInput_polynomialOrder_x_.setValidator(std_validate)
-        self.textInput_polynomialOrder_x_.move(25, self.label_polynomialOrder_.y()+20)
+        layout_poly_xyz.addWidget(self.textInput_polynomialOrder_x_, 0, 2, QtCore.Qt.AlignLeft)
+
+        layout_poly_xyz.setColumnMinimumWidth(3, 20)
 
         self.label_polynomialOrder_y_ = QtGui.QLabel("y: ", self)
-        self.label_polynomialOrder_y_.move(110, self.label_polynomialOrder_.y()+25)
+        layout_poly_xyz.addWidget(self.label_polynomialOrder_y_, 0, 4, QtCore.Qt.AlignLeft)
+
+        layout_poly_xyz.setColumnMinimumWidth(5, 0)
+
         self.textInput_polynomialOrder_y_ = QtGui.QLineEdit(self)
-        self.textInput_polynomialOrder_y_.setPlaceholderText("2")
-        self.textInput_polynomialOrder_y_.setFixedWidth(60)
+        self.textInput_polynomialOrder_y_.setPlaceholderText("1")
+        self.textInput_polynomialOrder_y_.setFixedWidth(50)
         self.textInput_polynomialOrder_y_.setValidator(std_validate)
-        self.textInput_polynomialOrder_y_.move(125, self.label_polynomialOrder_.y()+20)
+
+        layout_poly_xyz.addWidget(self.textInput_polynomialOrder_y_, 0, 6, QtCore.Qt.AlignLeft)
+
+        layout_poly_xyz.setColumnMinimumWidth(7, 20)
 
         self.label_polynomialOrder_z_ = QtGui.QLabel("z: ", self)
-        self.label_polynomialOrder_z_.move(210, self.label_polynomialOrder_.y()+25)
-        self.textInput_polynomialOrder_z_ = QtGui.QLineEdit(self)
-        self.textInput_polynomialOrder_z_.setPlaceholderText("3")
-        self.textInput_polynomialOrder_z_.setFixedWidth(60)
-        self.textInput_polynomialOrder_z_.setValidator(std_validate)
-        self.textInput_polynomialOrder_z_.move(225, self.label_polynomialOrder_.y()+20)
+        layout_poly_xyz.addWidget(self.label_polynomialOrder_z_, 0, 8, QtCore.Qt.AlignLeft)
 
-        #number of elements
+        layout_poly_xyz.setColumnMinimumWidth(9, 0)
+
+        self.textInput_polynomialOrder_z_ = QtGui.QLineEdit(self)
+        self.textInput_polynomialOrder_z_.setPlaceholderText("1")
+        self.textInput_polynomialOrder_z_.setFixedWidth(50)
+        self.textInput_polynomialOrder_z_.setValidator(std_validate)
+
+        layout_poly_xyz.addWidget(self.textInput_polynomialOrder_z_, 0, 10, QtCore.Qt.AlignLeft)
+
+        # End of SubLayout for Polynomial Order
+
+        layout_main.addLayout(layout_poly_xyz, 20, 0, QtCore.Qt.AlignCenter)
+
+        layout_main.setRowMinimumHeight(21, 5)
+
         self.label_nElements_ = QtGui.QLabel("Number of elements:", self)
-        self.label_nElements_.move(10, self.textInput_polynomialOrder_z_.y()+30)
         self.label_nElements_.setFont(boldFont)
+        layout_main.addWidget(self.label_nElements_, 22, 0, QtCore.Qt.AlignLeft)
+
+        layout_main.setRowMinimumHeight(23, 0)
+
+        # Creating SubLayout for Number of Elements
+
+        layout_nElements_ = QtGui.QGridLayout()
 
         self.label_nElements_x_ = QtGui.QLabel("x: ", self)
-        self.label_nElements_x_.move(10, self.label_nElements_.y()+25)
+        layout_nElements_.addWidget(self.label_nElements_x_, 0, 0, QtCore.Qt.AlignLeft)
+
+        layout_nElements_.setColumnMinimumWidth(1, 0)
+
         self.textInput_nElements_x_ = QtGui.QLineEdit(self)
-        self.textInput_nElements_x_.setPlaceholderText("10")
-        self.textInput_nElements_x_.setFixedWidth(60)
+        self.textInput_nElements_x_.setPlaceholderText("1")
+        self.textInput_nElements_x_.setFixedWidth(50)
         self.textInput_nElements_x_.setValidator(std_validate)
-        self.textInput_nElements_x_.move(25, self.label_nElements_.y()+20)
+        layout_nElements_.addWidget(self.textInput_nElements_x_, 0, 2, QtCore.Qt.AlignLeft)
+
+        layout_nElements_.setColumnMinimumWidth(3, 20)
 
         self.label_nElements_y_ = QtGui.QLabel("y: ", self)
-        self.label_nElements_y_.move(110, self.label_nElements_.y()+25)
+        layout_nElements_.addWidget(self.label_nElements_y_, 0, 4, QtCore.Qt.AlignLeft)
+
+        layout_nElements_.setColumnMinimumWidth(5, 0)
+
         self.textInput_nElements_y_ = QtGui.QLineEdit(self)
-        self.textInput_nElements_y_.setPlaceholderText("20")
-        self.textInput_nElements_y_.setFixedWidth(60)
+        self.textInput_nElements_y_.setPlaceholderText("1")
+        self.textInput_nElements_y_.setFixedWidth(50)
         self.textInput_nElements_y_.setValidator(std_validate)
-        self.textInput_nElements_y_.move(125, self.label_nElements_.y()+20)
+        layout_nElements_.addWidget(self.textInput_nElements_y_, 0, 6, QtCore.Qt.AlignLeft)
+
+        layout_nElements_.setColumnMinimumWidth(7, 20)
 
         self.label_nElements_z_ = QtGui.QLabel("z: ", self)
-        self.label_nElements_z_.move(210, self.label_nElements_.y()+25)
+        layout_nElements_.addWidget(self.label_nElements_z_, 0, 8, QtCore.Qt.AlignLeft)
+
+        layout_nElements_.setColumnMinimumWidth(9, 0)
+
         self.textInput_nElements_z_ = QtGui.QLineEdit(self)
-        self.textInput_nElements_z_.setPlaceholderText("30")
-        self.textInput_nElements_z_.setFixedWidth(60)
+        self.textInput_nElements_z_.setPlaceholderText("1")
+        self.textInput_nElements_z_.setFixedWidth(50)
         self.textInput_nElements_z_.setValidator(std_validate)
-        self.textInput_nElements_z_.move(225, self.label_nElements_.y()+20)
 
-        # visulize button
+        layout_nElements_.addWidget(self.textInput_nElements_z_, 0, 10, QtCore.Qt.AlignLeft)
+
+        ## End of SubLayout for Number of Elements
+
+        layout_main.addLayout(layout_nElements_, 24, 0, QtCore.Qt.AlignCenter)
+
+        layout_main.setRowMinimumHeight(25, 5)
+
         self.visualizeButton = QtGui.QCheckBox('Visualize Grids', self)
-        self.visualizeButton.stateChanged.connect(self.onVisualize)
+        layout_main.addWidget(self.visualizeButton, 26, 0)
 
-        self.visualizeButton.move(10, self.textInput_nElements_z_.y()+45)
+        layout_main.setRowMinimumHeight(27, 10)
 
-        #solution settings head
+        ## END OF MESH SETTINGS ##
+
         self.label_main_ = QtGui.QLabel("Solution Settings:", self)
-        self.label_main_.move(10, self.visualizeButton.y()+45)
         self.label_main_.setFont(boldUnderlinedFont)
         self.label_main_.setPalette(blueFont)
+        layout_main.addWidget(self.label_main_, 28, 0, QtCore.Qt.AlignCenter)
 
-        #residual setting
+        layout_main.setRowMinimumHeight(29, 5)
+
         self.label_residual_ = QtGui.QLabel("Moment fitting residual:", self)
-        self.label_residual_.move(10, self.label_main_.y()+30)
+        layout_main.addWidget(self.label_residual_, 30, 0, QtCore.Qt.AlignLeft)
+
+        layout_main.setRowMinimumHeight(31, 0)
+
         self.textInput_residual_ = QtGui.QLineEdit(self)
         self.textInput_residual_.setPlaceholderText("1e-6")
         self.textInput_residual_.setFixedWidth(50)
         self.textInput_residual_.setValidator(scientific_validate)
-        self.textInput_residual_.move(10, self.label_residual_.y()+20)
+        layout_main.addWidget(self.textInput_residual_, 32, 0, 1, 1)
 
-        # min_element_volume ratio
-        ### self.label_min_el_vol_rat = QtGui.QLabel("Minimum element volume ratio:", self)
-        ### self.label_min_el_vol_rat.move(10, self.textInput_residual_.y()+30)
-        ### self.textInput__min_el_vol_rat = QtGui.QLineEdit(self)
-        ### self.textInput__min_el_vol_rat.setPlaceholderText("1e-3")
-        ### self.textInput__min_el_vol_rat.setFixedWidth(50)
-        ### self.textInput__min_el_vol_rat.setValidator(scientific_validate)
-        ### self.textInput__min_el_vol_rat.move(10, self.label_min_el_vol_rat.y()+20)
+        layout_main.setRowMinimumHeight(33, 5)
 
-
-        #integration method setting
         self.label_integration_ = QtGui.QLabel("Integration method:", self)
-        self.label_integration_.move(10, self.textInput_residual_.y()+30)
+        layout_main.addWidget(self.label_integration_, 34, 0, 1, 1)
+
+        layout_main.setRowMinimumHeight(35, 0)
+
         self.popup_integration = QtGui.QComboBox(self)
         self.popup_integration_items = ("Gauss","Gauss_Reduced1","Gauss_Reduced2","GGQ_Optimal","GGQ_Reduced1", "GGQ_Reduced2")
         self.popup_integration.addItems(self.popup_integration_items)
-        self.popup_integration.setFixedWidth(140)
-        self.popup_integration.move(10, self.label_integration_.y()+20)
+        self.popup_integration.setMinimumWidth(140)
+        layout_main.addWidget(self.popup_integration, 36, 0, 1, 0)
 
-        #BC settings
-        self.label_ApplyBC_ = QtGui.QLabel("Boundary Conditions:", self)
-        self.label_ApplyBC_.move(10, self.popup_integration.y()+45)
+        layout_main.setRowMinimumHeight(37, 10)
+
+        ## END OF SOLUTION SETTINGS ##
+
+        self.label_ApplyBC_ = QtGui.QLabel("Boundary Conditions", self)
         self.label_ApplyBC_.setFont(boldUnderlinedFont)
         self.label_ApplyBC_.setPalette(blueFont)
+        layout_main.addWidget(self.label_ApplyBC_, 38, 0, QtCore.Qt.AlignCenter)
+
+        layout_main.setRowMinimumHeight(39, 5)
 
         self.button_PenaltySupport_ = QtGui.QPushButton('Apply Penalty Support Condition',self)
-        self.button_PenaltySupport_.clicked.connect(self.onPenaltySupportBC)
         self.button_PenaltySupport_.setAutoDefault(False)
-        self.button_PenaltySupport_.setFixedWidth(230)
+        self.button_PenaltySupport_.setMinimumWidth(230)
+        layout_main.addWidget(self.button_PenaltySupport_, 40, 0, QtCore.Qt.AlignCenter)
+
+        layout_main.setRowMinimumHeight(41, 0)
 
         self.button_SurfaceLoad_ = QtGui.QPushButton('Apply Surface Load Condition',self)
-        self.button_SurfaceLoad_.clicked.connect(self.onSurfaceLoadBC)
         self.button_SurfaceLoad_.setAutoDefault(False)
-        self.button_SurfaceLoad_.setFixedWidth(230)
+        self.button_SurfaceLoad_.setMinimumWidth(230)
+        layout_main.addWidget(self.button_SurfaceLoad_, 42, 0, QtCore.Qt.AlignCenter)
 
-        self.container_PenaltySupportSurfaceLoad = QtGui.QWidget(self)
-        self.container_PenaltySupportSurfaceLoad.setContentsMargins(0, 0, 0, 0)
+        layout_main.setRowMinimumHeight(43, 10)
 
-        layout_PenaltySupportSurfaceLoad = QtGui.QVBoxLayout(self.container_PenaltySupportSurfaceLoad)
-        layout_PenaltySupportSurfaceLoad.setContentsMargins(0, 0, 0, 0)
-        layout_PenaltySupportSurfaceLoad.addWidget(self.button_PenaltySupport_)
-        layout_PenaltySupportSurfaceLoad.addWidget(self.button_SurfaceLoad_)
-        layout_PenaltySupportSurfaceLoad.setSpacing(10)
+        ## END OF BOUNDARY CONDITIONS ##
 
-        self.container_PenaltySupportSurfaceLoad.move(10, self.label_ApplyBC_.y()+25)
-
-        #Solver settings button
-        self.label_SolverSettings_ = QtGui.QLabel("Solver Settings:", self)
-        self.label_SolverSettings_.move(10, self.container_PenaltySupportSurfaceLoad.y()+80)
+        self.label_SolverSettings_ = QtGui.QLabel("Solver Settings", self)
         self.label_SolverSettings_.setFont(boldUnderlinedFont)
         self.label_SolverSettings_.setPalette(blueFont)
-        
+        layout_main.addWidget(self.label_SolverSettings_, 44, 0, QtCore.Qt.AlignCenter)
+
+        layout_main.setRowMinimumHeight(45, 5)
 
         self.SolverSettingsButton = QtGui.QPushButton('Apply Solver Settings',self)
-        self.SolverSettingsButton.clicked.connect(self.onSolverSettingsButton)
         self.SolverSettingsButton.setAutoDefault(False)
-        self.SolverSettingsButton.setFixedWidth(155)
+        self.SolverSettingsButton.setMinimumWidth(155)
+        layout_main.addWidget(self.SolverSettingsButton, 46, 0, QtCore.Qt.AlignCenter)
 
-        self.container_SolverSettingsButton = QtGui.QWidget(self)
-        self.container_SolverSettingsButton.setContentsMargins(0, 0, 0, 0)
+        layout_main.setRowMinimumHeight(47, 20)
 
-        layout_SolverSettingsButton = QtGui.QHBoxLayout(self.container_SolverSettingsButton)
-        layout_SolverSettingsButton.setContentsMargins(0, 0, 0, 0)
-        layout_SolverSettingsButton.addWidget(self.SolverSettingsButton)
+        ## END OF SOLVER SETTINGS
 
-        self.container_SolverSettingsButton.move(10, self.label_SolverSettings_.y()+25)
+        ## Sublayout for save-cancel
 
-
-        # cancel button
-        cancelButton = QtGui.QPushButton('Cancel', self)
-        cancelButton.clicked.connect(self.onCancel)
-        cancelButton.setFixedWidth(80)
-       
-        # OK button
-        saveButton = QtGui.QPushButton('Save', self)
-        saveButton.clicked.connect(self.onSave)
-        saveButton.setAutoDefault(True)
-        saveButton.setFixedWidth(80)
-
-        self.container_saveCancel = QtGui.QWidget(self)
-        self.container_saveCancel.setContentsMargins(0, 0, 0, 0)
-
-        layout_saveCancel = QtGui.QHBoxLayout(self.container_saveCancel)
-        layout_saveCancel.setContentsMargins(0, 0, 0,0)
+        layout_saveCancel = QtGui.QHBoxLayout()
+        cancelButton = QtGui.QPushButton("Cancel", self)
+        cancelButton.setIcon(cancel_icon)
+        saveButton = QtGui.QPushButton("Save", self)
+        saveButton.setIcon(save_icon)
         layout_saveCancel.addWidget(saveButton)
         layout_saveCancel.addWidget(cancelButton)
         layout_saveCancel.setSpacing(40)
 
-        self.container_saveCancel.move(0.5*width - saveButton.geometry().width() - 0.5*layout_saveCancel.spacing(),
-                                     self.container_SolverSettingsButton.y()+60)
+        ## End of Sublayout save-cancel
+
+        layout_main.addLayout(layout_saveCancel, 48, 0, QtCore.Qt.AlignCenter)
+
+        self.setLayout(layout_main)
+
+        
+        self.goback_button.clicked.connect(self.onGoBackButton)
+        self.fileBrowseButton_QuESo.clicked.connect(self.onBrowseButton_QuESodirectory)
+        self.fileBrowseButton_Kratos.clicked.connect(self.onBrowseButton_Kratosdirectory)
+        self.visualizeButton.stateChanged.connect(self.onVisualize)
+        self.button_PenaltySupport_.clicked.connect(self.onPenaltySupportBC)
+        self.button_SurfaceLoad_.clicked.connect(self.onSurfaceLoadBC)
+        self.SolverSettingsButton.clicked.connect(self.onSolverSettingsButton)
+        cancelButton.clicked.connect(self.onCancel)
+        saveButton.clicked.connect(self.onSave)
+
 
         # show the dialog box and creates instances of other required classes
         self.PenaltySupportBCBox_obj = PenaltySupportBCBox()
@@ -1097,7 +1157,7 @@ class projectNameWindow(QtGui.QDialog):
         self.okFlag = False
 
     def initUI(self):
-        width = 340
+        width = 350
         height = 210
         centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
@@ -1110,6 +1170,10 @@ class projectNameWindow(QtGui.QDialog):
         self.textInput_name.setPlaceholderText("e.g: Cantilever, Knuckle ... ")
         self.textInput_name.setFixedWidth(210)
         self.textInput_name.move(10, self.label_name2.y()+25)
+        forward_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowForward)
+        cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
+        browse_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DirOpenIcon)
+
 
         self.label_dir1 = QtGui.QLabel("Please give the directory where the project will", self)
         self.label_dir1.move(10, self.textInput_name.y()+40)
@@ -1121,18 +1185,21 @@ class projectNameWindow(QtGui.QDialog):
         self.textInput_dir.move(10, self.label_dir2.y()+25)
 
         browseButton = QtGui.QPushButton('Browse Files', self)
+        browseButton.setIcon(browse_icon)
         browseButton.move(230, self.textInput_dir.y())
         browseButton.clicked.connect(self.onBrowseButton)
 
         # cancel button
         cancelButton = QtGui.QPushButton('Cancel', self)
         cancelButton.clicked.connect(self.onCancelButton)
+        cancelButton.setIcon(cancel_icon)
         cancelButton.setFixedWidth(80)
        
         # OK button
         okButton = QtGui.QPushButton('Next', self)
         okButton.clicked.connect(self.onOkButton)
         okButton.setAutoDefault(True)
+        okButton.setIcon(forward_arrow_icon)
         okButton.setFixedWidth(80)
 
         self.container_okCancel = QtGui.QWidget(self)
@@ -1328,8 +1395,10 @@ class PenaltySupportFacesList(QtGui.QWidget):
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, on = True)
         layout = QtGui.QGridLayout()
+        discard_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogDiscardButton)
+        ok_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogApplyButton)
 
-        FaceID_label = QtGui.QLabel("Faces Under PenaltySupport BC:", self)
+        FaceID_label = QtGui.QLabel("Faces Under Penalty Support BC:", self)
         layout.addWidget(FaceID_label, 0, 0, 1, 1)
 
         layout.setColumnMinimumWidth(1, 10)
@@ -1352,10 +1421,12 @@ class PenaltySupportFacesList(QtGui.QWidget):
         layout.setRowMinimumHeight(5, 10)
 
         self.okButton = QtGui.QPushButton('OK', self)
+        self.okButton.setIcon(ok_icon)
         self.okButton.setAutoDefault(True)
         self.okButton.setFixedWidth(80)
 
         self.DiscardButton = QtGui.QPushButton('Discard', self)
+        self.DiscardButton.setIcon(discard_icon)
         self.DiscardButton.setFixedWidth(80)
 
         layout4OkDiscard = QtGui.QHBoxLayout()
@@ -1385,8 +1456,10 @@ class SurfaceLoadFacesList(QtGui.QWidget):
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, on = True)
         layout = QtGui.QGridLayout()
+        discard_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogDiscardButton)
+        ok_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogApplyButton)
 
-        FaceID_label = QtGui.QLabel("Faces Under SurfaceLoad BC:", self)
+        FaceID_label = QtGui.QLabel("Faces Under Surface Load BC:", self)
         layout.addWidget(FaceID_label, 0, 0, 1, 1)
 
         layout.setColumnMinimumWidth(1, 10)
@@ -1409,10 +1482,12 @@ class SurfaceLoadFacesList(QtGui.QWidget):
         layout.setRowMinimumHeight(5, 10)
 
         self.okButton = QtGui.QPushButton('OK', self)
+        self.okButton.setIcon(ok_icon)
         self.okButton.setAutoDefault(True)
         self.okButton.setFixedWidth(80)
 
         self.DiscardButton = QtGui.QPushButton('Discard', self)
+        self.DiscardButton.setIcon(discard_icon)
         self.DiscardButton.setFixedWidth(80)
 
         layout4OkDiscard = QtGui.QHBoxLayout()
