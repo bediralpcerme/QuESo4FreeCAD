@@ -14,25 +14,37 @@ class RunQuESo(QtGui.QDialog):
     def initUI(self):
 
         #position and geometry of the dialog box
-        width = 300
-        height = 160
-        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
-        self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
-        self.setWindowTitle("Run QuESo?")
+        self.setWindowTitle("Run QuESo")
+        layout = QtGui.QGridLayout()
+        cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
+        ok_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogApplyButton)
 
         #label text
-        self.label_ = QtGui.QLabel("Run QuESo?", self)
-        self.label_.move(100, 20)
+        self.label_ = QtGui.QLabel("Are you sure you want to run QuESo?", self)
+        layout.addWidget(self.label_, 0, 0, QtCore.Qt.AlignCenter)
+
+        layout.setRowMinimumHeight(1, 20)
 
         # cancel button
         cancelButton = QtGui.QPushButton('Cancel', self)
+        cancelButton.setIcon(cancel_icon)
         cancelButton.clicked.connect(self.onCancel)
-        cancelButton.move(10, 90)
         # OK button
         okButton = QtGui.QPushButton('OK', self)
+        okButton.setIcon(ok_icon)
         okButton.clicked.connect(self.onOk)
         okButton.setAutoDefault(True)
-        okButton.move(170, 90)
+
+        # Sublayout for Ok-Cancel
+
+        layout_okCancel = QtGui.QHBoxLayout()
+        layout_okCancel.addWidget(okButton)
+        layout_okCancel.addWidget(cancelButton)
+        layout_okCancel.setSpacing(40)
+
+        layout.addLayout(layout_okCancel, 2, 0, QtCore.Qt.AlignCenter)
+
+        self.setLayout(layout)
 
     def onOk(self):
        
