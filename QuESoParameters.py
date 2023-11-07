@@ -512,24 +512,24 @@ class QuESoParameters(QtGui.QDialog):
             myfile.close()
 
 
-            self.SolverSettingsBox_obj.textInput_parallel_type_.setText(parallel_type)
-            self.SolverSettingsBox_obj.textInput_echo_level2_.setText(echo_level_problemdata)
+            self.SolverSettingsBox_obj.popup_parallel_type_.setCurrentText(parallel_type)
+            self.SolverSettingsBox_obj.popup_echo_level2_.setCurrentText(echo_level_problemdata)
             self.SolverSettingsBox_obj.textInput_start_time_.setText(start_time)
             self.SolverSettingsBox_obj.textInput_end_time_.setText(end_time)
-            self.SolverSettingsBox_obj.textInput_solver_type_.setText(solver_type)
+            self.SolverSettingsBox_obj.popup_solver_type_.setCurrentText(solver_type)
             self.SolverSettingsBox_obj.popup_analysis_type_.setCurrentText(analysis_type)
-            self.SolverSettingsBox_obj.textInput_model_part_name_.setText(model_part_name)
-            self.SolverSettingsBox_obj.textInput_echo_level3_.setText(echo_level_solversettings)
-            self.SolverSettingsBox_obj.textInput_input_type_.setText(input_type)
-            self.SolverSettingsBox_obj.textInput_preconditioner_type_.setText(preconditioner_type)
-            self.SolverSettingsBox_obj.textInput_solver_type2_.setText(solver_type_linearsolversettings)
+            self.SolverSettingsBox_obj.popup_model_part_name_.setCurrentText(model_part_name)
+            self.SolverSettingsBox_obj.popup_echo_level3_.setCurrentText(echo_level_solversettings)
+            self.SolverSettingsBox_obj.popup_input_type_.setCurrentText(input_type)
+            self.SolverSettingsBox_obj.popup_preconditioner_type_.setCurrentText(preconditioner_type)
+            self.SolverSettingsBox_obj.popup_solver_type2_.setCurrentText(solver_type_linearsolversettings)
             self.SolverSettingsBox_obj.textInput_tolerance_.setText(tolerance)
             self.SolverSettingsBox_obj.popup_rotation_dofs_.setCurrentText(rotation_dofs)
             self.SolverSettingsBox_obj.popup_block_builder_.setCurrentText(use_block_builder)
             self.SolverSettingsBox_obj.textInput_relative_tolerance_.setText(residual_relative_tolerance)
-            self.SolverSettingsBox_obj.textInput_modeler_name_.setText(modeler_name)
-            self.SolverSettingsBox_obj.textInput_modeler_part_name_.setText(model_part_name_modelers)
-            self.SolverSettingsBox_obj.textInput_modeler_geometry_name_.setText(geometry_name)
+            self.SolverSettingsBox_obj.popup_modeler_name_.setCurrentText(modeler_name)
+            self.SolverSettingsBox_obj.popup_modeler_part_name_.setCurrentText(model_part_name_modelers)
+            self.SolverSettingsBox_obj.popup_modeler_geometry_name_.setCurrentText(geometry_name)
 
         except:
             pass
@@ -556,9 +556,9 @@ class QuESoParameters(QtGui.QDialog):
             poisson_ratio = str(Variables['POISSON_RATIO'])
             myfile.close()
 
-            self.SolverSettingsBox_obj.textInput_modeler_part_name_.setText(model_part_name_stm)
+            self.SolverSettingsBox_obj.popup_modeler_part_name_.setCurrentText(model_part_name_stm)
             self.SolverSettingsBox_obj.textInput_properties_id_.setText(properties_id)
-            self.SolverSettingsBox_obj.textInput_constitutive_id_.setText(name_constLaw)
+            self.SolverSettingsBox_obj.popup_constitutive_id_.setCurrentText(name_constLaw)
             self.SolverSettingsBox_obj.textInput_density_.setText(density)
             self.SolverSettingsBox_obj.textInput_young_modulus_.setText(young_modulus)
             self.SolverSettingsBox_obj.textInput_poisson_ratio_.setText(poisson_ratio)
@@ -1516,7 +1516,7 @@ class SolverSettingsBox(QtGui.QDialog):
 
     def initUI(self):    
         width = 330
-        height = 1070
+        height = 1010
         centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
         self.setWindowTitle("Kratos Solver Settings")
@@ -1539,22 +1539,24 @@ class SolverSettingsBox(QtGui.QDialog):
         #parallel type
         self.label_parallel_type_ = QtGui.QLabel("Parallel type:", self)
         self.label_parallel_type_.move(10, self.label_main_.y()+30)
-        self.textInput_parallel_type_ = QtGui.QLineEdit(self)
-        self.textInput_parallel_type_.setPlaceholderText("OpenMP")
-        self.textInput_parallel_type_.setFixedWidth(100)
-        self.textInput_parallel_type_.move(10, self.label_parallel_type_.y()+20)
+        self.popup_parallel_type_ = QtGui.QComboBox(self)
+        self.popup_parallel_type_items = ("OpenMP", "MPI")
+        self.popup_parallel_type_.addItems(self.popup_parallel_type_items)
+        self.popup_parallel_type_.setFixedWidth(100)
+        self.popup_parallel_type_.move(10, self.label_parallel_type_.y()+20)
 
         #echo level
         self.label_echo_level2_ = QtGui.QLabel("Echo level:", self)
         self.label_echo_level2_.move(200, self.label_main_.y()+30)
-        self.textInput_echo_level2_ = QtGui.QLineEdit(self)
-        self.textInput_echo_level2_.setPlaceholderText("1")
-        self.textInput_echo_level2_.setFixedWidth(100)
-        self.textInput_echo_level2_.move(200, self.label_echo_level2_.y()+20)
+        self.popup_echo_level2_ = QtGui.QComboBox(self)
+        self.popup_echo_level2_items = ("0", "1", "2")
+        self.popup_echo_level2_.addItems(self.popup_echo_level2_items)
+        self.popup_echo_level2_.setFixedWidth(100)
+        self.popup_echo_level2_.move(200, self.label_echo_level2_.y()+20)
 
         #start time
         self.label_start_time_ = QtGui.QLabel("Start time:", self)
-        self.label_start_time_.move(10, self.textInput_echo_level2_.y()+30)
+        self.label_start_time_.move(10, self.popup_echo_level2_.y()+30)
         self.textInput_start_time_ = QtGui.QLineEdit(self)
         self.textInput_start_time_.setPlaceholderText("0.0")
         self.textInput_start_time_.setFixedWidth(100)
@@ -1562,7 +1564,7 @@ class SolverSettingsBox(QtGui.QDialog):
 
         #end time
         self.label_end_time_ = QtGui.QLabel("End time:", self)
-        self.label_end_time_.move(200, self.textInput_echo_level2_.y()+30)
+        self.label_end_time_.move(200, self.popup_echo_level2_.y()+30)
         self.textInput_end_time_ = QtGui.QLineEdit(self)
         self.textInput_end_time_.setPlaceholderText("1.0")
         self.textInput_end_time_.setFixedWidth(100)
@@ -1577,10 +1579,11 @@ class SolverSettingsBox(QtGui.QDialog):
         #solver type
         self.label_solver_type_ = QtGui.QLabel("Solver type:", self)
         self.label_solver_type_.move(10, self.label_main_.y()+30)
-        self.textInput_solver_type_ = QtGui.QLineEdit(self)
-        self.textInput_solver_type_.setPlaceholderText("Static")
-        self.textInput_solver_type_.setFixedWidth(100)
-        self.textInput_solver_type_.move(10, self.label_solver_type_.y()+20)
+        self.popup_solver_type_ = QtGui.QComboBox(self)
+        self.popup_solver_type_items = ("Static", " ")
+        self.popup_solver_type_.addItems(self.popup_solver_type_items)
+        self.popup_solver_type_.setFixedWidth(100)
+        self.popup_solver_type_.move(10, self.label_solver_type_.y()+20)
 
         #analysis type
         self.label_analysis_type_ = QtGui.QLabel("Analysis type:", self)
@@ -1594,30 +1597,33 @@ class SolverSettingsBox(QtGui.QDialog):
         #model part name
         self.label_model_part_name_ = QtGui.QLabel("Model part name:", self)
         self.label_model_part_name_.move(10, self.popup_analysis_type_.y()+30)
-        self.textInput_model_part_name_ = QtGui.QLineEdit(self)
-        self.textInput_model_part_name_.setPlaceholderText("NurbsMesh")
-        self.textInput_model_part_name_.setFixedWidth(100)
-        self.textInput_model_part_name_.move(10, self.label_model_part_name_.y()+20)
+        self.popup_model_part_name_ = QtGui.QComboBox(self)
+        self.popup_model_part_name_items = ("NurbsMesh", " ")
+        self.popup_model_part_name_.addItems(self.popup_model_part_name_items)
+        self.popup_model_part_name_.setFixedWidth(100)
+        self.popup_model_part_name_.move(10, self.label_model_part_name_.y()+20)
 
         #echo level 
         self.label_echo_level3_ = QtGui.QLabel("Echo level:", self)
         self.label_echo_level3_.move(200, self.popup_analysis_type_.y()+30)
-        self.textInput_echo_level3_ = QtGui.QLineEdit(self)
-        self.textInput_echo_level3_.setPlaceholderText("1")
-        self.textInput_echo_level3_.setFixedWidth(100)
-        self.textInput_echo_level3_.move(200, self.label_echo_level3_.y()+20)
+        self.popup_echo_level3_ = QtGui.QComboBox(self)
+        self.popup_echo_level3_items = ("0", "1", "2")
+        self.popup_echo_level3_.addItems(self.popup_echo_level3_items)
+        self.popup_echo_level3_.setFixedWidth(100)
+        self.popup_echo_level3_.move(200, self.label_echo_level3_.y()+20)
 
         #Material import setting - Input type
         self.label_input_type_ = QtGui.QLabel("Material import setting - Input type:", self)
-        self.label_input_type_.move(10, self.textInput_echo_level3_.y()+35)
-        self.textInput_input_type_ = QtGui.QLineEdit(self)
-        self.textInput_input_type_.setPlaceholderText("use_input_model_part")
-        self.textInput_input_type_.setFixedWidth(300)
-        self.textInput_input_type_.move(10, self.label_input_type_.y()+20)
+        self.label_input_type_.move(10, self.popup_echo_level3_.y()+35)
+        self.popup_input_type_ = QtGui.QComboBox(self)
+        self.popup_input_type_items = ("use_input_model_part", " ")
+        self.popup_input_type_.addItems(self.popup_input_type_items)
+        self.popup_input_type_.setFixedWidth(300)
+        self.popup_input_type_.move(10, self.label_input_type_.y()+20)
 
         #linear solver settings head
         self.label_main_ = QtGui.QLabel("Linear solver settings:", self)
-        self.label_main_.move(10, self.textInput_input_type_.y()+40)
+        self.label_main_.move(10, self.popup_input_type_.y()+40)
        
         self.label_main_.setFont(boldUnderlinedFont)
         self.label_main_.setPalette(blueFont)
@@ -1625,23 +1631,25 @@ class SolverSettingsBox(QtGui.QDialog):
         #Preconditioner type
         self.label_preconditioner_type_ = QtGui.QLabel("Preconditioner type:", self)
         self.label_preconditioner_type_.move(10, self.label_main_.y()+30)
-        self.textInput_preconditioner_type_ = QtGui.QLineEdit(self)
-        self.textInput_preconditioner_type_.setPlaceholderText("additive_schwarz")
-        self.textInput_preconditioner_type_.setFixedWidth(300)
-        self.textInput_preconditioner_type_.move(10, self.label_preconditioner_type_.y()+20)
+        self.popup_preconditioner_type_ = QtGui.QComboBox(self)
+        self.popup_preconditioner_type_items = ("additive_schwarz", " ")
+        self.popup_preconditioner_type_.addItems(self.popup_preconditioner_type_items)
+        self.popup_preconditioner_type_.setFixedWidth(300)
+        self.popup_preconditioner_type_.move(10, self.label_preconditioner_type_.y()+20)
 
         #Solver type
         self.label_solver_type2_ = QtGui.QLabel("Solver type:", self)
-        self.label_solver_type2_.move(10, self.textInput_preconditioner_type_.y()+30)
-        self.textInput_solver_type2_ = QtGui.QLineEdit(self)
-        self.textInput_solver_type2_.setPlaceholderText("bicgstab")
-        self.textInput_solver_type2_.setFixedWidth(300)
-        self.textInput_solver_type2_.move(10, self.label_solver_type2_.y()+20)
+        self.label_solver_type2_.move(10, self.popup_preconditioner_type_.y()+30)
+        self.popup_solver_type2_ = QtGui.QComboBox(self)
+        self.popup_solver_type2_items = ("bicgstab", "pardiso_lu")
+        self.popup_solver_type2_.addItems(self.popup_solver_type2_items)
+        self.popup_solver_type2_.setFixedWidth(300)
+        self.popup_solver_type2_.move(10, self.label_solver_type2_.y()+20)
 
 
         #Tolerance
         self.label_tolerance_ = QtGui.QLabel("Tolerance:", self)
-        self.label_tolerance_.move(200, self.textInput_solver_type2_.y()+30)
+        self.label_tolerance_.move(200, self.popup_solver_type2_.y()+30)
         self.textInput_tolerance_ = QtGui.QLineEdit(self)
         self.textInput_tolerance_.setPlaceholderText("1e-6")
         self.textInput_tolerance_.setFixedWidth(100)
@@ -1649,7 +1657,7 @@ class SolverSettingsBox(QtGui.QDialog):
 
         #Rotation dofs
         self.label_rotation_dofs_ = QtGui.QLabel("Rotation dof:", self)
-        self.label_rotation_dofs_.move(10, self.textInput_solver_type2_.y()+30)
+        self.label_rotation_dofs_.move(10, self.popup_solver_type2_.y()+30)
         self.popup_rotation_dofs_ = QtGui.QComboBox(self)
         self.popup_rotation_dofs_items = ("false", "true")
         self.popup_rotation_dofs_.addItems(self.popup_rotation_dofs_items)
@@ -1669,7 +1677,7 @@ class SolverSettingsBox(QtGui.QDialog):
         self.label_relative_tolerance_ = QtGui.QLabel("Residual relative tol.:", self)
         self.label_relative_tolerance_.move(10, self.textInput_tolerance_.y()+30)
         self.textInput_relative_tolerance_ = QtGui.QLineEdit(self)
-        self.textInput_relative_tolerance_.setPlaceholderText("0.000001")
+        self.textInput_relative_tolerance_.setPlaceholderText("1e-6")
         self.textInput_relative_tolerance_.setFixedWidth(100)
         self.textInput_relative_tolerance_.move(10, self.label_relative_tolerance_.y()+20)
 
@@ -1683,31 +1691,34 @@ class SolverSettingsBox(QtGui.QDialog):
         #Modeler Name
         self.label_modeler_name_ = QtGui.QLabel("Modeler name:", self)
         self.label_modeler_name_.move(10, self.label_main_.y()+30)
-        self.textInput_modeler_name_ = QtGui.QLineEdit(self)
-        self.textInput_modeler_name_.setPlaceholderText("NurbsGeometryModeler")
-        self.textInput_modeler_name_.setFixedWidth(300)
-        self.textInput_modeler_name_.move(10, self.label_modeler_name_.y()+20)
+        self.popup_modeler_name_ = QtGui.QComboBox(self)
+        self.popup_modeler_name_items = ("NurbsGeometryModeler", " ")
+        self.popup_modeler_name_.addItems(self.popup_modeler_name_items)
+        self.popup_modeler_name_.setFixedWidth(300)
+        self.popup_modeler_name_.move(10, self.label_modeler_name_.y()+20)
 
         #Modeler Part Name
         self.label_modeler_part_name_ = QtGui.QLabel("Modeler part name:", self)
-        self.label_modeler_part_name_.move(10, self.textInput_modeler_name_.y()+30)
-        self.textInput_modeler_part_name_ = QtGui.QLineEdit(self)
-        self.textInput_modeler_part_name_.setPlaceholderText("NurbsMesh")
-        self.textInput_modeler_part_name_.setFixedWidth(300)
-        self.textInput_modeler_part_name_.move(10, self.label_modeler_part_name_.y()+20)
+        self.label_modeler_part_name_.move(10, self.popup_modeler_name_.y()+30)
+        self.popup_modeler_part_name_ = QtGui.QComboBox(self)
+        self.popup_modeler_part_name_items = ("NurbsMesh", " ")
+        self.popup_modeler_part_name_.addItems(self.popup_modeler_part_name_items)
+        self.popup_modeler_part_name_.setFixedWidth(300)
+        self.popup_modeler_part_name_.move(10, self.label_modeler_part_name_.y()+20)
 
         #Modeler Geometry Name
         self.label_modeler_geometry_name_ = QtGui.QLabel("Modeler geometry name:", self)
-        self.label_modeler_geometry_name_.move(10, self.textInput_modeler_part_name_.y()+30)
-        self.textInput_modeler_geometry_name_ = QtGui.QLineEdit(self)
-        self.textInput_modeler_geometry_name_.setPlaceholderText("NurbsVolume")
-        self.textInput_modeler_geometry_name_.setFixedWidth(300)
-        self.textInput_modeler_geometry_name_.move(10, self.label_modeler_geometry_name_.y()+20)
+        self.label_modeler_geometry_name_.move(10, self.popup_modeler_part_name_.y()+30)
+        self.popup_modeler_geometry_name_ = QtGui.QComboBox(self)
+        self.popup_modeler_geometry_name_items = ("NurbsVolume", " ")
+        self.popup_modeler_geometry_name_.addItems(self.popup_modeler_geometry_name_items)
+        self.popup_modeler_geometry_name_.setFixedWidth(300)
+        self.popup_modeler_geometry_name_.move(10, self.label_modeler_geometry_name_.y()+20)
 
 
         #Material properties head
         self.label_main_ = QtGui.QLabel("Material Properties:", self)
-        self.label_main_.move(10, self.textInput_modeler_geometry_name_.y()+30)
+        self.label_main_.move(10, self.popup_modeler_geometry_name_.y()+30)
        
         self.label_main_.setFont(boldUnderlinedFont)
         self.label_main_.setPalette(blueFont)
@@ -1747,10 +1758,11 @@ class SolverSettingsBox(QtGui.QDialog):
         #Constitutive law
         self.label_constitutive_id_ = QtGui.QLabel("Constitutive law name:", self)
         self.label_constitutive_id_.move(10, self.textInput_properties_id_.y()+30)
-        self.textInput_constitutive_id_ = QtGui.QLineEdit(self)
-        self.textInput_constitutive_id_.setPlaceholderText("LinearElastic3DLaw")
-        self.textInput_constitutive_id_.setFixedWidth(150)
-        self.textInput_constitutive_id_.move(10, self.label_constitutive_id_.y()+20)
+        self.popup_constitutive_id_ = QtGui.QComboBox(self)
+        self.popup_constitutive_id_items = ("LinearElastic3DLaw", " ")
+        self.popup_constitutive_id_.addItems(self.popup_constitutive_id_items)
+        self.popup_constitutive_id_.setFixedWidth(300)
+        self.popup_constitutive_id_.move(10, self.label_constitutive_id_.y()+20)
 
 
         # cancel button
@@ -1774,7 +1786,7 @@ class SolverSettingsBox(QtGui.QDialog):
         self.layout_okCancel.setSpacing(40)
 
         self.container_okCancel.move(0.5*width - self.okButton.geometry().width() - 0.5*self.layout_okCancel.spacing(), 
-                                     self.textInput_constitutive_id_.y()+50)
+                                     self.popup_constitutive_id_.y()+50)
     
     def onOk(self):
 
@@ -1784,19 +1796,19 @@ class SolverSettingsBox(QtGui.QDialog):
         self.KratosParam = \
         {
             "problem_data"    : {
-                "parallel_type" : self.textInput_parallel_type_.text(),
-                "echo_level"    : int(self.textInput_echo_level2_.text()),
+                "parallel_type" : self.popup_parallel_type_.currentText(),
+                "echo_level"    : int(self.popup_echo_level2_.currentText()),
                 "start_time"    : float(self.textInput_start_time_.text()),
                 "end_time"      : float(self.textInput_end_time_.text())
             },
             "solver_settings" : {
-                "solver_type"              : self.textInput_solver_type_.text(),
+                "solver_type"              : self.popup_solver_type_.currentText(),
                 "analysis_type"            : self.popup_analysis_type_.currentText(),
-                "model_part_name"          : self.textInput_model_part_name_.text(),
-                "echo_level"               : int(self.textInput_echo_level3_.text()),
+                "model_part_name"          : self.popup_model_part_name_.currentText(),
+                "echo_level"               : int(self.popup_echo_level3_.currentText()),
                 "domain_size"              : 3,
                 "model_import_settings"    : {
-                    "input_type"     : self.textInput_input_type_.text()
+                    "input_type"     : self.popup_input_type_.currentText()
                 },
                 "material_import_settings"        : {
                     "materials_filename" : "StructuralMaterials.json"
@@ -1805,8 +1817,8 @@ class SolverSettingsBox(QtGui.QDialog):
                     "time_step" : 1.1       
                 },
                 "linear_solver_settings":{
-                    "preconditioner_type" : self.textInput_preconditioner_type_.text(),
-                    "solver_type": self.textInput_solver_type2_.text(),
+                    "preconditioner_type" : self.popup_preconditioner_type_.currentText(),
+                    "solver_type": self.popup_solver_type2_.currentText(),
                     "max_iteration" : 5000,
                     "tolerance" : float(self.textInput_tolerance_.text())
                 },
@@ -1817,10 +1829,10 @@ class SolverSettingsBox(QtGui.QDialog):
                 "residual_relative_tolerance"        : float(self.textInput_relative_tolerance_.text())
             },
             "modelers" : [{
-                        "modeler_name": self.textInput_modeler_name_.text(),
+                        "modeler_name": self.popup_modeler_name_.currentText(),
                         "Parameters": {
-                            "model_part_name" : self.textInput_modeler_part_name_.text(),
-                            "geometry_name"   : self.textInput_modeler_geometry_name_.text()}
+                            "model_part_name" : self.popup_modeler_part_name_.currentText(),
+                            "geometry_name"   : self.popup_modeler_geometry_name_.currentText()}
                     }]
         }
 
@@ -1828,11 +1840,11 @@ class SolverSettingsBox(QtGui.QDialog):
         self.StructuralMat = \
         {
             "properties" : [{
-                "model_part_name" : self.textInput_modeler_part_name_.text(),
+                "model_part_name" : self.popup_modeler_part_name_.currentText(),
                 "properties_id"   : int(self.textInput_properties_id_.text()),
                 "Material"        : {
                     "constitutive_law" : {
-                        "name" : self.textInput_constitutive_id_.text()
+                        "name" : self.popup_constitutive_id_.currentText()
                     },
                     "Variables"        : {
                         "DENSITY"       : float(self.textInput_density_.text()),
