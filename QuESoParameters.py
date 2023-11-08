@@ -7,6 +7,8 @@ import json
 from pivy import coin
 import numpy as np
 from collections import OrderedDict
+import math
+import OpenSCADUtils
 
 ##################
 
@@ -376,6 +378,8 @@ class QuESoParameters(QtGui.QDialog):
         self.SurfaceLoad_force_arr = []
         self.PenaltySupportSelectionList = []
         self.SurfaceLoadSelectionList = []
+        self.Dirichlet_BC_icons = []
+        self.Neumann_BC_icons = []
         
         self.projectNameWindow_obj.exec_()
         self.work_dir = self.projectNameWindow_obj.project_dir
@@ -622,8 +626,18 @@ class QuESoParameters(QtGui.QDialog):
 
     def DeleteButtonClicked_PenaltySupportFacesList(self):
         current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
+        current_Item_text = self.PenaltySupportFacesList_Obj.listwidget.currentItem().text()
         indexToDel = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
         del self.PenaltySupport_displacement_arr[indexToDel]
+
+        #Temporary solution - this loop needs to know #No of nodes
+        for i in range (1, 5, 1):
+            obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Dirichlet_BC_" + str(current_Item_text) + "_" + str(i))
+            OpenSCADUtils.removesubtree(obj)
+        else:
+            print()
+
+        FreeCAD.ActiveDocument.removeObject('Dirichlet_BC_' + current_Item_text)
         print(str(self.PenaltySupport_displacement_arr))
         self.PenaltySupportFacesList_Obj.listwidget.takeItem(self.PenaltySupportFacesList_Obj.listwidget.row(current_Item))
 
@@ -673,9 +687,74 @@ class QuESoParameters(QtGui.QDialog):
                     sel = Gui.Selection.getSelectionEx()
                     # object = Draft.makeFacebinder(sel, 'D' + str(self.PenaltySupportBCBox_obj.PenaltySupport_count))
                     self.PenaltySupportSelectionList.append(sel)
-                    Gui.Selection.clearSelection()
-                                        
 
+                                                               ##### Preprocessing Icons -> Dirichlet BC #####
+                    for sel in Gui.Selection.getSelectionEx('', 0):
+                        for path in sel.SubElementNames if sel.SubElementNames else ['']:
+                            shape = sel.Object.getSubObject(path)
+                           
+                            pnt = sel.PickedPoints[0]
+                            sub = sel.SubObjects[0]
+                            u, v = sub.Surface.parameter(pnt)
+                            normal = sub.Surface.normal(u,v)
+
+                            print(element_list.get('Component'))
+
+                            #prepIcons = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Prep_icons")
+                            iconDir = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Dirichlet BC_" + element_list.get('Component'))
+                            #self.prepIcons.addObject(iconDir)
+
+                            vX = FreeCAD.Vector(1,0,0)
+                            vY = FreeCAD.Vector(0,1,0)
+                            vZ = FreeCAD.Vector(0,0,1)
+                            axis1 = FreeCAD.Vector.cross(normal,vX)
+                            axis2 = FreeCAD.Vector.cross(normal,vY)
+                            axis3 = FreeCAD.Vector.cross(normal,vZ)
+                            angle1 = math.degrees(vX.getAngle(normal))
+                            angle2 = math.degrees(vY.getAngle(normal))
+                            angle3 = math.degrees(vZ.getAngle(normal))
+
+                            n = 1  
+
+                            print([v.Point for v in shape.Vertexes])
+                            for i in [v.Point for v in shape.Vertexes]:
+                                
+                                bcCone = FreeCAD.ActiveDocument.addObject("Part::Cone")
+                                bcCone.Height = 0.5	
+                                bcCone.Radius1 = 0
+                                bcCone.Radius2 = 0.2
+                                bcCone.Label = "_bcCone_" + str(n)
+
+                                bcBox = FreeCAD.ActiveDocument.addObject("Part::Box")
+                                bcBox.Height = 0.1
+                                bcBox.Length = 0.5
+                                bcBox.Width = 0.5
+                                bcBox.Label = "_bcBox_" + str(n)
+                                
+                                bcBox.Placement = FreeCAD.Placement(FreeCAD.Vector(-0.25, -0.25, 0.5),FreeCAD.Rotation(0, 0, 0), FreeCAD.Vector(0, 0, 0))
+                                FreeCAD.ActiveDocument.recompute()
+                                
+                                fusion = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + element_list.get('Component') + str(n))
+                                fusion.Shapes = [bcCone, bcBox]
+
+                                fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1,180 - angle1))
+                                fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2,180 - angle2))
+                                fusion.Placement = FreeCAD.Placement(i + FreeCAD.Vector(0, 0, 0),FreeCAD.Rotation(axis3,180 - angle3))
+                                FreeCAD.ActiveDocument.recompute()
+
+                                fusion.Label = "Dirichlet_BC_" + element_list.get('Component') + "_" + str(n)
+                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).Selectable = False
+                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShowInTree = True
+                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShapeColor = (255,0,0)
+                                FreeCAD.ActiveDocument.recompute()
+
+                                iconDir.addObject(fusion)
+
+                                self.Dirichlet_BC_icons.append([element_list.get('Component'), str(n)])
+                                print(str(self.Dirichlet_BC_icons))
+                                n +=1
+
+                    Gui.Selection.clearSelection()                                        
 
     def onSolverSettingsButton(self):
 
@@ -710,8 +789,17 @@ class QuESoParameters(QtGui.QDialog):
 
     def DeleteButtonClicked_SurfaceLoadFacesList(self):
         current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
+        current_Item_text = self.SurfaceLoadFacesList_Obj.listwidget.currentItem().text()
         indexToDel = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
         del self.SurfaceLoad_force_arr[indexToDel]
+
+        #Temporary solution - this loop needs to know #No of nodes
+        for i in range (1, 5, 1):
+            obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Neumann_BC_" + str(current_Item_text) + "_" + str(i))
+            OpenSCADUtils.removesubtree(obj)
+        else:
+            print()
+        FreeCAD.ActiveDocument.removeObject('Neumann_BC_' + str(current_Item_text))
         print(str(self.SurfaceLoad_force_arr))
         self.SurfaceLoadFacesList_Obj.listwidget.takeItem(self.SurfaceLoadFacesList_Obj.listwidget.row(current_Item))
 
@@ -764,6 +852,77 @@ class QuESoParameters(QtGui.QDialog):
                     sel = Gui.Selection.getSelectionEx()
                     # object = Draft.makeFacebinder(sel, 'D' + str(self.PenaltySupportBCBox_obj.PenaltySupport_count))
                     self.SurfaceLoadSelectionList.append(sel)
+
+
+                                                               ##### Preprocessing Icons -> Dirichlet BC #####
+					
+                    for sel in Gui.Selection.getSelectionEx('', 0):
+                        for path in sel.SubElementNames if sel.SubElementNames else ['']:
+                            shape = sel.Object.getSubObject(path)
+
+                            neuVector = FreeCAD.Vector(float(self.SurfaceLoadBCBox_obj.x_val),float(self.SurfaceLoadBCBox_obj.y_val),float(self.SurfaceLoadBCBox_obj.z_val))
+                            vX = FreeCAD.Vector(1,0,0)
+                            vY = FreeCAD.Vector(0,1,0)
+                            vZ = FreeCAD.Vector(0,0,1)
+
+                            axis1 = FreeCAD.Vector.cross(vX, neuVector)
+                            axis2 = FreeCAD.Vector.cross(vY, neuVector)
+                            axis3 = FreeCAD.Vector.cross(vZ, neuVector)
+
+                            angle1 = math.degrees(vX.getAngle(neuVector))
+                            angle2 = math.degrees(vY.getAngle(neuVector))
+                            angle3 = math.degrees(vZ.getAngle(neuVector))
+
+                            #prepIcons = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Prep_icons")
+                            iconNeu = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Neumann BC_" + element_list.get('Component'))
+                            #prepIcons.addObject(iconNeu)
+
+                            n = 1 
+                            print([v.Point for v in shape.Vertexes])
+                            
+                            for i in [v.Point for v in shape.Vertexes]:
+                              
+                                bcTip = FreeCAD.ActiveDocument.addObject("Part::Cone")
+                                bcTip.Height = 0.75	
+                                bcTip.Radius1 = 0.2
+                                bcTip.Radius2 = 0
+                                bcTip.Label = "_bcTip_" + str(n)
+                            
+                                bcTip.Placement = FreeCAD.Placement(FreeCAD.Vector(0, 0, -0.75),FreeCAD.Rotation(0, 0, 0))
+                                bcCyl = FreeCAD.ActiveDocument.addObject("Part::Cone")
+                                bcCyl.Height = 0.75
+                                bcCyl.Radius1 = 0.11
+                                bcCyl.Radius2 = 0.10
+
+                                bcCyl.Placement = FreeCAD.Placement(FreeCAD.Vector(0, 0, -1.5), FreeCAD.Rotation(0, 0, 0))
+                                bcCyl.Label = "_bcCyl_" + str(n)
+
+                                FreeCAD.ActiveDocument.recompute()
+                                
+                                fusion_arrow = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + element_list.get('Component') + str(n))
+                                fusion_arrow.Shapes = [bcTip, bcCyl]
+
+                                FreeCAD.ActiveDocument.recompute()
+
+                                fusion_arrow.Label = "Neumann_BC_" + element_list.get('Component') + "_" + str(n)
+
+                                fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1,angle1))
+                                fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2,180 - angle2))
+                                fusion_arrow.Placement = FreeCAD.Placement(i,FreeCAD.Rotation(axis3,angle3))
+
+                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).Selectable = False
+                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShowInTree = True
+                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShapeColor = (0,0,255)
+
+                                FreeCAD.ActiveDocument.recompute()
+
+                                iconNeu.addObject(fusion_arrow)
+
+                                self.Neumann_BC_icons.append([element_list.get('Component'), str(n)])
+                                print(str(self.Neumann_BC_icons))
+          
+                                n +=1
+
                     Gui.Selection.clearSelection()
 
     def onVisualize(self):
@@ -1248,6 +1407,8 @@ class PenaltySupportBCBox(QtGui.QDialog):
             self.label_PenaltySupport = QtGui.QLabel("Please enter the displacement constraint values:", self)
             self.label_PenaltySupport.move(10, 20)
             self.element_list = []
+            self.icon_element_list = []
+
             self.x_val = 0
             self.y_val = 0
             self.z_val = 0
