@@ -56,7 +56,7 @@ class RunQuESo(QtGui.QDialog):
 
         os.chdir(work_dir)
 
-        with open('DirectoryInfo.json', 'r') as myfile:
+        with open('OtherInfos.json', 'r') as myfile:
             mydata = json.load(myfile)
 
         kratos_dirOrg = mydata['kratos_directory']

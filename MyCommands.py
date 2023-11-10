@@ -2,6 +2,7 @@ import FreeCADGui
 import FreeCAD
 from random import *
 from FreeCAD_PySide import *
+import os
 
 import QuESoParameters
 import RunQuESo
@@ -11,7 +12,7 @@ class SetQuESoParameters():
     """My new command"""
 
     def GetResources(self):
-        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/set_parameter.svg'
+        icon_path = os.path.dirname(__file__)+'/icon/set_parameter.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
                 'MenuText': "QuESo Parameters",
                 'ToolTip' : "Set QuESo Parameters"}
@@ -30,7 +31,7 @@ class RunQuESo_Class():
   
 
     def GetResources(self):
-        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/run_icon.svg'
+        icon_path = os.path.dirname(__file__) + '/icon/run_icon.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
                 'MenuText': "Run QuESo",
                 'ToolTip' : "Run QuESo"}
