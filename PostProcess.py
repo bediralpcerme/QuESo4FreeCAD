@@ -14,7 +14,7 @@ import Draft, Sketcher, Mesh, Part
 from pivy import coin
 from femobjects import result_mechanical
 from PySide2 import QtWidgets
-
+import math
 
 class PostProcess(QtGui.QDialog):
 
@@ -25,6 +25,7 @@ class PostProcess(QtGui.QDialog):
         self.setMaximumHeight(220)
         self.setMinimumHeight(220)
         self.visulizerun=False
+        self.slider_num=1
         self.initUI()
 
     def initUI(self):
@@ -83,31 +84,39 @@ class PostProcess(QtGui.QDialog):
         self.visualizeButton.stateChanged.connect(self.onVisualize)
         self.visualizeButton.move(10, self.label_result_.y()+45)
 
-        #push button
-        self.run_button = QtGui.QPushButton("Run Task",self)
-        self.run_button.clicked.connect(self.run_task)
-        #self.run_button.move(10, self.visualizeButton.y()+45)
-
+        #slider
+        self.label_slider_ = QtGui.QLabel('Scale: '+str(self.get_max_length()),self)
+        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.slider.setMinimum(0)
+        self.slider.setMaximum(50)
+        self.slider.setValue((self.get_max_length()))
+        self.slider.valueChanged.connect(self.slider_function)
         
         self.colorGradient=GradientBar(self.min_val, self.max_val)
 
         layout1 = QtGui.QVBoxLayout()
         layout2 = QtGui.QVBoxLayout()
         layout3 = QtGui.QVBoxLayout()
+        layout4 = QtGui.QVBoxLayout()
+
         layout1.addWidget(self.label_pathname_)
         layout1.addWidget(self.textInput_pathname_)
         layout1.addWidget(self.fileBrowseButton)
         layout1.addWidget(self.label_result_)
         layout1.addWidget(self.popup_result)
         layout1.addWidget(self.visualizeButton)
-        layout1.addWidget(self.run_button)
 
+        layout2.addWidget(self.label_slider_)
+        
 
-        layout2.addWidget(self.colorGradient)
+        layout3.addWidget(self.slider)
+        layout3.addWidget(self.colorGradient)
 
-        layout3.addLayout( layout1 )
-        layout3.addLayout( layout2 )
-        self.setLayout(layout3)
+        layout4.addLayout( layout1 )
+        layout4.addLayout( layout2 )
+        layout4.addLayout( layout3 )
+
+        self.setLayout(layout4)
         self.show()
 
     def Visualize(self):
@@ -287,6 +296,10 @@ class PostProcess(QtGui.QDialog):
         self.mesh_obj.ViewObject.setNodeDisplacementByVectors(self.result_obj.NodeNumbers, self.result_obj.DisplacementVectors)
         self.mesh_obj.Visibility= False
 
+        self.update_slider(self.get_max_length())
+        self.slider.setValue(self.get_max_length())
+
+
     def onVisualize(self):
         if (self.visualizeButton.isChecked()):
             self.Visualize()
@@ -305,8 +318,12 @@ class PostProcess(QtGui.QDialog):
                 self.Visualize()
                 self.update_gradient()
 
-    def run_task(self):
-        print('in runtask')
+    def slider_function(self):
+        if self.visulizerun:
+            if( self.visualizeButton.isChecked() ):
+                self.update_slider(self.slider.value())
+                self.mesh_obj.ViewObject.applyDisplacement(self.slider.value())
+                
 
     def get_min_max_values(self):
         if self.visulizerun:
@@ -334,11 +351,23 @@ class PostProcess(QtGui.QDialog):
                 return min(self.result_obj.vonMises), max(self.result_obj.vonMises)
         else:
             return 0, 1
-           
+
+    def get_max_length(self):
+        if self.visulizerun:
+            list_length=[np.max(self.locations[0,:])-np.min(self.locations[0,:]),np.max(self.locations[1,:])-np.min(self.locations[1,:]),np.max(self.locations[2,:])-np.min(self.locations[2,:])]
+            ratio=max(list_length)/max(self.result_obj.DisplacementLengths)*0.1
+            return ratio
+        else:
+            return  1
+
+    def update_slider(self,new_ratio):
+        self.layout().itemAt(1).itemAt(0).widget().setText('Scale: '+str(new_ratio))
+        self.layout().update()
+
     def update_gradient(self):
         self.min_val, self.max_val=self.get_min_max_values()
         gradient_bar = GradientBar(self.min_val, self.max_val)
-        self.layout().replaceWidget(self.layout().itemAt(1).itemAt(0).widget(), gradient_bar)
+        self.layout().replaceWidget(self.layout().itemAt(2).itemAt(1).widget(), gradient_bar)
         self.colorGradient=gradient_bar
         self.layout().update()
 
