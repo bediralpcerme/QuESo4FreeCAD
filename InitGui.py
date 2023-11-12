@@ -44,7 +44,7 @@ class TIBRA4FreeCAD (Workbench):
     def Initialize(self):
         """This function is executed when FreeCAD starts"""
         import MyCommands#, MyModuleB # import here all the needed files that create your FreeCAD commands
-        self.list = ["Set QuESo Parameters", 'Run QuESo' ] # A list of command names created in the line above
+        self.list = ["Set QuESo Parameters", 'Run QuESo' , 'Visualize Result' ] # A list of command names created in the line above
         self.appendToolbar("My Commands",self.list) # creates a new toolbar with your commands
         self.appendMenu("Example Menu",self.list) # creates a new menu
         self.appendMenu(["An existing Menu","My submenu"],self.list) # appends a submenu to an existing menu

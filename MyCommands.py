@@ -6,6 +6,8 @@ import os
 
 import QuESoParameters
 import RunQuESo
+import PostProcess
+
 import __main__
     
 class SetQuESoParameters():
@@ -46,6 +48,24 @@ class RunQuESo_Class():
         are met or not. This function is optional."""
         return True
 
+class RunPostProcess():
+    """My new command"""
+    def GetResources(self):
+        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/set_parameter.svg'
+        return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
+                'MenuText': "Post Process",
+                'ToolTip' : "Post Process"}
+
+    def Activated(self):
+        __main__.form = PostProcess.PostProcess()
+        return
+
+    def IsActive(self):
+        """Here you can define if the command must be active or not (greyed) if certain conditions
+        are met or not. This function is optional."""
+        return True
+
 
 FreeCADGui.addCommand('Set QuESo Parameters',SetQuESoParameters())
 FreeCADGui.addCommand('Run QuESo',RunQuESo_Class())
+FreeCADGui.addCommand('Visualize Result',RunPostProcess())
