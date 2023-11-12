@@ -420,6 +420,7 @@ class QuESoParameters(QtGui.QMainWindow):
                 mydata_directory = json.load(myfile)
 
             kratos_dirOrg = mydata_directory['kratos_directory']
+            kratos_dirOrg = kratos_dirOrg.replace("/bin/Release","")
             QuESo_dirOrg = mydata_directory['QuESo_directory']
             STL_dir = mydata_directory['STL_directory']
 
@@ -1272,7 +1273,7 @@ class projectNameWindow(QtGui.QDialog):
         browseButton.clicked.connect(self.onBrowseButton)
         sublayout.addWidget(self.textInput_dir, 0)
         sublayout.setSpacing(5)
-        sublayout.addWidget(browseButton, 2)
+        sublayout.addWidget(browseButton, 1)
 
         layout.addLayout(sublayout, 6, 0, QtCore.Qt.AlignLeft)
 
