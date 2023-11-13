@@ -16,6 +16,7 @@ from femobjects import result_mechanical
 import math
 
 class PostProcess(QtGui.QDialog):
+    resized = QtCore.Signal()
 
     def __init__(self):
         super(PostProcess, self).__init__()
@@ -121,7 +122,7 @@ class PostProcess(QtGui.QDialog):
 
 
         # color gradient
-        self.colorGradient = GradientBar(self.min_val, self.max_val)
+        self.colorGradient = GradientBar(self.min_val, self.max_val, self.width())
         self.layout.addWidget(self.colorGradient, 12, 0)
 
         self.setLayout(self.layout)
@@ -137,6 +138,7 @@ class PostProcess(QtGui.QDialog):
         self.popup_result.currentTextChanged.connect(self.onVisualize__)
         self.visualizeButton.stateChanged.connect(self.onVisualize)
         self.slider.valueChanged.connect(self.slider_function)
+        self.resized.connect(self.windowSizedChanged)
 
         self.show()
 
@@ -200,13 +202,20 @@ class PostProcess(QtGui.QDialog):
             self.vonmisses=[]
 
     def onBrowseButton(self):
-        browseWindow = QtGui.QFileDialog.getOpenFileName(self, "Select the Result File", "/home/bediralp/", "*.vtk")
+        browseWindow = QtGui.QFileDialog.getOpenFileName(self, "Select the Result File", self.work_dir, "*.vtk")
         print(browseWindow[0])
         print(browseWindow[1])
         self.textInput_pathname_.setText(browseWindow[0])
         self.deVisualize_()
         self.read_result()
         self.onVisualize_()
+
+    def resizeEvent(self, event):
+        self.resized.emit()
+        return super(PostProcess, self).resizeEvent(event)
+    
+    def windowSizedChanged(self):
+        self.update_gradient()
 
     def onCancel(self):
         self.result = "Cancel"
@@ -381,8 +390,8 @@ class PostProcess(QtGui.QDialog):
         self.layout.update()
 
     def update_gradient(self):
-        self.min_val, self.max_val=self.get_min_max_values()
-        gradient_bar = GradientBar(self.min_val, self.max_val)
+        self.min_val, self.max_val = self.get_min_max_values()
+        gradient_bar = GradientBar(self.min_val, self.max_val, self.width())
         self.layout.replaceWidget(self.layout.itemAtPosition(12, 0).widget(), gradient_bar)
         self.colorGradient = gradient_bar
         min_val_round = "{:.4f}".format(self.min_val)
@@ -396,10 +405,11 @@ class PostProcess(QtGui.QDialog):
         self.layout.update()
 
 class GradientBar(QtGui.QWidget):
-    def __init__(self, min_val, max_val):
+    def __init__(self, min_val, max_val, width_val):
         super().__init__()
         self.min_val = min_val
         self.max_val = max_val
+        self.width_val = width_val
         self.initUI()
 
     def initUI(self):
@@ -446,14 +456,20 @@ class GradientBar(QtGui.QWidget):
         rect = event.rect()
         painter.fillRect(rect, gradient)
 
-        num_intervals = 5
+        if (self.width_val < 400):
+            num_intervals = 5
+
+        else:
+            num_intervals = 5 + math.floor((self.width_val - 400)/100)
+
+        print(num_intervals)
+        
         interval = (self.max_val - self.min_val) / num_intervals
 
         # Draw scale (tick marks)
         painter.setPen(QtGui.QColor(0, 0, 0))
         for i in range(num_intervals + 1):
             x = i * (self.width() / num_intervals)
-            value = f'{self.min_val + i * interval:.2e}'
             painter.drawLine(x, self.height() - 5, x, self.height())
 
         small_font = QtGui.QFont("Arial", 8)

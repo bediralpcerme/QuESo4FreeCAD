@@ -386,6 +386,7 @@ class QuESoParameters(QtGui.QMainWindow):
         self.SurfaceLoadFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_SurfaceLoadFacesList)
 
         self.PenaltySupport_displacement_arr = []
+        self.mainObjectName = ""
         self.SurfaceLoad_modulus_arr=[]
         self.SurfaceLoad_force_arr = []
         self.PenaltySupportSelectionList = []
@@ -423,6 +424,7 @@ class QuESoParameters(QtGui.QMainWindow):
             kratos_dirOrg = kratos_dirOrg.replace("/bin/Release","")
             QuESo_dirOrg = mydata_directory['QuESo_directory']
             STL_dir = mydata_directory['STL_directory']
+            self.mainObjectName = mydata_directory['mainObjectName']
 
             self.viewport.textInput_QuESo_.setText(QuESo_dirOrg)
             self.viewport.textInput_Kratos_.setText(kratos_dirOrg)
@@ -591,8 +593,6 @@ class QuESoParameters(QtGui.QMainWindow):
                 mydata_QuESo = json.load(myfile)
 
             conditions = mydata_QuESo['conditions']
-
-
             
             for member in conditions:
                 if('SurfaceLoadCondition' in member):
@@ -612,7 +612,7 @@ class QuESoParameters(QtGui.QMainWindow):
                     for member_SurfaceLoadFaces in mydata_OtherInfos['SurfaceLoadFaces']:
                         self.SurfaceLoad_faces.append(member_SurfaceLoadFaces)
                         self.SurfaceLoadFacesList_Obj.listwidget.addItem(member_SurfaceLoadFaces)
-                        Gui.Selection.addSelection(FreeCAD.ActiveDocument.Name, FreeCAD.ActiveDocument.ActiveObject.Name, member_SurfaceLoadFaces)
+                        Gui.Selection.addSelection(FreeCAD.ActiveDocument.Name, self.mainObjectName, member_SurfaceLoadFaces)
                         sel = Gui.Selection.getSelectionEx()
                         self.SurfaceLoadSelectionList.append(sel)
                         Gui.Selection.clearSelection()
@@ -621,10 +621,13 @@ class QuESoParameters(QtGui.QMainWindow):
                     for member_PenaltySupportFaces in mydata_OtherInfos['PenaltySupportFaces']:
                         self.PenaltySupport_faces.append(member_PenaltySupportFaces)
                         self.PenaltySupportFacesList_Obj.listwidget.addItem(member_PenaltySupportFaces)
-                        Gui.Selection.addSelection(FreeCAD.ActiveDocument.Name, FreeCAD.ActiveDocument.ActiveObject.Name, member_PenaltySupportFaces)
+                        Gui.Selection.addSelection(FreeCAD.ActiveDocument.Name, self.mainObjectName, member_PenaltySupportFaces)
                         sel = Gui.Selection.getSelectionEx()
                         self.PenaltySupportSelectionList.append(sel)
                         Gui.Selection.clearSelection()
+            
+            print(str(self.SurfaceLoadSelectionList))
+            print(str(self.PenaltySupportSelectionList))
 
         except:
             pass
@@ -698,6 +701,7 @@ class QuESoParameters(QtGui.QMainWindow):
     def ModifyButtonClicked_PenaltySupportFacesList(self):
         current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
         indexToMod = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        print("whole surface load arr = " + str(self.PenaltySupport_displacement_arr))
         prev_vals = self.PenaltySupport_displacement_arr[indexToMod]
         prev_x = prev_vals[0]
         prev_y = prev_vals[1]
@@ -742,6 +746,7 @@ class QuESoParameters(QtGui.QMainWindow):
                     # object = Draft.makeFacebinder(sel, 'D' + str(self.PenaltySupportBCBox_obj.PenaltySupport_count))
                     self.PenaltySupportSelectionList.append(sel)
                     self.PenaltySupport_faces.append(element_list['Component'])
+                    self.mainObjectName = element_list['Object']
                     Gui.Selection.clearSelection()
                                         
 
@@ -844,6 +849,7 @@ class QuESoParameters(QtGui.QMainWindow):
                     # object = Draft.makeFacebinder(sel, 'D' + str(self.PenaltySupportBCBox_obj.PenaltySupport_count))
                     self.SurfaceLoadSelectionList.append(sel)
                     self.SurfaceLoad_faces.append(element_list['Component'])
+                    self.mainObjectName = element_list['Object']
                     Gui.Selection.clearSelection()
 
     def onVisualize(self):
@@ -931,6 +937,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
             self.OtherInfos = \
             {
+                "mainObjectName"        : self.mainObjectName,
                 "SurfaceLoadFaces"      : self.SurfaceLoad_faces,
                 "PenaltySupportFaces"   : self.PenaltySupport_faces,
                 "working_directory"     : self.work_dir,
@@ -949,6 +956,11 @@ class QuESoParameters(QtGui.QMainWindow):
                 pass
 
             for i in range (int(len(self.SurfaceLoad_force_arr))):
+                print("i = " + str(i))
+                print("surface load arr = " + str(self.SurfaceLoad_force_arr[i]))
+                print("whole surface load arr = " + str(self.SurfaceLoad_force_arr))
+                print("magnitude = " + str(self.SurfaceLoad_modulus_arr[i]))
+                print("whole magnitude arr = " + str(self.SurfaceLoad_modulus_arr))
                 force_direction = list(self.SurfaceLoad_force_arr[i])
                 magnitude = self.SurfaceLoad_modulus_arr[i]
                 SurfaceLoad_json = {"SurfaceLoadCondition": {
@@ -1529,6 +1541,11 @@ class PenaltySupportFacesList(QtGui.QWidget):
 
         self.setLayout(layout)
 
+        topLeftPoint = QtGui.QDesktopWidget().availableGeometry().topLeft()
+        frameGm = self.frameGeometry()
+        frameGm.moveTopLeft(topLeftPoint)
+        self.move(frameGm.topLeft())
+
 
     def closeEvent(self, event):
         if (self.result):
@@ -1589,6 +1606,11 @@ class SurfaceLoadFacesList(QtGui.QWidget):
         self.finished_flag = QtGui.QAction("Quit", self)
 
         self.setLayout(layout)
+
+        topLeftPoint = QtGui.QDesktopWidget().availableGeometry().topLeft()
+        frameGm = self.frameGeometry()
+        frameGm.moveTopLeft(topLeftPoint)
+        self.move(frameGm.topLeft())
 
 
     def closeEvent(self, event):
@@ -1870,6 +1892,16 @@ class SolverSettingsBox(QtGui.QDialog):
 
         self.result = "Ok"
 
+        if(self.popup_block_builder_.currentText() == 'false'):
+            bool_popup_block_builder = False
+        elif(self.popup_block_builder_.currentText() == 'true'):
+            bool_popup_block_builder = True
+
+        if(self.popup_rotation_dofs_.currentText() == 'false'):
+            bool_popup_rotation_dofs = False
+        elif(self.popup_block_builder_.currentText() == 'true'):
+            bool_popup_rotation_dofs = True
+
 
         self.KratosParam = \
         {
@@ -1900,9 +1932,9 @@ class SolverSettingsBox(QtGui.QDialog):
                     "max_iteration" : 5000,
                     "tolerance" : float(self.textInput_tolerance_.text())
                 },
-                "rotation_dofs"            : self.popup_rotation_dofs_.currentText(),
+                "rotation_dofs"            : bool_popup_rotation_dofs,
                 "builder_and_solver_settings" : {
-                    "use_block_builder" : self.popup_block_builder_.currentText()
+                    "use_block_builder" : bool_popup_block_builder
                 },
                 "residual_relative_tolerance"        : float(self.textInput_relative_tolerance_.text())
             },
@@ -1911,7 +1943,50 @@ class SolverSettingsBox(QtGui.QDialog):
                         "Parameters": {
                             "model_part_name" : self.textInput_modeler_part_name_.text(),
                             "geometry_name"   : self.textInput_modeler_geometry_name_.text()}
-                    }]
+                    }],
+            
+            "output_processes": 
+            {
+                "vtk_output": 
+                [
+                    {
+                        "python_module": "vtk_embedded_geometry_output_process",
+                        "kratos_module": "KratosMultiphysics.IgaApplication",
+                        "process_name": "VtkEmbeddedGeometryOutputProcess",
+                        "help": "This process writes postprocessing files for Paraview",
+                        "Parameters": {
+                            "mapping_parameters": {
+                                "main_model_part_name": "NurbsMesh",
+                                "nurbs_volume_name": "NurbsVolume",
+                                "embedded_model_part_name": "EmbeddedModelPart"
+                            },
+                            "vtk_parameters": {
+                                "model_part_name": "EmbeddedModelPart",
+                                "output_control_type": "step",
+                                "output_interval": 1,
+                                "file_format": "ascii",
+                                "output_precision": 7,
+                                "output_sub_model_parts": False,
+                                "output_path": "kratos_output",
+                                "save_output_files_in_folder": True,
+                                "nodal_solution_step_data_variables": [
+                                    "DISPLACEMENT"
+                                ],
+                                "nodal_data_value_variables": [
+                                    "CAUCHY_STRESS_VECTOR",
+                                    "VON_MISES_STRESS"
+                                ],
+                                "nodal_flags": [],
+                                "element_data_value_variables": [],
+                                "element_flags": [],
+                                "condition_data_value_variables": [],
+                                "condition_flags": [],
+                                "gauss_point_variables_extrapolated_to_nodes": []
+                            }
+                        }
+                    }
+                ]
+            }
         }
 
 

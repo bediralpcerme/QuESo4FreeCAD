@@ -20,7 +20,7 @@ class RunQuESo(QtGui.QDialog):
         ok_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogApplyButton)
 
         #label text
-        self.label_ = QtGui.QLabel("Are you sure you want to run QuESo?", self)
+        self.label_ = QtGui.QLabel("Are you sure you want to run QuESo and Kratos?", self)
         layout.addWidget(self.label_, 0, 0, QtCore.Qt.AlignCenter)
 
         layout.setRowMinimumHeight(1, 20)
