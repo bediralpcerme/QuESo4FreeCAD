@@ -1,4 +1,4 @@
-from FreeCAD_PySide import *
+from FreeCAD_PySide import QtGui, QtCore
 import os
 import subprocess
 import FreeCAD
@@ -13,17 +13,12 @@ import FreeCADGui as Gui
 import Draft, Sketcher, Mesh, Part
 from pivy import coin
 from femobjects import result_mechanical
-from PySide2 import QtWidgets
 import math
 
 class PostProcess(QtGui.QDialog):
 
     def __init__(self):
         super(PostProcess, self).__init__()
-        self.setMinimumWidth(300)
-        self.setMaximumWidth(300)
-        self.setMaximumHeight(220)
-        self.setMinimumHeight(220)
         self.visulizerun=False
         self.slider_num=1
         self.initUI()
@@ -34,89 +29,115 @@ class PostProcess(QtGui.QDialog):
         self.work_dir = self.work_dir.replace(self.docName,"")
 
         #position and geometry of the dialog box
-        width = 300
-        height = 220
-
-        self.centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
 
         std_validate = QtGui.QIntValidator()
         scientific_validate = QtGui.QDoubleValidator()
         scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation)
-
-        self.setGeometry(self.centerPoint.x()-0.5*width, self.centerPoint.y()-0.5*height, height, width)
-        self.setWindowTitle("Post Process")
-
-        layout = QtGui.QVBoxLayout()
-
-        self.min_val, self.max_val = self.get_min_max_values()
-
         self.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, on = True)
         self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, on = True)
+        self.setWindowTitle("Post Process")
 
-        #Initial Parameters input:
+        self.small_font = QtGui.QFont("Arial", 8)
+        self.layout = QtGui.QGridLayout()
+
+        self.min_val, self.max_val = self.get_min_max_values()
 
         #path to the file
         self.label_pathname_ = QtGui.QLabel("Path to the result file:", self)
+        self.layout.addWidget(self.label_pathname_, 0, 0, QtCore.Qt.AlignLeft)
+
+        self.layout.setRowMinimumHeight(1, 3)
 
         #Text edit of pathname
         self.textInput_pathname_ = QtGui.QLineEdit(self)
         self.textInput_pathname_.setText("")
-        self.textInput_pathname_.setFixedWidth(140)
 
         #file browser button
-        self.fileBrowseButton = QtGui.QPushButton('Browse files',self)
-        self.fileBrowseButton.clicked.connect(self.onBrowseButton)
-        self.fileBrowseButton.setFixedWidth(80)
-        self.fileBrowseButton.setAutoDefault(False)
+        fileBrowseButton = QtGui.QPushButton('Browse files', self)
+        fileBrowseButton.setAutoDefault(False)
+
+        sublayout = QtGui.QHBoxLayout()
+        sublayout.addWidget(self.textInput_pathname_)
+        sublayout.addWidget(fileBrowseButton)
+        sublayout.setSpacing(5)
+
+        self.layout.addLayout(sublayout, 2, 0)
+
+        self.layout.setRowMinimumHeight(3, 7)
 
         #method setting
         self.label_result_ = QtGui.QLabel("Results:", self)
         self.popup_result = QtGui.QComboBox(self)
         self.popup_result_items = ("Displacement X","Displacement Y","Displacement Z","Total Displacement","Cauchy Stress Vector XX", "Cauchy Stress Vector YY","Cauchy Stress Vector ZZ","Cauchy Stress Vector XY","Cauchy Stress Vector XZ","Cauchy Stress Vector YZ","Von Misses Stress")
         self.popup_result.addItems(self.popup_result_items)
-        self.popup_result.currentTextChanged.connect(self.onVisualize__)
-        self.popup_result.setFixedWidth(140)
-        
-        # visulize button
-        self.visualizeButton = QtGui.QCheckBox('Visualize the output', self)
-        self.visualizeButton.stateChanged.connect(self.onVisualize)
-        self.visualizeButton.move(10, self.label_result_.y()+45)
 
-        #slider
-        self.label_slider_ = QtGui.QLabel('Scale: '+str(self.get_max_length()),self)
+        sublayout = QtGui.QHBoxLayout()
+        sublayout.addWidget(self.label_result_, 0, QtCore.Qt.AlignLeft)
+        sublayout.addWidget(self.popup_result, 1, QtCore.Qt.AlignLeft)
+        sublayout.setSpacing(5)
+
+        self.layout.addLayout(sublayout, 4, 0)
+
+        self.layout.setRowMinimumHeight(5, 3)
+        
+        # visualize button
+        self.visualizeButton = QtGui.QCheckBox('Visualize the output', self)
+
+        self.layout.addWidget(self.visualizeButton, 6, 0, QtCore.Qt.AlignLeft)
+
+        self.layout.setRowMinimumHeight(7, 7)
+
+        # slider
+        self.label_slider_ = QtGui.QLabel('Scale: ' + str(self.get_max_length()), self)
         self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(50)
         self.slider.setValue((self.get_max_length()))
+
+        sublayout = QtGui.QHBoxLayout()
+        sublayout.addWidget(self.label_slider_, 0, QtCore.Qt.AlignLeft)
+        sublayout.addWidget(self.slider, 1)
+        sublayout.setSpacing(5)
+
+        self.layout.addLayout(sublayout, 8, 0, 1, -1)
+
+        self.layout.setRowMinimumHeight(9, 5)
+
+        self.min_label = QtGui.QLabel("Min. value: " + str(self.min_val), self)
+        self.min_label.setFont(self.small_font)
+        self.max_label = QtGui.QLabel("Max. value: " + str(self.max_val), self)
+        self.max_label.setFont(self.small_font)
+
+        sublayout = QtGui.QHBoxLayout()
+        sublayout.addWidget(self.min_label, 0, QtCore.Qt.AlignLeft)
+        sublayout.addWidget(self.max_label, 1, QtCore.Qt.AlignRight)
+        sublayout.setContentsMargins(0, 0, 0, 0)
+
+        self.layout.addLayout(sublayout, 10, 0)
+
+        self.layout.setRowMinimumHeight(11, 0)
+
+
+        # color gradient
+        self.colorGradient = GradientBar(self.min_val, self.max_val)
+        self.layout.addWidget(self.colorGradient, 12, 0)
+
+        self.setLayout(self.layout)
+
+        width = self.sizeHint().width() + 100
+        height = self.sizeHint().height()
+        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+        self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
+        self.setFixedHeight(height)
+        self.setMinimumWidth(width)
+
+        fileBrowseButton.clicked.connect(self.onBrowseButton)
+        self.popup_result.currentTextChanged.connect(self.onVisualize__)
+        self.visualizeButton.stateChanged.connect(self.onVisualize)
         self.slider.valueChanged.connect(self.slider_function)
-        
-        self.colorGradient=GradientBar(self.min_val, self.max_val)
 
-        layout1 = QtGui.QVBoxLayout()
-        layout2 = QtGui.QVBoxLayout()
-        layout3 = QtGui.QVBoxLayout()
-        layout4 = QtGui.QVBoxLayout()
-
-        layout1.addWidget(self.label_pathname_)
-        layout1.addWidget(self.textInput_pathname_)
-        layout1.addWidget(self.fileBrowseButton)
-        layout1.addWidget(self.label_result_)
-        layout1.addWidget(self.popup_result)
-        layout1.addWidget(self.visualizeButton)
-
-        layout2.addWidget(self.label_slider_)
-        
-
-        layout3.addWidget(self.slider)
-        layout3.addWidget(self.colorGradient)
-
-        layout4.addLayout( layout1 )
-        layout4.addLayout( layout2 )
-        layout4.addLayout( layout3 )
-
-        self.setLayout(layout4)
         self.show()
 
     def Visualize(self):
@@ -179,18 +200,13 @@ class PostProcess(QtGui.QDialog):
             self.vonmisses=[]
 
     def onBrowseButton(self):
-        self.browseWindow = QtGui.QFileDialog(self)
-        self.browseWindow.setFileMode(QtGui.QFileDialog.ExistingFile)
-        self.browseWindow.setNameFilter(str("*.vtk"))
-        self.browseWindow.setViewMode(QtGui.QFileDialog.Detail)
-        self.browseWindow.setDirectory(self.work_dir)
-
-        if self.browseWindow.exec_():
-            path_name_list = self.browseWindow.selectedFiles()
-            self.textInput_pathname_.setText(path_name_list[0])
-            self.deVisualize_()
-            self.read_result()
-            self.onVisualize_()
+        browseWindow = QtGui.QFileDialog.getOpenFileName(self, "Select the Result File", "/home/bediralp/", "*.vtk")
+        print(browseWindow[0])
+        print(browseWindow[1])
+        self.textInput_pathname_.setText(browseWindow[0])
+        self.deVisualize_()
+        self.read_result()
+        self.onVisualize_()
 
     def onCancel(self):
         self.result = "Cancel"
@@ -361,34 +377,37 @@ class PostProcess(QtGui.QDialog):
             return  1
 
     def update_slider(self,new_ratio):
-        self.layout().itemAt(1).itemAt(0).widget().setText('Scale: '+str(new_ratio))
-        self.layout().update()
+        self.layout.itemAtPosition(8, 0).itemAt(0).widget().setText('Scale: ' + str(new_ratio))
+        self.layout.update()
 
     def update_gradient(self):
         self.min_val, self.max_val=self.get_min_max_values()
         gradient_bar = GradientBar(self.min_val, self.max_val)
-        self.layout().replaceWidget(self.layout().itemAt(2).itemAt(1).widget(), gradient_bar)
-        self.colorGradient=gradient_bar
-        self.layout().update()
+        self.layout.replaceWidget(self.layout.itemAtPosition(12, 0).widget(), gradient_bar)
+        self.colorGradient = gradient_bar
+        min_val_round = "{:.4f}".format(self.min_val)
+        min_label_text = "Min. value: " + min_val_round
+        self.layout.itemAtPosition(10, 0).itemAt(0).widget().setText(min_label_text)
+        self.layout.itemAtPosition(10, 0).itemAt(0).widget().setFont(self.small_font)
+        max_val_round = "{:.4f}".format(self.max_val)
+        max_label_text = "Max. value: " + str(max_val_round)
+        self.layout.itemAtPosition(10, 0).itemAt(1).widget().setText(max_label_text)
+        self.layout.itemAtPosition(10, 0).itemAt(1).widget().setFont(self.small_font)
+        self.layout.update()
 
-class GradientBar(QtWidgets.QWidget):
+class GradientBar(QtGui.QWidget):
     def __init__(self, min_val, max_val):
         super().__init__()
-        self.setMinimumWidth(280)
-        self.setMaximumWidth(280)
-        self.setMinimumHeight(30)
         self.min_val = min_val
         self.max_val = max_val
         self.initUI()
 
     def initUI(self):
-        self.setMinimumWidth(280)
-        self.setMaximumWidth(280)
         self.setMinimumHeight(30)
         self.min_val_label = QtGui.QLabel(f'{self.min_val:.2e}')
         self.max_val_label = QtGui.QLabel(f'{self.max_val:.2e}')
-        self.min_val_label.setAlignment(QtGui.Qt.AlignLeft)
-        self.max_val_label.setAlignment(QtGui.Qt.AlignRight)
+        self.min_val_label.setAlignment(QtCore.Qt.AlignLeft)
+        self.max_val_label.setAlignment(QtCore.Qt.AlignRight)
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
@@ -396,8 +415,6 @@ class GradientBar(QtWidgets.QWidget):
 
         # Create a gradient for the bar
         gradient = QtGui.QLinearGradient(0, 0, self.width(), 0)
-        self.min_val
-        self.max_val
         if((self.min_val>0) and (self.max_val>0)):
             ratio=self.max_val/(255*2)
             min_valgoes=self.min_val/ratio
@@ -436,14 +453,14 @@ class GradientBar(QtWidgets.QWidget):
         painter.setPen(QtGui.QColor(0, 0, 0))
         for i in range(num_intervals + 1):
             x = i * (self.width() / num_intervals)
+            value = f'{self.min_val + i * interval:.2e}'
             painter.drawLine(x, self.height() - 5, x, self.height())
 
-        # Draw numerical values
-        values = [f'{self.min_val + i * interval:.2e}' for i in range(num_intervals + 1)]
-        for i, value in enumerate(values):
-            x = i * (self.width() / num_intervals) - 10
-            label = QtGui.QLabel(value)
-            label.setAlignment(QtGui.Qt.AlignCenter)
-            label.setGeometry(x, self.height() - 20, 40, 20)
-            label.setParent(self)
-            label.show()
+        small_font = QtGui.QFont("Arial", 8)
+        painter.setPen(QtGui.QPen())
+        painter.setFont(small_font)
+        for i in range(num_intervals + 1):
+            x = i * (self.width() / num_intervals)
+            value = f'{self.min_val + i * interval:.2e}'
+            if(x != QtCore.QRectF(rect).x()) and (x != QtCore.QRectF(rect).width()):
+                painter.drawText(x - 20 , self.height() - 20, value)
