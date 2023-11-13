@@ -392,8 +392,14 @@ class PostProcess(QtGui.QDialog):
     def update_gradient(self):
         self.min_val, self.max_val = self.get_min_max_values()
         gradient_bar = GradientBar(self.min_val, self.max_val, self.width())
-        self.layout.replaceWidget(self.layout.itemAtPosition(12, 0).widget(), gradient_bar)
+
+        #changed this part
+        self.layout.itemAtPosition(12, 0).widget().setParent(None)
+        self.layout.addWidget(gradient_bar, 12, 0)
         self.colorGradient = gradient_bar
+       
+        #self.layout.replaceWidget(self.layout.itemAtPosition(12, 0).widget(), gradient_bar)
+        
         min_val_round = "{:.4f}".format(self.min_val)
         min_label_text = "Min. value: " + min_val_round
         self.layout.itemAtPosition(10, 0).itemAt(0).widget().setText(min_label_text)
