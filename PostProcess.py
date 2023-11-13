@@ -215,7 +215,8 @@ class PostProcess(QtGui.QDialog):
         return super(PostProcess, self).resizeEvent(event)
     
     def windowSizedChanged(self):
-        self.update_gradient()
+        if (self.width()%50 == 0):
+            self.update_gradient()
 
     def onCancel(self):
         self.result = "Cancel"
@@ -464,11 +465,8 @@ class GradientBar(QtGui.QWidget):
 
         if (self.width_val < 400):
             num_intervals = 5
-
         else:
             num_intervals = 5 + math.floor((self.width_val - 400)/100)
-
-        print(num_intervals)
         
         interval = (self.max_val - self.min_val) / num_intervals
 
