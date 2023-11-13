@@ -51,7 +51,7 @@ class RunQuESo_Class():
 class RunPostProcess():
     """My new command"""
     def GetResources(self):
-        icon_path = FreeCAD.getUserAppDataDir()+'/Mod/TIBRA4FreeCAD/icon/set_parameter.svg'
+        icon_path = os.path.dirname(__file__) + '/icon/fem_postprocess.svg'
         return {'Pixmap'  :  str(icon_path), # the name of a svg file available in the resources
                 'MenuText': "Post Process",
                 'ToolTip' : "Post Process"}
