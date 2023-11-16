@@ -378,8 +378,8 @@ class QuESoParameters(QtGui.QDialog):
         self.SurfaceLoad_force_arr = []
         self.PenaltySupportSelectionList = []
         self.SurfaceLoadSelectionList = []
-        self.Dirichlet_BC_icons = []
-        self.Neumann_BC_icons = []
+        self.Dirichlet_BC_icons = {}
+        self.Neumann_BC_icons = {}
         
         self.projectNameWindow_obj.exec_()
         self.work_dir = self.projectNameWindow_obj.project_dir
@@ -629,15 +629,15 @@ class QuESoParameters(QtGui.QDialog):
         current_Item_text = self.PenaltySupportFacesList_Obj.listwidget.currentItem().text()
         indexToDel = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
         del self.PenaltySupport_displacement_arr[indexToDel]
-
-        #Temporary solution - this loop needs to know #No of nodes
-        for i in range (1, 5, 1):
+        k = self.Dirichlet_BC_icons[current_Item_text]
+        for i in range (1, int(k), 1):
             obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Dirichlet_BC_" + str(current_Item_text) + "_" + str(i))
             OpenSCADUtils.removesubtree(obj)
         else:
             print()
-
         FreeCAD.ActiveDocument.removeObject('Dirichlet_BC_' + current_Item_text)
+        self.Dirichlet_BC_icons.pop(str(current_Item_text))
+        print('BC Container: ', str(self.Dirichlet_BC_icons))
         print(str(self.PenaltySupport_displacement_arr))
         self.PenaltySupportFacesList_Obj.listwidget.takeItem(self.PenaltySupportFacesList_Obj.listwidget.row(current_Item))
 
@@ -697,8 +697,11 @@ class QuESoParameters(QtGui.QDialog):
                             sub = sel.SubObjects[0]
                             u, v = sub.Surface.parameter(pnt)
                             normal = sub.Surface.normal(u,v)
+                            uv = sub.Surface.parameter(normal)
+                            nv = sub.normalAt(uv[0], uv[1]).normalize()
+                            print("nv: ", nv)
 
-                            print(element_list.get('Component'))
+                            #print(element_list.get('Component'))
 
                             #prepIcons = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Prep_icons")
                             iconDir = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Dirichlet BC_" + element_list.get('Component'))
@@ -707,39 +710,39 @@ class QuESoParameters(QtGui.QDialog):
                             vX = FreeCAD.Vector(1,0,0)
                             vY = FreeCAD.Vector(0,1,0)
                             vZ = FreeCAD.Vector(0,0,1)
-                            axis1 = FreeCAD.Vector.cross(normal,vX)
-                            axis2 = FreeCAD.Vector.cross(normal,vY)
-                            axis3 = FreeCAD.Vector.cross(normal,vZ)
-                            angle1 = math.degrees(vX.getAngle(normal))
-                            angle2 = math.degrees(vY.getAngle(normal))
-                            angle3 = math.degrees(vZ.getAngle(normal))
+                            axis1 = FreeCAD.Vector.cross(vX,nv)
+                            axis2 = FreeCAD.Vector.cross(vY,nv)
+                            axis3 = FreeCAD.Vector.cross(vZ,nv)
+                            angle1 = math.degrees(vX.getAngle(nv))
+                            angle2 = math.degrees(vY.getAngle(nv))
+                            angle3 = math.degrees(vZ.getAngle(nv))
 
                             n = 1  
 
-                            print([v.Point for v in shape.Vertexes])
+                            #print([v.Point for v in shape.Vertexes])
                             for i in [v.Point for v in shape.Vertexes]:
                                 
                                 bcCone = FreeCAD.ActiveDocument.addObject("Part::Cone")
-                                bcCone.Height = 0.5	
+                                bcCone.Height = 5	
                                 bcCone.Radius1 = 0
-                                bcCone.Radius2 = 0.2
+                                bcCone.Radius2 = 2
                                 bcCone.Label = "_bcCone_" + str(n)
 
                                 bcBox = FreeCAD.ActiveDocument.addObject("Part::Box")
-                                bcBox.Height = 0.1
-                                bcBox.Length = 0.5
-                                bcBox.Width = 0.5
+                                bcBox.Height = 1
+                                bcBox.Length = 5
+                                bcBox.Width = 5
                                 bcBox.Label = "_bcBox_" + str(n)
                                 
-                                bcBox.Placement = FreeCAD.Placement(FreeCAD.Vector(-0.25, -0.25, 0.5),FreeCAD.Rotation(0, 0, 0), FreeCAD.Vector(0, 0, 0))
+                                bcBox.Placement = FreeCAD.Placement(FreeCAD.Vector(-2.5, -2.5, 5.0),FreeCAD.Rotation(0, 0, 0), FreeCAD.Vector(0, 0, 0))
                                 FreeCAD.ActiveDocument.recompute()
                                 
                                 fusion = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + element_list.get('Component') + str(n))
                                 fusion.Shapes = [bcCone, bcBox]
 
                                 fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1,180 - angle1))
-                                fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2,180 - angle2))
-                                fusion.Placement = FreeCAD.Placement(i + FreeCAD.Vector(0, 0, 0),FreeCAD.Rotation(axis3,180 - angle3))
+                                fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2, angle2))
+                                fusion.Placement = FreeCAD.Placement(i + FreeCAD.Vector(0, 0, 0),FreeCAD.Rotation(axis3, 180 - angle3))
                                 FreeCAD.ActiveDocument.recompute()
 
                                 fusion.Label = "Dirichlet_BC_" + element_list.get('Component') + "_" + str(n)
@@ -749,11 +752,10 @@ class QuESoParameters(QtGui.QDialog):
                                 FreeCAD.ActiveDocument.recompute()
 
                                 iconDir.addObject(fusion)
-
-                                self.Dirichlet_BC_icons.append([element_list.get('Component'), str(n)])
-                                print(str(self.Dirichlet_BC_icons))
                                 n +=1
 
+                    self.Dirichlet_BC_icons.update({str(element_list.get('Component')): str(n)})
+                    print('BC Container: ', str(self.Dirichlet_BC_icons))
                     Gui.Selection.clearSelection()                                        
 
     def onSolverSettingsButton(self):
@@ -792,14 +794,15 @@ class QuESoParameters(QtGui.QDialog):
         current_Item_text = self.SurfaceLoadFacesList_Obj.listwidget.currentItem().text()
         indexToDel = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
         del self.SurfaceLoad_force_arr[indexToDel]
-
-        #Temporary solution - this loop needs to know #No of nodes
-        for i in range (1, 5, 1):
+        k = self.Neumann_BC_icons[current_Item_text]
+        for i in range (1, int(k), 1):
             obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Neumann_BC_" + str(current_Item_text) + "_" + str(i))
             OpenSCADUtils.removesubtree(obj)
         else:
             print()
-        FreeCAD.ActiveDocument.removeObject('Neumann_BC_' + str(current_Item_text))
+        FreeCAD.ActiveDocument.removeObject('Neumann_BC_' + current_Item_text)
+        self.Neumann_BC_icons.pop(str(current_Item_text))
+        print('BC Container: ', str(self.Neumann_BC_icons))
         print(str(self.SurfaceLoad_force_arr))
         self.SurfaceLoadFacesList_Obj.listwidget.takeItem(self.SurfaceLoadFacesList_Obj.listwidget.row(current_Item))
 
@@ -878,23 +881,22 @@ class QuESoParameters(QtGui.QDialog):
                             #prepIcons.addObject(iconNeu)
 
                             n = 1 
-                            print([v.Point for v in shape.Vertexes])
-                            
+                            #print([v.Point for v in shape.Vertexes])
                             for i in [v.Point for v in shape.Vertexes]:
                               
                                 bcTip = FreeCAD.ActiveDocument.addObject("Part::Cone")
-                                bcTip.Height = 0.75	
-                                bcTip.Radius1 = 0.2
+                                bcTip.Height = 7.5	
+                                bcTip.Radius1 = 2
                                 bcTip.Radius2 = 0
                                 bcTip.Label = "_bcTip_" + str(n)
                             
-                                bcTip.Placement = FreeCAD.Placement(FreeCAD.Vector(0, 0, -0.75),FreeCAD.Rotation(0, 0, 0))
+                                bcTip.Placement = FreeCAD.Placement(FreeCAD.Vector(0, 0, -7.5),FreeCAD.Rotation(0, 0, 0))
                                 bcCyl = FreeCAD.ActiveDocument.addObject("Part::Cone")
-                                bcCyl.Height = 0.75
-                                bcCyl.Radius1 = 0.11
-                                bcCyl.Radius2 = 0.10
+                                bcCyl.Height = 7.5
+                                bcCyl.Radius1 = 1.1
+                                bcCyl.Radius2 = 1.0
 
-                                bcCyl.Placement = FreeCAD.Placement(FreeCAD.Vector(0, 0, -1.5), FreeCAD.Rotation(0, 0, 0))
+                                bcCyl.Placement = FreeCAD.Placement(FreeCAD.Vector(0, 0, -15.0), FreeCAD.Rotation(0, 0, 0))
                                 bcCyl.Label = "_bcCyl_" + str(n)
 
                                 FreeCAD.ActiveDocument.recompute()
@@ -916,13 +918,11 @@ class QuESoParameters(QtGui.QDialog):
 
                                 FreeCAD.ActiveDocument.recompute()
 
-                                iconNeu.addObject(fusion_arrow)
-
-                                self.Neumann_BC_icons.append([element_list.get('Component'), str(n)])
-                                print(str(self.Neumann_BC_icons))
-          
+                                iconNeu.addObject(fusion_arrow)        
                                 n +=1
 
+                    self.Neumann_BC_icons.update({str(element_list.get('Component')): str(n)})
+                    print('BC Container: ', str(self.Neumann_BC_icons))
                     Gui.Selection.clearSelection()
 
     def onVisualize(self):
