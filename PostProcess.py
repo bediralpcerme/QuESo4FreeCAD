@@ -211,12 +211,12 @@ class PostProcess(QtGui.QDialog):
         self.onVisualize_()
 
     def resizeEvent(self, event):
-        self.resized.emit()
+        if (self.width()%50 == 0):
+            self.resized.emit()
         return super(PostProcess, self).resizeEvent(event)
     
     def windowSizedChanged(self):
-        if (self.width()%50 == 0):
-            self.update_gradient()
+        self.update_gradient()
 
     def onCancel(self):
         self.result = "Cancel"
