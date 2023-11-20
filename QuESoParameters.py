@@ -693,35 +693,36 @@ class QuESoParameters(QtGui.QDialog):
                         for path in sel.SubElementNames if sel.SubElementNames else ['']:
                             shape = sel.Object.getSubObject(path)
                            
-                            pnt = sel.PickedPoints[0]
-                            sub = sel.SubObjects[0]
-                            u, v = sub.Surface.parameter(pnt)
-                            normal = sub.Surface.normal(u,v)
-                            uv = sub.Surface.parameter(normal)
-                            nv = sub.normalAt(uv[0], uv[1]).normalize()
-                            print("nv: ", nv)
-
-                            #print(element_list.get('Component'))
-
-                            #prepIcons = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Prep_icons")
                             iconDir = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Dirichlet BC_" + element_list.get('Component'))
-                            #self.prepIcons.addObject(iconDir)
-
-                            vX = FreeCAD.Vector(1,0,0)
-                            vY = FreeCAD.Vector(0,1,0)
-                            vZ = FreeCAD.Vector(0,0,1)
-                            axis1 = FreeCAD.Vector.cross(vX,nv)
-                            axis2 = FreeCAD.Vector.cross(vY,nv)
-                            axis3 = FreeCAD.Vector.cross(vZ,nv)
-                            angle1 = math.degrees(vX.getAngle(nv))
-                            angle2 = math.degrees(vY.getAngle(nv))
-                            angle3 = math.degrees(vZ.getAngle(nv))
 
                             n = 1  
 
                             #print([v.Point for v in shape.Vertexes])
                             for i in [v.Point for v in shape.Vertexes]:
-                                
+
+                                # i <- coordinates of vertex
+                                #Calculating normals:
+                                sub = sel.SubObjects[0]
+                                suv = sub.Surface.parameter(i)
+                                snv = sub.normalAt(suv[0], suv[1]).normalize()
+
+                                pnt = sel.PickedPoints[0]
+                                sub = sel.SubObjects[0]
+                                u, v = sub.Surface.parameter(pnt)
+                                nv = sub.Surface.normal(u,v)
+
+                                #Calculating rotation angles:
+                                vX = FreeCAD.Vector(1,0,0)
+                                vY = FreeCAD.Vector(0,1,0)
+                                vZ = FreeCAD.Vector(0,0,1)
+                                axis1 = FreeCAD.Vector.cross(vX,snv)
+                                axis2 = FreeCAD.Vector.cross(vY,snv)
+                                axis3 = FreeCAD.Vector.cross(vZ,snv)
+                                angle1 = math.degrees(vX.getAngle(snv))
+                                angle2 = math.degrees(vY.getAngle(snv))
+                                angle3 = math.degrees(vZ.getAngle(snv))
+
+                                #Creating icons:
                                 bcCone = FreeCAD.ActiveDocument.addObject("Part::Cone")
                                 bcCone.Height = 5	
                                 bcCone.Radius1 = 0
@@ -740,9 +741,9 @@ class QuESoParameters(QtGui.QDialog):
                                 fusion = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + element_list.get('Component') + str(n))
                                 fusion.Shapes = [bcCone, bcBox]
 
-                                fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1,180 - angle1))
+                                fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1, angle1))
                                 fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2, angle2))
-                                fusion.Placement = FreeCAD.Placement(i + FreeCAD.Vector(0, 0, 0),FreeCAD.Rotation(axis3, 180 - angle3))
+                                fusion.Placement = FreeCAD.Placement(i + FreeCAD.Vector(0, 0, 0),FreeCAD.Rotation(axis3,  angle3))
                                 FreeCAD.ActiveDocument.recompute()
 
                                 fusion.Label = "Dirichlet_BC_" + element_list.get('Component') + "_" + str(n)
