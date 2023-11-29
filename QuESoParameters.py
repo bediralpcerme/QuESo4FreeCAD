@@ -729,17 +729,16 @@ class QuESoParameters(QtGui.QMainWindow):
                     self.PenaltySupportSelectionList.append(sel)
                     self.PenaltySupport_faces.append(element_list['Component'])
                     self.mainObjectName = element_list['Object']
-                    Gui.Selection.clearSelection()
                                         
-
+                    n = 1 
                                                                ##### Preprocessing Icons -> Dirichlet BC #####
-                    for sel in Gui.Selection.getSelectionEx('', 0):
+                    for sel in Gui.Selection.getSelectionEx('', 0): 
                         for path in sel.SubElementNames if sel.SubElementNames else ['']:
                             shape = sel.Object.getSubObject(path)
                            
                             iconDir = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Dirichlet BC_" + element_list.get('Component'))
 
-                            n = 1  
+                            print("elelelelelellelee")
 
                             #print([v.Point for v in shape.Vertexes])
                             for i in [v.Point for v in shape.Vertexes]:
