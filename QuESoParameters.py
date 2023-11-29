@@ -1,5 +1,5 @@
 from FreeCAD_PySide import QtGui, QtCore
-import os
+import os, shutil
 import FreeCAD
 import FreeCADGui as Gui
 import Draft, Mesh
@@ -21,7 +21,7 @@ import OpenSCADUtils
 # - Visual improvements and name changes
 
 
-class QuESoParameters(QtGui.QDialog):
+class QuESoParameters(QtGui.QMainWindow):
 
     def __init__(self):
 
@@ -34,10 +34,11 @@ class QuESoParameters(QtGui.QDialog):
     def initUI(self):
 
         # Basic settings of the QuESo Parameters Window
-        
-        layout_main = QtGui.QGridLayout()
 
-        self.centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+        self.viewport = QtGui.QDialog()
+        self.scrollArea = QtGui.QScrollArea()
+        layout_dialog = QtGui.QGridLayout()
+
         std_validate = QtGui.QIntValidator()
         scientific_validate = QtGui.QDoubleValidator()
         scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation)
@@ -60,269 +61,269 @@ class QuESoParameters(QtGui.QDialog):
 
         ## BEGINNING OF GENERAL SETTINGS ##
 
-        self.goback_button = QtGui.QPushButton("Go Back", self)
-        self.goback_button.setIcon(back_arrow_icon)
-        layout_main.addWidget(self.goback_button, 0, 0, QtCore.Qt.AlignLeft)
+        self.viewport.goback_button = QtGui.QPushButton("Go Back", self)
+        self.viewport.goback_button.setIcon(back_arrow_icon)
+        layout_dialog.addWidget(self.viewport.goback_button, 0, 0, QtCore.Qt.AlignLeft)
 
-        layout_main.setRowMinimumHeight(1, 10)
+        layout_dialog.setRowMinimumHeight(1, 10)
 
-        self.label_main_ = QtGui.QLabel("General settings", self)
-        self.label_main_.setFont(boldUnderlinedFont)
-        self.label_main_.setPalette(blueFont)
-        layout_main.addWidget(self.label_main_, 2, 0, QtCore.Qt.AlignHCenter)
+        self.viewport.label_main_ = QtGui.QLabel("General settings", self)
+        self.viewport.label_main_.setFont(boldUnderlinedFont)
+        self.viewport.label_main_.setPalette(blueFont)
+        layout_dialog.addWidget(self.viewport.label_main_, 2, 0, QtCore.Qt.AlignHCenter)
 
-        layout_main.setRowMinimumHeight(3, 5)
+        layout_dialog.setRowMinimumHeight(3, 5)
 
-        self.label_QuESo_ = QtGui.QLabel("Directory of the QuESo:", self)
-        layout_main.addWidget(self.label_QuESo_, 4, 0, QtCore.Qt.AlignLeft)
+        self.viewport.label_QuESo_ = QtGui.QLabel("Directory of the QuESo:", self)
+        layout_dialog.addWidget(self.viewport.label_QuESo_, 4, 0, QtCore.Qt.AlignLeft)
 
-        layout_main.setRowMinimumHeight(5, 0)
+        layout_dialog.setRowMinimumHeight(5, 0)
 
         layout_QuESo_text = QtGui.QHBoxLayout()
-        self.textInput_QuESo_ = QtGui.QLineEdit(self)
-        self.textInput_QuESo_.setText("")
-        self.textInput_QuESo_.setMinimumWidth(200)
-        layout_QuESo_text.addWidget(self.textInput_QuESo_)
+        self.viewport.textInput_QuESo_ = QtGui.QLineEdit(self)
+        self.viewport.textInput_QuESo_.setText("")
+        self.viewport.textInput_QuESo_.setMinimumWidth(200)
+        layout_QuESo_text.addWidget(self.viewport.textInput_QuESo_)
 
-        self.fileBrowseButton_QuESo = QtGui.QPushButton('Browse files',self)
-        self.fileBrowseButton_QuESo.setIcon(browse_icon)
-        self.fileBrowseButton_QuESo.setAutoDefault(False)
-        layout_QuESo_text.addWidget(self.fileBrowseButton_QuESo)
+        self.viewport.fileBrowseButton_QuESo = QtGui.QPushButton('Browse files',self)
+        self.viewport.fileBrowseButton_QuESo.setIcon(browse_icon)
+        self.viewport.fileBrowseButton_QuESo.setAutoDefault(False)
+        layout_QuESo_text.addWidget(self.viewport.fileBrowseButton_QuESo)
 
-        layout_main.addLayout(layout_QuESo_text, 6, 0, 1, -1)
+        layout_dialog.addLayout(layout_QuESo_text, 6, 0, 1, -1)
 
-        layout_main.setRowMinimumHeight(7, 5)
+        layout_dialog.setRowMinimumHeight(7, 5)
 
-        self.label_kratos_ = QtGui.QLabel("Directory of the Kratos:", self)
-        layout_main.addWidget(self.label_kratos_, 8, 0, QtCore.Qt.AlignLeft)
+        self.viewport.label_kratos_ = QtGui.QLabel("Directory of the Kratos:", self)
+        layout_dialog.addWidget(self.viewport.label_kratos_, 8, 0, QtCore.Qt.AlignLeft)
 
-        layout_main.setRowMinimumHeight(9, 0)
+        layout_dialog.setRowMinimumHeight(9, 0)
 
         layout_kratos_text = QtGui.QHBoxLayout()
-        self.textInput_Kratos_ = QtGui.QLineEdit(self)
-        self.textInput_Kratos_.setText("")
-        self.textInput_Kratos_.setMinimumWidth(200)
-        layout_kratos_text.addWidget(self.textInput_Kratos_)
+        self.viewport.textInput_Kratos_ = QtGui.QLineEdit(self)
+        self.viewport.textInput_Kratos_.setText("")
+        self.viewport.textInput_Kratos_.setMinimumWidth(200)
+        layout_kratos_text.addWidget(self.viewport.textInput_Kratos_)
 
-        self.fileBrowseButton_Kratos = QtGui.QPushButton('Browse files',self)
-        self.fileBrowseButton_Kratos.setIcon(browse_icon)
-        self.fileBrowseButton_Kratos.setAutoDefault(False)
-        layout_kratos_text.addWidget(self.fileBrowseButton_Kratos)
+        self.viewport.fileBrowseButton_Kratos = QtGui.QPushButton('Browse files',self)
+        self.viewport.fileBrowseButton_Kratos.setIcon(browse_icon)
+        self.viewport.fileBrowseButton_Kratos.setAutoDefault(False)
+        layout_kratos_text.addWidget(self.viewport.fileBrowseButton_Kratos)
 
-        layout_main.addLayout(layout_kratos_text, 10, 0, 1, -1)
+        layout_dialog.addLayout(layout_kratos_text, 10, 0, 1, -1)
 
-        layout_main.setRowMinimumHeight(11, 5)
+        layout_dialog.setRowMinimumHeight(11, 5)
 
-        self.label_echo_ = QtGui.QLabel("Echo level:", self)
-        layout_main.addWidget(self.label_echo_, 12, 0, QtCore.Qt.AlignLeft)
+        self.viewport.label_echo_ = QtGui.QLabel("Echo level:", self)
+        layout_dialog.addWidget(self.viewport.label_echo_, 12, 0, QtCore.Qt.AlignLeft)
 
-        layout_main.setRowMinimumHeight(13, 0)
+        layout_dialog.setRowMinimumHeight(13, 0)
 
-        self.textInput_echo_ = QtGui.QLineEdit(self)
-        self.textInput_echo_.setPlaceholderText("1")
-        self.textInput_echo_.setFixedWidth(50)
-        self.textInput_echo_.setValidator(std_validate)
+        self.viewport.textInput_echo_ = QtGui.QLineEdit(self)
+        self.viewport.textInput_echo_.setPlaceholderText("1")
+        self.viewport.textInput_echo_.setFixedWidth(50)
+        self.viewport.textInput_echo_.setValidator(std_validate)
 
-        layout_main.addWidget(self.textInput_echo_, 14, 0, QtCore.Qt.AlignLeft)
+        layout_dialog.addWidget(self.viewport.textInput_echo_, 14, 0, QtCore.Qt.AlignLeft)
 
         ## END OF GENERAL SETTINGS ##
 
-        layout_main.setRowMinimumHeight(15, 10)
+        layout_dialog.setRowMinimumHeight(15, 10)
 
-        self.label_main_ = QtGui.QLabel("Mesh Settings", self)
-        self.label_main_.setFont(boldUnderlinedFont)
-        self.label_main_.setPalette(blueFont)
-        layout_main.addWidget(self.label_main_, 16, 0, QtCore.Qt.AlignHCenter)
+        self.viewport.label_main_ = QtGui.QLabel("Mesh Settings", self)
+        self.viewport.label_main_.setFont(boldUnderlinedFont)
+        self.viewport.label_main_.setPalette(blueFont)
+        layout_dialog.addWidget(self.viewport.label_main_, 16, 0, QtCore.Qt.AlignHCenter)
 
-        layout_main.setRowMinimumHeight(17, 5)
+        layout_dialog.setRowMinimumHeight(17, 5)
 
-        self.label_polynomialOrder_ = QtGui.QLabel("Polynomial order:", self)
-        self.label_polynomialOrder_.setFont(boldFont)
-        layout_main.addWidget(self.label_polynomialOrder_, 18, 0, QtCore.Qt.AlignLeft)
+        self.viewport.label_polynomialOrder_ = QtGui.QLabel("Polynomial order:", self)
+        self.viewport.label_polynomialOrder_.setFont(boldFont)
+        layout_dialog.addWidget(self.viewport.label_polynomialOrder_, 18, 0, QtCore.Qt.AlignLeft)
 
-        layout_main.setRowMinimumHeight(19, 0)
+        layout_dialog.setRowMinimumHeight(19, 0)
 
         # Creating SubLayout for Polynomial Order
 
         layout_poly_xyz = QtGui.QGridLayout()
 
-        self.label_polynomialOrder_x_ = QtGui.QLabel("x: ", self)
-        layout_poly_xyz.addWidget(self.label_polynomialOrder_x_, 0, 0, QtCore.Qt.AlignLeft)
+        self.viewport.label_polynomialOrder_x_ = QtGui.QLabel("x: ", self)
+        layout_poly_xyz.addWidget(self.viewport.label_polynomialOrder_x_, 0, 0, QtCore.Qt.AlignLeft)
 
         layout_poly_xyz.setColumnMinimumWidth(1, 0)
 
-        self.textInput_polynomialOrder_x_ = QtGui.QLineEdit(self)
-        self.textInput_polynomialOrder_x_.setPlaceholderText("1")
-        self.textInput_polynomialOrder_x_.setFixedWidth(50)
-        self.textInput_polynomialOrder_x_.setValidator(std_validate)
-        layout_poly_xyz.addWidget(self.textInput_polynomialOrder_x_, 0, 2, QtCore.Qt.AlignLeft)
+        self.viewport.textInput_polynomialOrder_x_ = QtGui.QLineEdit(self)
+        self.viewport.textInput_polynomialOrder_x_.setPlaceholderText("1")
+        self.viewport.textInput_polynomialOrder_x_.setFixedWidth(50)
+        self.viewport.textInput_polynomialOrder_x_.setValidator(std_validate)
+        layout_poly_xyz.addWidget(self.viewport.textInput_polynomialOrder_x_, 0, 2, QtCore.Qt.AlignLeft)
 
         layout_poly_xyz.setColumnMinimumWidth(3, 20)
 
-        self.label_polynomialOrder_y_ = QtGui.QLabel("y: ", self)
-        layout_poly_xyz.addWidget(self.label_polynomialOrder_y_, 0, 4, QtCore.Qt.AlignLeft)
+        self.viewport.label_polynomialOrder_y_ = QtGui.QLabel("y: ", self)
+        layout_poly_xyz.addWidget(self.viewport.label_polynomialOrder_y_, 0, 4, QtCore.Qt.AlignLeft)
 
         layout_poly_xyz.setColumnMinimumWidth(5, 0)
 
-        self.textInput_polynomialOrder_y_ = QtGui.QLineEdit(self)
-        self.textInput_polynomialOrder_y_.setPlaceholderText("1")
-        self.textInput_polynomialOrder_y_.setFixedWidth(50)
-        self.textInput_polynomialOrder_y_.setValidator(std_validate)
+        self.viewport.textInput_polynomialOrder_y_ = QtGui.QLineEdit(self)
+        self.viewport.textInput_polynomialOrder_y_.setPlaceholderText("1")
+        self.viewport.textInput_polynomialOrder_y_.setFixedWidth(50)
+        self.viewport.textInput_polynomialOrder_y_.setValidator(std_validate)
 
-        layout_poly_xyz.addWidget(self.textInput_polynomialOrder_y_, 0, 6, QtCore.Qt.AlignLeft)
+        layout_poly_xyz.addWidget(self.viewport.textInput_polynomialOrder_y_, 0, 6, QtCore.Qt.AlignLeft)
 
         layout_poly_xyz.setColumnMinimumWidth(7, 20)
 
-        self.label_polynomialOrder_z_ = QtGui.QLabel("z: ", self)
-        layout_poly_xyz.addWidget(self.label_polynomialOrder_z_, 0, 8, QtCore.Qt.AlignLeft)
+        self.viewport.label_polynomialOrder_z_ = QtGui.QLabel("z: ", self)
+        layout_poly_xyz.addWidget(self.viewport.label_polynomialOrder_z_, 0, 8, QtCore.Qt.AlignLeft)
 
         layout_poly_xyz.setColumnMinimumWidth(9, 0)
 
-        self.textInput_polynomialOrder_z_ = QtGui.QLineEdit(self)
-        self.textInput_polynomialOrder_z_.setPlaceholderText("1")
-        self.textInput_polynomialOrder_z_.setFixedWidth(50)
-        self.textInput_polynomialOrder_z_.setValidator(std_validate)
+        self.viewport.textInput_polynomialOrder_z_ = QtGui.QLineEdit(self)
+        self.viewport.textInput_polynomialOrder_z_.setPlaceholderText("1")
+        self.viewport.textInput_polynomialOrder_z_.setFixedWidth(50)
+        self.viewport.textInput_polynomialOrder_z_.setValidator(std_validate)
 
-        layout_poly_xyz.addWidget(self.textInput_polynomialOrder_z_, 0, 10, QtCore.Qt.AlignLeft)
+        layout_poly_xyz.addWidget(self.viewport.textInput_polynomialOrder_z_, 0, 10, QtCore.Qt.AlignLeft)
 
         # End of SubLayout for Polynomial Order
 
-        layout_main.addLayout(layout_poly_xyz, 20, 0, QtCore.Qt.AlignCenter)
+        layout_dialog.addLayout(layout_poly_xyz, 20, 0, QtCore.Qt.AlignCenter)
 
-        layout_main.setRowMinimumHeight(21, 5)
+        layout_dialog.setRowMinimumHeight(21, 5)
 
-        self.label_nElements_ = QtGui.QLabel("Number of elements:", self)
-        self.label_nElements_.setFont(boldFont)
-        layout_main.addWidget(self.label_nElements_, 22, 0, QtCore.Qt.AlignLeft)
+        self.viewport.label_nElements_ = QtGui.QLabel("Number of elements:", self)
+        self.viewport.label_nElements_.setFont(boldFont)
+        layout_dialog.addWidget(self.viewport.label_nElements_, 22, 0, QtCore.Qt.AlignLeft)
 
-        layout_main.setRowMinimumHeight(23, 0)
+        layout_dialog.setRowMinimumHeight(23, 0)
 
         # Creating SubLayout for Number of Elements
 
         layout_nElements_ = QtGui.QGridLayout()
 
-        self.label_nElements_x_ = QtGui.QLabel("x: ", self)
-        layout_nElements_.addWidget(self.label_nElements_x_, 0, 0, QtCore.Qt.AlignLeft)
+        self.viewport.label_nElements_x_ = QtGui.QLabel("x: ", self)
+        layout_nElements_.addWidget(self.viewport.label_nElements_x_, 0, 0, QtCore.Qt.AlignLeft)
 
         layout_nElements_.setColumnMinimumWidth(1, 0)
 
-        self.textInput_nElements_x_ = QtGui.QLineEdit(self)
-        self.textInput_nElements_x_.setPlaceholderText("1")
-        self.textInput_nElements_x_.setFixedWidth(50)
-        self.textInput_nElements_x_.setValidator(std_validate)
-        layout_nElements_.addWidget(self.textInput_nElements_x_, 0, 2, QtCore.Qt.AlignLeft)
+        self.viewport.textInput_nElements_x_ = QtGui.QLineEdit(self)
+        self.viewport.textInput_nElements_x_.setPlaceholderText("1")
+        self.viewport.textInput_nElements_x_.setFixedWidth(50)
+        self.viewport.textInput_nElements_x_.setValidator(std_validate)
+        layout_nElements_.addWidget(self.viewport.textInput_nElements_x_, 0, 2, QtCore.Qt.AlignLeft)
 
         layout_nElements_.setColumnMinimumWidth(3, 20)
 
-        self.label_nElements_y_ = QtGui.QLabel("y: ", self)
-        layout_nElements_.addWidget(self.label_nElements_y_, 0, 4, QtCore.Qt.AlignLeft)
+        self.viewport.label_nElements_y_ = QtGui.QLabel("y: ", self)
+        layout_nElements_.addWidget(self.viewport.label_nElements_y_, 0, 4, QtCore.Qt.AlignLeft)
 
         layout_nElements_.setColumnMinimumWidth(5, 0)
 
-        self.textInput_nElements_y_ = QtGui.QLineEdit(self)
-        self.textInput_nElements_y_.setPlaceholderText("1")
-        self.textInput_nElements_y_.setFixedWidth(50)
-        self.textInput_nElements_y_.setValidator(std_validate)
-        layout_nElements_.addWidget(self.textInput_nElements_y_, 0, 6, QtCore.Qt.AlignLeft)
+        self.viewport.textInput_nElements_y_ = QtGui.QLineEdit(self)
+        self.viewport.textInput_nElements_y_.setPlaceholderText("1")
+        self.viewport.textInput_nElements_y_.setFixedWidth(50)
+        self.viewport.textInput_nElements_y_.setValidator(std_validate)
+        layout_nElements_.addWidget(self.viewport.textInput_nElements_y_, 0, 6, QtCore.Qt.AlignLeft)
 
         layout_nElements_.setColumnMinimumWidth(7, 20)
 
-        self.label_nElements_z_ = QtGui.QLabel("z: ", self)
-        layout_nElements_.addWidget(self.label_nElements_z_, 0, 8, QtCore.Qt.AlignLeft)
+        self.viewport.label_nElements_z_ = QtGui.QLabel("z: ", self)
+        layout_nElements_.addWidget(self.viewport.label_nElements_z_, 0, 8, QtCore.Qt.AlignLeft)
 
         layout_nElements_.setColumnMinimumWidth(9, 0)
 
-        self.textInput_nElements_z_ = QtGui.QLineEdit(self)
-        self.textInput_nElements_z_.setPlaceholderText("1")
-        self.textInput_nElements_z_.setFixedWidth(50)
-        self.textInput_nElements_z_.setValidator(std_validate)
+        self.viewport.textInput_nElements_z_ = QtGui.QLineEdit(self)
+        self.viewport.textInput_nElements_z_.setPlaceholderText("1")
+        self.viewport.textInput_nElements_z_.setFixedWidth(50)
+        self.viewport.textInput_nElements_z_.setValidator(std_validate)
 
-        layout_nElements_.addWidget(self.textInput_nElements_z_, 0, 10, QtCore.Qt.AlignLeft)
+        layout_nElements_.addWidget(self.viewport.textInput_nElements_z_, 0, 10, QtCore.Qt.AlignLeft)
 
         ## End of SubLayout for Number of Elements
 
-        layout_main.addLayout(layout_nElements_, 24, 0, QtCore.Qt.AlignCenter)
+        layout_dialog.addLayout(layout_nElements_, 24, 0, QtCore.Qt.AlignCenter)
 
-        layout_main.setRowMinimumHeight(25, 5)
+        layout_dialog.setRowMinimumHeight(25, 5)
 
-        self.visualizeButton = QtGui.QCheckBox('Visualize Grids', self)
-        layout_main.addWidget(self.visualizeButton, 26, 0)
+        self.viewport.visualizeButton = QtGui.QCheckBox('Visualize Grids', self)
+        layout_dialog.addWidget(self.viewport.visualizeButton, 26, 0)
 
-        layout_main.setRowMinimumHeight(27, 10)
+        layout_dialog.setRowMinimumHeight(27, 10)
 
         ## END OF MESH SETTINGS ##
 
-        self.label_main_ = QtGui.QLabel("Solution Settings:", self)
-        self.label_main_.setFont(boldUnderlinedFont)
-        self.label_main_.setPalette(blueFont)
-        layout_main.addWidget(self.label_main_, 28, 0, QtCore.Qt.AlignCenter)
+        self.viewport.label_main_ = QtGui.QLabel("Solution Settings:", self)
+        self.viewport.label_main_.setFont(boldUnderlinedFont)
+        self.viewport.label_main_.setPalette(blueFont)
+        layout_dialog.addWidget(self.viewport.label_main_, 28, 0, QtCore.Qt.AlignCenter)
 
-        layout_main.setRowMinimumHeight(29, 5)
+        layout_dialog.setRowMinimumHeight(29, 5)
 
-        self.label_residual_ = QtGui.QLabel("Moment fitting residual:", self)
-        layout_main.addWidget(self.label_residual_, 30, 0, QtCore.Qt.AlignLeft)
+        self.viewport.label_residual_ = QtGui.QLabel("Moment fitting residual:", self)
+        layout_dialog.addWidget(self.viewport.label_residual_, 30, 0, QtCore.Qt.AlignLeft)
 
-        layout_main.setRowMinimumHeight(31, 0)
+        layout_dialog.setRowMinimumHeight(31, 0)
 
-        self.textInput_residual_ = QtGui.QLineEdit(self)
-        self.textInput_residual_.setPlaceholderText("1e-6")
-        self.textInput_residual_.setFixedWidth(50)
-        self.textInput_residual_.setValidator(scientific_validate)
-        layout_main.addWidget(self.textInput_residual_, 32, 0, 1, 1)
+        self.viewport.textInput_residual_ = QtGui.QLineEdit(self)
+        self.viewport.textInput_residual_.setPlaceholderText("1e-6")
+        self.viewport.textInput_residual_.setFixedWidth(50)
+        self.viewport.textInput_residual_.setValidator(scientific_validate)
+        layout_dialog.addWidget(self.viewport.textInput_residual_, 32, 0, 1, 1)
 
-        layout_main.setRowMinimumHeight(33, 5)
+        layout_dialog.setRowMinimumHeight(33, 5)
 
-        self.label_integration_ = QtGui.QLabel("Integration method:", self)
-        layout_main.addWidget(self.label_integration_, 34, 0, 1, 1)
+        self.viewport.label_integration_ = QtGui.QLabel("Integration method:", self)
+        layout_dialog.addWidget(self.viewport.label_integration_, 34, 0, 1, 1)
 
-        layout_main.setRowMinimumHeight(35, 0)
+        layout_dialog.setRowMinimumHeight(35, 0)
 
-        self.popup_integration = QtGui.QComboBox(self)
-        self.popup_integration_items = ("Gauss","Gauss_Reduced1","Gauss_Reduced2","GGQ_Optimal","GGQ_Reduced1", "GGQ_Reduced2")
-        self.popup_integration.addItems(self.popup_integration_items)
-        self.popup_integration.setMinimumWidth(140)
-        layout_main.addWidget(self.popup_integration, 36, 0, 1, 0)
+        self.viewport.popup_integration = QtGui.QComboBox(self)
+        self.viewport.popup_integration_items = ("Gauss","Gauss_Reduced1","Gauss_Reduced2","GGQ_Optimal","GGQ_Reduced1", "GGQ_Reduced2")
+        self.viewport.popup_integration.addItems(self.viewport.popup_integration_items)
+        self.viewport.popup_integration.setMinimumWidth(140)
+        layout_dialog.addWidget(self.viewport.popup_integration, 36, 0, 1, 0)
 
-        layout_main.setRowMinimumHeight(37, 10)
+        layout_dialog.setRowMinimumHeight(37, 10)
 
         ## END OF SOLUTION SETTINGS ##
 
-        self.label_ApplyBC_ = QtGui.QLabel("Boundary Conditions", self)
-        self.label_ApplyBC_.setFont(boldUnderlinedFont)
-        self.label_ApplyBC_.setPalette(blueFont)
-        layout_main.addWidget(self.label_ApplyBC_, 38, 0, QtCore.Qt.AlignCenter)
+        self.viewport.label_ApplyBC_ = QtGui.QLabel("Boundary Conditions", self)
+        self.viewport.label_ApplyBC_.setFont(boldUnderlinedFont)
+        self.viewport.label_ApplyBC_.setPalette(blueFont)
+        layout_dialog.addWidget(self.viewport.label_ApplyBC_, 38, 0, QtCore.Qt.AlignCenter)
 
-        layout_main.setRowMinimumHeight(39, 5)
+        layout_dialog.setRowMinimumHeight(39, 5)
 
-        self.button_PenaltySupport_ = QtGui.QPushButton('Apply Penalty Support Condition',self)
-        self.button_PenaltySupport_.setAutoDefault(False)
-        self.button_PenaltySupport_.setMinimumWidth(230)
-        layout_main.addWidget(self.button_PenaltySupport_, 40, 0, QtCore.Qt.AlignCenter)
+        self.viewport.button_PenaltySupport_ = QtGui.QPushButton('Apply Penalty Support Condition',self)
+        self.viewport.button_PenaltySupport_.setAutoDefault(False)
+        self.viewport.button_PenaltySupport_.setMinimumWidth(230)
+        layout_dialog.addWidget(self.viewport.button_PenaltySupport_, 40, 0, QtCore.Qt.AlignCenter)
 
-        layout_main.setRowMinimumHeight(41, 0)
+        layout_dialog.setRowMinimumHeight(41, 0)
 
-        self.button_SurfaceLoad_ = QtGui.QPushButton('Apply Surface Load Condition',self)
-        self.button_SurfaceLoad_.setAutoDefault(False)
-        self.button_SurfaceLoad_.setMinimumWidth(230)
-        layout_main.addWidget(self.button_SurfaceLoad_, 42, 0, QtCore.Qt.AlignCenter)
+        self.viewport.button_SurfaceLoad_ = QtGui.QPushButton('Apply Surface Load Condition',self)
+        self.viewport.button_SurfaceLoad_.setAutoDefault(False)
+        self.viewport.button_SurfaceLoad_.setMinimumWidth(230)
+        layout_dialog.addWidget(self.viewport.button_SurfaceLoad_, 42, 0, QtCore.Qt.AlignCenter)
 
-        layout_main.setRowMinimumHeight(43, 10)
+        layout_dialog.setRowMinimumHeight(43, 10)
 
         ## END OF BOUNDARY CONDITIONS ##
 
-        self.label_SolverSettings_ = QtGui.QLabel("Solver Settings", self)
-        self.label_SolverSettings_.setFont(boldUnderlinedFont)
-        self.label_SolverSettings_.setPalette(blueFont)
-        layout_main.addWidget(self.label_SolverSettings_, 44, 0, QtCore.Qt.AlignCenter)
+        self.viewport.label_SolverSettings_ = QtGui.QLabel("Solver Settings", self)
+        self.viewport.label_SolverSettings_.setFont(boldUnderlinedFont)
+        self.viewport.label_SolverSettings_.setPalette(blueFont)
+        layout_dialog.addWidget(self.viewport.label_SolverSettings_, 44, 0, QtCore.Qt.AlignCenter)
 
-        layout_main.setRowMinimumHeight(45, 5)
+        layout_dialog.setRowMinimumHeight(45, 5)
 
-        self.SolverSettingsButton = QtGui.QPushButton('Apply Solver Settings',self)
-        self.SolverSettingsButton.setAutoDefault(False)
-        self.SolverSettingsButton.setMinimumWidth(155)
-        layout_main.addWidget(self.SolverSettingsButton, 46, 0, QtCore.Qt.AlignCenter)
+        self.viewport.SolverSettingsButton = QtGui.QPushButton('Apply Solver Settings',self)
+        self.viewport.SolverSettingsButton.setAutoDefault(False)
+        self.viewport.SolverSettingsButton.setMinimumWidth(155)
+        layout_dialog.addWidget(self.viewport.SolverSettingsButton, 46, 0, QtCore.Qt.AlignCenter)
 
-        layout_main.setRowMinimumHeight(47, 20)
+        layout_dialog.setRowMinimumHeight(47, 20)
 
         ## END OF SOLVER SETTINGS
 
@@ -339,18 +340,31 @@ class QuESoParameters(QtGui.QDialog):
 
         ## End of Sublayout save-cancel
 
-        layout_main.addLayout(layout_saveCancel, 48, 0, QtCore.Qt.AlignCenter)
+        layout_dialog.addLayout(layout_saveCancel, 48, 0, QtCore.Qt.AlignCenter)
 
-        self.setLayout(layout_main)
+        self.viewport.setLayout(layout_dialog)
+
+        self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setWidget(self.viewport)
+
+        self.setCentralWidget(self.scrollArea)
+
+        width = self.sizeHint().width()
+        height = self.viewport.sizeHint().height()
+        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+        self.setMinimumWidth(self.sizeHint().width())
+        self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
 
         
-        self.goback_button.clicked.connect(self.onGoBackButton)
-        self.fileBrowseButton_QuESo.clicked.connect(self.onBrowseButton_QuESodirectory)
-        self.fileBrowseButton_Kratos.clicked.connect(self.onBrowseButton_Kratosdirectory)
-        self.visualizeButton.stateChanged.connect(self.onVisualize)
-        self.button_PenaltySupport_.clicked.connect(self.onPenaltySupportBC)
-        self.button_SurfaceLoad_.clicked.connect(self.onSurfaceLoadBC)
-        self.SolverSettingsButton.clicked.connect(self.onSolverSettingsButton)
+        self.viewport.goback_button.clicked.connect(self.onGoBackButton)
+        self.viewport.fileBrowseButton_QuESo.clicked.connect(self.onBrowseButton_QuESodirectory)
+        self.viewport.fileBrowseButton_Kratos.clicked.connect(self.onBrowseButton_Kratosdirectory)
+        self.viewport.visualizeButton.stateChanged.connect(self.onVisualize)
+        self.viewport.button_PenaltySupport_.clicked.connect(self.onPenaltySupportBC)
+        self.viewport.button_SurfaceLoad_.clicked.connect(self.onSurfaceLoadBC)
+        self.viewport.SolverSettingsButton.clicked.connect(self.onSolverSettingsButton)
         cancelButton.clicked.connect(self.onCancel)
         saveButton.clicked.connect(self.onSave)
 
@@ -374,19 +388,23 @@ class QuESoParameters(QtGui.QDialog):
         self.SurfaceLoadFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_SurfaceLoadFacesList)
 
         self.PenaltySupport_displacement_arr = []
+        self.mainObjectName = ""
         self.SurfaceLoad_modulus_arr=[]
         self.SurfaceLoad_force_arr = []
         self.PenaltySupportSelectionList = []
         self.SurfaceLoadSelectionList = []
         self.Dirichlet_BC_icons = {}
         self.Neumann_BC_icons = {}
+        self.PenaltySupport_faces = []
+        self.SurfaceLoad_faces = []
         
         self.projectNameWindow_obj.exec_()
         self.work_dir = self.projectNameWindow_obj.project_dir
         self.ActiveDocument_Name = FreeCAD.ActiveDocument.Name
 
         if (self.projectNameWindow_obj.project_Name != "") and (self.projectNameWindow_obj.project_dir != "") and (self.projectNameWindow_obj.okFlag == True):
-            self.previousValuesCheck()
+            self.previousValuesCheck_QuESoParam()
+            self.previousValuesCheck_BC()
             self.show()
         else:
             pass
@@ -398,20 +416,22 @@ class QuESoParameters(QtGui.QDialog):
 
                                                 ##### Browse Files Function #####
 
-    def previousValuesCheck(self):
+    def previousValuesCheck_QuESoParam(self):
 
         try:
             os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
             work_dir = os.getcwd()
-            with open('DirectoryInfo.json', 'r') as myfile:
+            with open('OtherInfos.json', 'r') as myfile:
                 mydata_directory = json.load(myfile)
 
             kratos_dirOrg = mydata_directory['kratos_directory']
+            kratos_dirOrg = kratos_dirOrg.replace("/bin/Release","")
             QuESo_dirOrg = mydata_directory['QuESo_directory']
             STL_dir = mydata_directory['STL_directory']
+            self.mainObjectName = mydata_directory['mainObjectName']
 
-            self.textInput_QuESo_.setText(QuESo_dirOrg)
-            self.textInput_Kratos_.setText(kratos_dirOrg)
+            self.viewport.textInput_QuESo_.setText(QuESo_dirOrg)
+            self.viewport.textInput_Kratos_.setText(kratos_dirOrg)
 
         except:
             pass
@@ -454,19 +474,17 @@ class QuESoParameters(QtGui.QDialog):
             myfile.close()
             #######
 
-            # Maybe, I can also read boudnary conditions ? Let's skip it for now.
-
             #######
 
-            self.textInput_echo_.setText(echo_level)
-            self.textInput_polynomialOrder_x_.setText(polynomial_order_x)
-            self.textInput_polynomialOrder_y_.setText(polynomial_order_y)
-            self.textInput_polynomialOrder_z_.setText(polynomial_order_z)
-            self.textInput_nElements_x_.setText(number_of_elements_x)
-            self.textInput_nElements_y_.setText(number_of_elements_y)
-            self.textInput_nElements_z_.setText(number_of_elements_z)
-            self.textInput_residual_.setText(moment_fitting_residual)
-            self.popup_integration.setCurrentText(integration_method)
+            self.viewport.textInput_echo_.setText(echo_level)
+            self.viewport.textInput_polynomialOrder_x_.setText(polynomial_order_x)
+            self.viewport.textInput_polynomialOrder_y_.setText(polynomial_order_y)
+            self.viewport.textInput_polynomialOrder_z_.setText(polynomial_order_z)
+            self.viewport.textInput_nElements_x_.setText(number_of_elements_x)
+            self.viewport.textInput_nElements_y_.setText(number_of_elements_y)
+            self.viewport.textInput_nElements_z_.setText(number_of_elements_z)
+            self.viewport.textInput_residual_.setText(moment_fitting_residual)
+            self.viewport.popup_integration.setCurrentText(integration_method)
 
         except:
             pass
@@ -492,27 +510,8 @@ class QuESoParameters(QtGui.QDialog):
 
             solver_type = str(solver_settings['solver_type'])
             analysis_type = str(solver_settings['analysis_type'])
-            model_part_name = str(solver_settings['model_part_name'])
             echo_level_solversettings = str(solver_settings['echo_level'])
-            model_import_settings = solver_settings['model_import_settings']
 
-            input_type = str(model_import_settings['input_type'])
-            linear_solver_settings = solver_settings['linear_solver_settings']
-            preconditioner_type = str(linear_solver_settings['preconditioner_type'])
-            solver_type_linearsolversettings = str(linear_solver_settings['solver_type'])
-            tolerance = str(linear_solver_settings['tolerance'])
-            rotation_dofs = str(solver_settings['rotation_dofs'])
-            residual_relative_tolerance = str(solver_settings['residual_relative_tolerance'])
-            builder_and_solver_settings = solver_settings['builder_and_solver_settings']
-            use_block_builder = str(builder_and_solver_settings['use_block_builder'])
-
-
-            # Reading modelers
-            modelers = mydata_Kratos['modelers']
-            modeler_name = str(modelers[0]['modeler_name'])
-            parameters_modelers = modelers[0]['Parameters']
-            model_part_name_modelers = str(parameters_modelers['model_part_name'])
-            geometry_name = str(parameters_modelers['geometry_name'])
             myfile.close()
 
 
@@ -522,18 +521,7 @@ class QuESoParameters(QtGui.QDialog):
             self.SolverSettingsBox_obj.textInput_end_time_.setText(end_time)
             self.SolverSettingsBox_obj.popup_solver_type_.setCurrentText(solver_type)
             self.SolverSettingsBox_obj.popup_analysis_type_.setCurrentText(analysis_type)
-            self.SolverSettingsBox_obj.popup_model_part_name_.setCurrentText(model_part_name)
             self.SolverSettingsBox_obj.popup_echo_level3_.setCurrentText(echo_level_solversettings)
-            self.SolverSettingsBox_obj.popup_input_type_.setCurrentText(input_type)
-            self.SolverSettingsBox_obj.popup_preconditioner_type_.setCurrentText(preconditioner_type)
-            self.SolverSettingsBox_obj.popup_solver_type2_.setCurrentText(solver_type_linearsolversettings)
-            self.SolverSettingsBox_obj.textInput_tolerance_.setText(tolerance)
-            self.SolverSettingsBox_obj.popup_rotation_dofs_.setCurrentText(rotation_dofs)
-            self.SolverSettingsBox_obj.popup_block_builder_.setCurrentText(use_block_builder)
-            self.SolverSettingsBox_obj.textInput_relative_tolerance_.setText(residual_relative_tolerance)
-            self.SolverSettingsBox_obj.popup_modeler_name_.setCurrentText(modeler_name)
-            self.SolverSettingsBox_obj.popup_modeler_part_name_.setCurrentText(model_part_name_modelers)
-            self.SolverSettingsBox_obj.popup_modeler_geometry_name_.setCurrentText(geometry_name)
 
         except:
             pass
@@ -549,7 +537,6 @@ class QuESoParameters(QtGui.QDialog):
             # Reading properties
             properties = mydata_StMat['properties']
 
-            model_part_name_stm = str(properties[0]['model_part_name'])
             properties_id = str(properties[0]['properties_id'])
             Material = properties[0]['Material']
             consitutive_law = Material['constitutive_law']
@@ -560,7 +547,6 @@ class QuESoParameters(QtGui.QDialog):
             poisson_ratio = str(Variables['POISSON_RATIO'])
             myfile.close()
 
-            self.SolverSettingsBox_obj.popup_modeler_part_name_.setCurrentText(model_part_name_stm)
             self.SolverSettingsBox_obj.textInput_properties_id_.setText(properties_id)
             self.SolverSettingsBox_obj.popup_constitutive_id_.setCurrentText(name_constLaw)
             self.SolverSettingsBox_obj.textInput_density_.setText(density)
@@ -569,6 +555,55 @@ class QuESoParameters(QtGui.QDialog):
 
         except:
             pass
+    
+    def previousValuesCheck_BC(self):
+
+        try:
+            os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
+            work_dir = os.getcwd()
+            with open('QuESoParameters.json', 'r') as myfile:
+                mydata_QuESo = json.load(myfile)
+
+            conditions = mydata_QuESo['conditions']
+            
+            for member in conditions:
+                if('SurfaceLoadCondition' in member):
+                    self.SurfaceLoad_force_arr.append(member['SurfaceLoadCondition']['direction'])
+                    self.SurfaceLoad_modulus_arr.append(member['SurfaceLoadCondition']['modulus'])
+                
+                elif('PenaltySupportCondition' in member):
+                    self.PenaltySupport_displacement_arr.append(member['PenaltySupportCondition']['value'])
+
+            myfile.close()
+
+            with open('OtherInfos.json', 'r') as myfile:
+                mydata_OtherInfos = json.load(myfile)
+
+            for member_OtherInfos in mydata_OtherInfos:
+                if ('SurfaceLoadFaces' in member_OtherInfos):
+                    for member_SurfaceLoadFaces in mydata_OtherInfos['SurfaceLoadFaces']:
+                        self.SurfaceLoad_faces.append(member_SurfaceLoadFaces)
+                        self.SurfaceLoadFacesList_Obj.listwidget.addItem(member_SurfaceLoadFaces)
+                        Gui.Selection.addSelection(FreeCAD.ActiveDocument.Name, self.mainObjectName, member_SurfaceLoadFaces)
+                        sel = Gui.Selection.getSelectionEx()
+                        self.SurfaceLoadSelectionList.append(sel)
+                        Gui.Selection.clearSelection()
+
+                elif ('PenaltySupportFaces' in member_OtherInfos):
+                    for member_PenaltySupportFaces in mydata_OtherInfos['PenaltySupportFaces']:
+                        self.PenaltySupport_faces.append(member_PenaltySupportFaces)
+                        self.PenaltySupportFacesList_Obj.listwidget.addItem(member_PenaltySupportFaces)
+                        Gui.Selection.addSelection(FreeCAD.ActiveDocument.Name, self.mainObjectName, member_PenaltySupportFaces)
+                        sel = Gui.Selection.getSelectionEx()
+                        self.PenaltySupportSelectionList.append(sel)
+                        Gui.Selection.clearSelection()
+            
+            print(str(self.SurfaceLoadSelectionList))
+            print(str(self.PenaltySupportSelectionList))
+
+        except:
+            pass
+
 
 
     def onGoBackButton(self):
@@ -589,12 +624,12 @@ class QuESoParameters(QtGui.QDialog):
 
     def onBrowseButton_QuESodirectory(self):
         self.QuESo_directory = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory", self.work_dir, QtGui.QFileDialog.ShowDirsOnly)
-        self.textInput_QuESo_.setText(self.QuESo_directory)
+        self.viewport.textInput_QuESo_.setText(self.QuESo_directory)
         self.QuESo_lib_directory = self.QuESo_directory + '/libs'
     
     def onBrowseButton_Kratosdirectory(self):
         self.Kratos_directory = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory", self.work_dir, QtGui.QFileDialog.ShowDirsOnly)
-        self.textInput_Kratos_.setText(self.Kratos_directory)
+        self.viewport.textInput_Kratos_.setText(self.Kratos_directory)
         self.Kratos_directory = self.Kratos_directory + '/bin/Release'
         self.Kratos_lib_directory = self.Kratos_directory + '/libs'
 
@@ -622,6 +657,8 @@ class QuESoParameters(QtGui.QDialog):
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.PenaltySupportFacesList_Obj.result = False
         self.PenaltySupport_displacement_arr = []
+        self.PenaltySupport_faces = []
+        self.PenaltySupportSelectionList = []
         self.PenaltySupportFacesList_Obj.close()
 
     def DeleteButtonClicked_PenaltySupportFacesList(self):
@@ -638,12 +675,15 @@ class QuESoParameters(QtGui.QDialog):
         FreeCAD.ActiveDocument.removeObject('Dirichlet_BC_' + current_Item_text)
         self.Dirichlet_BC_icons.pop(str(current_Item_text))
         print('BC Container: ', str(self.Dirichlet_BC_icons))
+        del self.PenaltySupport_faces[indexToDel]
+        del self.PenaltySupportSelectionList[indexToDel]
         print(str(self.PenaltySupport_displacement_arr))
         self.PenaltySupportFacesList_Obj.listwidget.takeItem(self.PenaltySupportFacesList_Obj.listwidget.row(current_Item))
 
     def ModifyButtonClicked_PenaltySupportFacesList(self):
         current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
         indexToMod = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        print("whole surface load arr = " + str(self.PenaltySupport_displacement_arr))
         prev_vals = self.PenaltySupport_displacement_arr[indexToMod]
         prev_x = prev_vals[0]
         prev_y = prev_vals[1]
@@ -687,6 +727,10 @@ class QuESoParameters(QtGui.QDialog):
                     sel = Gui.Selection.getSelectionEx()
                     # object = Draft.makeFacebinder(sel, 'D' + str(self.PenaltySupportBCBox_obj.PenaltySupport_count))
                     self.PenaltySupportSelectionList.append(sel)
+                    self.PenaltySupport_faces.append(element_list['Component'])
+                    self.mainObjectName = element_list['Object']
+                    Gui.Selection.clearSelection()
+                                        
 
                                                                ##### Preprocessing Icons -> Dirichlet BC #####
                     for sel in Gui.Selection.getSelectionEx('', 0):
@@ -787,7 +831,9 @@ class QuESoParameters(QtGui.QDialog):
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.SurfaceLoadFacesList_Obj.result = False
         self.SurfaceLoad_force_arr = []
+        self.SurfaceLoad_faces = []
         self.SurfaceLoad_modulus_arr=[]
+        self.SurfaceLoadSelectionList = []
         self.SurfaceLoadFacesList_Obj.close()
 
     def DeleteButtonClicked_SurfaceLoadFacesList(self):
@@ -804,12 +850,20 @@ class QuESoParameters(QtGui.QDialog):
         FreeCAD.ActiveDocument.removeObject('Neumann_BC_' + current_Item_text)
         self.Neumann_BC_icons.pop(str(current_Item_text))
         print('BC Container: ', str(self.Neumann_BC_icons))
+        del self.SurfaceLoad_faces[indexToDel]
+        del self.SurfaceLoad_modulus_arr[indexToDel]
+        del self.SurfaceLoadSelectionList[indexToDel]
         print(str(self.SurfaceLoad_force_arr))
+        print(str(self.SurfaceLoad_modulus_arr))
         self.SurfaceLoadFacesList_Obj.listwidget.takeItem(self.SurfaceLoadFacesList_Obj.listwidget.row(current_Item))
 
     def ModifyButtonClicked_SurfaceLoadFacesList(self):
         current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
+        print(current_Item)
         indexToMod = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        print(indexToMod)
+        print(str(self.SurfaceLoad_force_arr))
+        print(str(self.SurfaceLoad_modulus_arr))
         prev_vals_direction = self.SurfaceLoad_force_arr[indexToMod]
         prev_vals_modulus = self.SurfaceLoad_modulus_arr[indexToMod]
         prev_x = prev_vals_direction[0]
@@ -825,7 +879,7 @@ class QuESoParameters(QtGui.QDialog):
                                                     [float(self.SurfaceLoadBCBox_obj.x_val),\
                                                      float(self.SurfaceLoadBCBox_obj.y_val),\
                                                      float(self.SurfaceLoadBCBox_obj.z_val)]
-        self.SurfaceLoad_modulus_arr = float(self.SurfaceLoadBCBox_obj.modulus_val)
+        self.SurfaceLoad_modulus_arr[indexToMod] = float(self.SurfaceLoadBCBox_obj.modulus_val)
         print(str(self.SurfaceLoad_force_arr))
         Gui.Selection.clearSelection()
 
@@ -924,11 +978,13 @@ class QuESoParameters(QtGui.QDialog):
 
                     self.Neumann_BC_icons.update({str(element_list.get('Component')): str(n)})
                     print('BC Container: ', str(self.Neumann_BC_icons))
+                    self.SurfaceLoad_faces.append(element_list['Component'])
+                    self.mainObjectName = element_list['Object']
                     Gui.Selection.clearSelection()
 
     def onVisualize(self):
             
-            if (self.visualizeButton.isChecked()):
+            if (self.viewport.visualizeButton.isChecked()):
                 self.VisualizeGrid_Fun()
             else:
                 self.deVisualizeGrid_Fun()
@@ -951,20 +1007,18 @@ class QuESoParameters(QtGui.QDialog):
             if os.path.isdir(os.getcwd() + "/" + self.projectNameWindow_obj.project_Name):
                 self.work_dir = os.getcwd() + "/" + self.projectNameWindow_obj.project_Name
                 os.chdir(self.work_dir)
-
-                if os.path.isdir(os.getcwd() + "/data"):
-                    self.data_dir = os.getcwd() + "/data"
-
-                else:
-                    os.mkdir(os.getcwd() + "/data")
-                    self.data_dir = os.getcwd() + "/data"
             
             else:
                 os.mkdir(os.getcwd() + "/" + self.projectNameWindow_obj.project_Name)
                 self.work_dir = os.getcwd() + "/" + self.projectNameWindow_obj.project_Name
                 os.chdir(self.work_dir)
-                os.mkdir(os.getcwd() + "/data")
-                self.data_dir = os.getcwd() + "/data"
+
+            if os.path.isdir(os.getcwd() + "/data"):
+                shutil.rmtree(os.getcwd() + "/data")
+            
+            os.mkdir(os.getcwd() + "/data")
+            
+            self.data_dir = os.getcwd() + "/data"
 
             temp_name = FreeCAD.ActiveDocument.Name
             FreeCAD.getDocument(temp_name).saveAs(self.work_dir + "/" + self.projectNameWindow_obj.project_Name + ".FCStd")
@@ -991,34 +1045,37 @@ class QuESoParameters(QtGui.QDialog):
 
                 "general_settings"   : {
                     "input_filename"  :  self.STL_directory,
-                    "echo_level"      :  int(self.textInput_echo_.text())
+                    "echo_level"      :  int(self.viewport.textInput_echo_.text())
                 },
                 "mesh_settings"     : {
                     "lower_bound_xyz": list([self.lowerbound_x_, self.lowerbound_y_, self.lowerbound_z_]),
                     "upper_bound_xyz": list([self.upperbound_x_, self.upperbound_y_, self.upperbound_z_]),
                     "lower_bound_uvw": list([self.lowerbound_x_, self.lowerbound_y_, self.lowerbound_z_]),
                     "upper_bound_uvw": list([self.upperbound_x_, self.upperbound_y_, self.upperbound_z_]),
-                    "polynomial_order" : list([int(self.textInput_polynomialOrder_x_.text()), int(self.textInput_polynomialOrder_y_.text()), int(self.textInput_polynomialOrder_z_.text())]),
-                    "number_of_elements" : list([int(self.textInput_nElements_x_.text()),  int(self.textInput_nElements_y_.text()), int(self.textInput_nElements_z_.text())])
+                    "polynomial_order" : list([int(self.viewport.textInput_polynomialOrder_x_.text()), int(self.viewport.textInput_polynomialOrder_y_.text()), int(self.viewport.textInput_polynomialOrder_z_.text())]),
+                    "number_of_elements" : list([int(self.viewport.textInput_nElements_x_.text()),  int(self.viewport.textInput_nElements_y_.text()), int(self.viewport.textInput_nElements_z_.text())])
                 },
                 "trimmed_quadrature_rule_settings"     : {
-                    "moment_fitting_residual": float(self.textInput_residual_.text())
+                    "moment_fitting_residual": float(self.viewport.textInput_residual_.text())
                 },
                 "non_trimmed_quadrature_rule_settings" : {
-                    "integration_method" : self.popup_integration.currentText()
+                    "integration_method" : self.viewport.popup_integration.currentText()
                 },
                 "conditions"    :  [
                 ]
             }
 
-            self.DirectoryInfo = \
+            self.OtherInfos = \
             {
+                "mainObjectName"        : self.mainObjectName,
+                "SurfaceLoadFaces"      : self.SurfaceLoad_faces,
+                "PenaltySupportFaces"   : self.PenaltySupport_faces,
                 "working_directory"     : self.work_dir,
                 "STL_directory"         : self.STL_directory,
-                "QuESo_directory"       : self.textInput_QuESo_.text(),
-                "QuESo_lib_directory"   : self.textInput_QuESo_.text() + "/libs",
-                "kratos_directory"      : self.textInput_Kratos_.text() + '/bin/Release',
-                "kratos_lib_directory"  : self.textInput_Kratos_.text() + '/bin/Release/libs'
+                "QuESo_directory"       : self.viewport.textInput_QuESo_.text(),
+                "QuESo_lib_directory"   : self.viewport.textInput_QuESo_.text() + "/libs",
+                "kratos_directory"      : self.viewport.textInput_Kratos_.text() + '/bin/Release',
+                "kratos_lib_directory"  : self.viewport.textInput_Kratos_.text() + '/bin/Release/libs'
             }
 
 
@@ -1029,6 +1086,11 @@ class QuESoParameters(QtGui.QDialog):
                 pass
 
             for i in range (int(len(self.SurfaceLoad_force_arr))):
+                print("i = " + str(i))
+                print("surface load arr = " + str(self.SurfaceLoad_force_arr[i]))
+                print("whole surface load arr = " + str(self.SurfaceLoad_force_arr))
+                print("magnitude = " + str(self.SurfaceLoad_modulus_arr[i]))
+                print("whole magnitude arr = " + str(self.SurfaceLoad_modulus_arr))
                 force_direction = list(self.SurfaceLoad_force_arr[i])
                 magnitude = self.SurfaceLoad_modulus_arr[i]
                 SurfaceLoad_json = {"SurfaceLoadCondition": {
@@ -1069,9 +1131,9 @@ class QuESoParameters(QtGui.QDialog):
                 json.dump(self.SolverSettingsBox_obj.StructuralMat, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
 
-            # Creating DirectoryInfo.json file:
-            with open('DirectoryInfo.json', 'w') as f:
-                json.dump(self.DirectoryInfo, f, indent=4, separators=(", ", ": "), sort_keys=False)
+            # Creating OtherInfos.json file:
+            with open('OtherInfos.json', 'w') as f:
+                json.dump(self.OtherInfos, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
 
             QuESo_main_script = \
@@ -1080,6 +1142,7 @@ class QuESoParameters(QtGui.QDialog):
 def main():
     pyqueso = PyQuESo("{QuESo_param_json}")
     pyqueso.Run()
+    pyqueso.RunKratosAnalysis()
 
 if __name__ == "__main__":
     main()'''.format(QuESo_param_json="QuESoParameters.json")
@@ -1115,9 +1178,9 @@ if __name__ == "__main__":
             if (mybounds[6] and mybounds[7]) > 0.0:
                 pl_z_first=[]
                 pl_z_sec=[]
-                stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.textInput_nElements_z_.text())
+                stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.viewport.textInput_nElements_z_.text())
                 
-                for i in range(int(self.textInput_nElements_z_.text())+1):
+                for i in range(int(self.viewport.textInput_nElements_z_.text())+1):
     
                     pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
                     duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
@@ -1130,9 +1193,9 @@ if __name__ == "__main__":
             if (mybounds[6] and mybounds[8]) > 0.0:
                 pl_y_first=[]
                 pl_y_sec=[]
-                stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.textInput_nElements_y_.text())
+                stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.viewport.textInput_nElements_y_.text())
     
-                for i in range(int(self.textInput_nElements_y_.text())+1):
+                for i in range(int(self.viewport.textInput_nElements_y_.text())+1):
     
                     pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
                     duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
@@ -1144,9 +1207,9 @@ if __name__ == "__main__":
             if (mybounds[7] and mybounds[8]) > 0.0:
                 pl_x_first=[]
                 pl_x_sec=[]
-                stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.textInput_nElements_x_.text())
+                stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.viewport.textInput_nElements_x_.text())
     
-                for i in range(int(self.textInput_nElements_x_.text())+1):
+                for i in range(int(self.viewport.textInput_nElements_x_.text())+1):
     
                     pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
                     duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
@@ -1238,9 +1301,9 @@ if __name__ == "__main__":
         if (mybounds[6] and mybounds[7]) > 0.0:
             pl_z_first=[]
             pl_z_sec=[]
-            stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.textInput_nElements_z_.text())
+            stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.viewport.textInput_nElements_z_.text())
             
-            for i in range(int(self.textInput_nElements_z_.text())+1):
+            for i in range(int(self.viewport.textInput_nElements_z_.text())+1):
 
                 pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
                 duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
@@ -1253,9 +1316,9 @@ if __name__ == "__main__":
         if (mybounds[6] and mybounds[8]) > 0.0:
             pl_y_first=[]
             pl_y_sec=[]
-            stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.textInput_nElements_y_.text())
+            stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.viewport.textInput_nElements_y_.text())
 
-            for i in range(int(self.textInput_nElements_y_.text())+1):
+            for i in range(int(self.viewport.textInput_nElements_y_.text())+1):
 
                 pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
                 duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
@@ -1267,9 +1330,9 @@ if __name__ == "__main__":
         if (mybounds[7] and mybounds[8]) > 0.0:
             pl_x_first=[]
             pl_x_sec=[]
-            stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.textInput_nElements_x_.text())
+            stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.viewport.textInput_nElements_x_.text())
 
-            for i in range(int(self.textInput_nElements_x_.text())+1):
+            for i in range(int(self.viewport.textInput_nElements_x_.text())+1):
 
                 pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
                 duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
@@ -1317,63 +1380,71 @@ class projectNameWindow(QtGui.QDialog):
         self.okFlag = False
 
     def initUI(self):
-        width = 350
-        height = 210
-        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
-        self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
+
+        layout = QtGui.QGridLayout()
+
         self.setWindowTitle("Project Name")
-        self.label_name1 = QtGui.QLabel("Please give your project a name (or the name", self)
-        self.label_name1.move(10, 10)
-        self.label_name2 = QtGui.QLabel("of the existing project):", self)
-        self.label_name2.move(10, self.label_name1.y()+20)
-        self.textInput_name = QtGui.QLineEdit(self)
-        self.textInput_name.setPlaceholderText("e.g: Cantilever, Knuckle ... ")
-        self.textInput_name.setFixedWidth(210)
-        self.textInput_name.move(10, self.label_name2.y()+25)
         forward_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowForward)
         cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
         browse_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DirOpenIcon)
 
+        self.label_name = QtGui.QLabel("Please give your project a name (or the name of the existing project):", self)
+        self.label_name.setWordWrap(True)
+        layout.addWidget(self.label_name, 0, 0, QtCore.Qt.AlignLeft)
 
-        self.label_dir1 = QtGui.QLabel("Please give the directory where the project will", self)
-        self.label_dir1.move(10, self.textInput_name.y()+40)
-        self.label_dir2 = QtGui.QLabel("be saved (or the path to the existing project):", self)
-        self.label_dir2.move(10, self.label_dir1.y()+20)
+        layout.setRowMinimumHeight(1, 3)
 
+        self.textInput_name = QtGui.QLineEdit(self)
+        self.textInput_name.setPlaceholderText("e.g: Cantilever, Knuckle ... ")
+        self.textInput_name.setFixedWidth(250)
+        layout.addWidget(self.textInput_name, 2, 0, QtCore.Qt.AlignLeft)
+
+        layout.setRowMinimumHeight(3, 7)
+
+        self.label_dir = QtGui.QLabel("Please give the directory where the project will be saved (or the path to the existing project folder):", self)
+        self.label_dir.setWordWrap(True)
+        layout.addWidget(self.label_dir, 4, 0, QtCore.Qt.AlignLeft)
+
+        layout.setRowMinimumHeight(5, 3)
+
+        sublayout = QtGui.QHBoxLayout()
         self.textInput_dir = QtGui.QLineEdit(self)
-        self.textInput_dir.setFixedWidth(210)
-        self.textInput_dir.move(10, self.label_dir2.y()+25)
-
+        self.textInput_dir.setFixedWidth(250)
         browseButton = QtGui.QPushButton('Browse Files', self)
         browseButton.setIcon(browse_icon)
-        browseButton.move(230, self.textInput_dir.y())
         browseButton.clicked.connect(self.onBrowseButton)
+        sublayout.addWidget(self.textInput_dir, 0)
+        sublayout.setSpacing(5)
+        sublayout.addWidget(browseButton, 1)
 
-        # cancel button
+        layout.addLayout(sublayout, 6, 0, QtCore.Qt.AlignLeft)
+
+        layout.setRowMinimumHeight(7, 10)
+
+        sublayout = QtGui.QHBoxLayout()
         cancelButton = QtGui.QPushButton('Cancel', self)
         cancelButton.clicked.connect(self.onCancelButton)
         cancelButton.setIcon(cancel_icon)
-        cancelButton.setFixedWidth(80)
-       
-        # OK button
         okButton = QtGui.QPushButton('Next', self)
+        okButton.setAutoDefault(True)
         okButton.clicked.connect(self.onOkButton)
         okButton.setAutoDefault(True)
         okButton.setIcon(forward_arrow_icon)
-        okButton.setFixedWidth(80)
+        sublayout.addWidget(okButton, 0)
+        sublayout.addWidget(cancelButton)
+        sublayout.setSpacing(40)
 
-        self.container_okCancel = QtGui.QWidget(self)
-        self.container_okCancel.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(sublayout, 8, 0, QtCore.Qt.AlignCenter)
 
-        layout_okCancel = QtGui.QHBoxLayout(self.container_okCancel)
-        layout_okCancel.setContentsMargins(0, 0, 0,0)
-        layout_okCancel.addWidget(okButton)
-        layout_okCancel.addWidget(cancelButton)
-        layout_okCancel.setSpacing(40)
-        
+        self.setLayout(layout)
 
-        self.container_okCancel.move(0.5*width - okButton.geometry().width() - 0.5*layout_okCancel.spacing(),
-                                     height-35)
+        width = self.sizeHint().width()
+        height = self.sizeHint().height()
+        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+        self.textInput_name.size().width()
+        self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
+        self.setFixedSize(width, height)
+
 
     def onOkButton(self):
         self.okFlag = True
@@ -1547,6 +1618,7 @@ class SurfaceLoadBCBox(QtGui.QDialog):
         self.text_x_constraint.setText("")
         self.text_y_constraint.setText("")
         self.text_z_constraint.setText("")
+        self.text_SurfaceLoad_modulus.setText("")
 
 class PenaltySupportFacesList(QtGui.QWidget):
     """"""
@@ -1600,6 +1672,11 @@ class PenaltySupportFacesList(QtGui.QWidget):
         self.finished_flag = QtGui.QAction("Quit", self)
 
         self.setLayout(layout)
+
+        topLeftPoint = QtGui.QDesktopWidget().availableGeometry().topLeft()
+        frameGm = self.frameGeometry()
+        frameGm.moveTopLeft(topLeftPoint)
+        self.move(frameGm.topLeft())
 
 
     def closeEvent(self, event):
@@ -1662,6 +1739,11 @@ class SurfaceLoadFacesList(QtGui.QWidget):
 
         self.setLayout(layout)
 
+        topLeftPoint = QtGui.QDesktopWidget().availableGeometry().topLeft()
+        frameGm = self.frameGeometry()
+        frameGm.moveTopLeft(topLeftPoint)
+        self.move(frameGm.topLeft())
+
 
     def closeEvent(self, event):
         if (self.result):
@@ -1677,12 +1759,8 @@ class SolverSettingsBox(QtGui.QDialog):
         self.initUI()
 
     def initUI(self):    
-        width = 330
-        height = 1010
-        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
-        self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
+    
         self.setWindowTitle("Kratos Solver Settings")
-
         boldFont=QtGui.QFont()
         boldFont.setBold(True)
         boldUnderlinedFont=QtGui.QFont()
@@ -1691,269 +1769,201 @@ class SolverSettingsBox(QtGui.QDialog):
         blueFont = QtGui.QPalette()
         blueFont.setColor(QtGui.QPalette.WindowText, QtGui.QColor('#005293'))
 
+        layout = QtGui.QGridLayout()
+
         #solution settings head
-        self.label_main_ = QtGui.QLabel("Problem data:", self)
-        self.label_main_.move(10, 10)
-       
+        self.label_main_ = QtGui.QLabel("Problem data", self)
         self.label_main_.setFont(boldUnderlinedFont)
         self.label_main_.setPalette(blueFont)
+        layout.addWidget(self.label_main_, 0, 0, QtCore.Qt.AlignCenter)
+
+        layout.setRowMinimumHeight(1, 5)
 
         #parallel type
+        sublayout = QtGui.QGridLayout()
         self.label_parallel_type_ = QtGui.QLabel("Parallel type:", self)
-        self.label_parallel_type_.move(10, self.label_main_.y()+30)
+
+        self.label_echo_level2_ = QtGui.QLabel("Echo level:", self)
+        sublayout.addWidget(self.label_parallel_type_,0, 0, QtCore.Qt.AlignLeft)
+        sublayout.setColumnMinimumWidth(1, 20)
+        sublayout.addWidget(self.label_echo_level2_,0, 2, QtCore.Qt.AlignLeft)
+        layout.addLayout(sublayout, 2, 0)
+
+        layout.setRowMinimumHeight(3, 0)
+
+        sublayout = QtGui.QGridLayout()
         self.popup_parallel_type_ = QtGui.QComboBox(self)
         self.popup_parallel_type_items = ("OpenMP", "MPI")
         self.popup_parallel_type_.addItems(self.popup_parallel_type_items)
-        self.popup_parallel_type_.setFixedWidth(100)
-        self.popup_parallel_type_.move(10, self.label_parallel_type_.y()+20)
-
-        #echo level
-        self.label_echo_level2_ = QtGui.QLabel("Echo level:", self)
-        self.label_echo_level2_.move(200, self.label_main_.y()+30)
         self.popup_echo_level2_ = QtGui.QComboBox(self)
         self.popup_echo_level2_items = ("0", "1", "2")
         self.popup_echo_level2_.addItems(self.popup_echo_level2_items)
-        self.popup_echo_level2_.setFixedWidth(100)
-        self.popup_echo_level2_.move(200, self.label_echo_level2_.y()+20)
+        sublayout.addWidget(self.popup_parallel_type_, 0, 0, QtCore.Qt.AlignLeft)
+        sublayout.setColumnMinimumWidth(1, 20)
+        sublayout.addWidget(self.popup_echo_level2_, 0, 2, QtCore.Qt.AlignLeft)
+        layout.addLayout(sublayout, 4, 0)
 
-        #start time
+        layout.setRowMinimumHeight(5, 3)
+
+        sublayout = QtGui.QGridLayout()
         self.label_start_time_ = QtGui.QLabel("Start time:", self)
-        self.label_start_time_.move(10, self.popup_echo_level2_.y()+30)
+        self.label_end_time_ = QtGui.QLabel("End time:", self)
+        sublayout.addWidget(self.label_start_time_, 0, 0, QtCore.Qt.AlignLeft)
+        sublayout.setColumnMinimumWidth(1, 20)
+        sublayout.addWidget(self.label_end_time_, 0, 2, QtCore.Qt.AlignLeft)
+        layout.addLayout(sublayout, 6, 0)
+
+        layout.setRowMinimumHeight(7, 0)
+
+        sublayout = QtGui.QGridLayout()
         self.textInput_start_time_ = QtGui.QLineEdit(self)
         self.textInput_start_time_.setPlaceholderText("0.0")
-        self.textInput_start_time_.setFixedWidth(100)
-        self.textInput_start_time_.move(10, self.label_start_time_.y()+20)
-
-        #end time
-        self.label_end_time_ = QtGui.QLabel("End time:", self)
-        self.label_end_time_.move(200, self.popup_echo_level2_.y()+30)
         self.textInput_end_time_ = QtGui.QLineEdit(self)
         self.textInput_end_time_.setPlaceholderText("1.0")
-        self.textInput_end_time_.setFixedWidth(100)
-        self.textInput_end_time_.move(200, self.label_end_time_.y()+20)
+        sublayout.addWidget(self.textInput_start_time_, 0, 0, QtCore.Qt.AlignLeft)
+        sublayout.setColumnMinimumWidth(1, 20)
+        sublayout.addWidget(self.textInput_end_time_, 0, 2, QtCore.Qt.AlignLeft)
+        layout.addLayout(sublayout, 8, 0)
+
+        layout.setRowMinimumHeight(9, 7)
 
         #Solver settings head
-        self.label_main_ = QtGui.QLabel("Solver settings:", self)
-        self.label_main_.move(10, self.textInput_end_time_.y()+40)
+        self.label_main_ = QtGui.QLabel("Solver settings", self)
         self.label_main_.setFont(boldUnderlinedFont)
         self.label_main_.setPalette(blueFont)
+        layout.addWidget(self.label_main_, 10, 0, QtCore.Qt.AlignCenter)
+
+        layout.setRowMinimumHeight(11, 5)
 
         #solver type
+        sublayout = QtGui.QGridLayout()
         self.label_solver_type_ = QtGui.QLabel("Solver type:", self)
-        self.label_solver_type_.move(10, self.label_main_.y()+30)
+        self.label_analysis_type_ = QtGui.QLabel("Analysis type:", self)
+        sublayout.addWidget(self.label_solver_type_, 0, 0, QtCore.Qt.AlignLeft)
+        sublayout.setColumnMinimumWidth(1, 20)
+        sublayout.addWidget(self.label_analysis_type_, 0, 2, QtCore.Qt.AlignLeft)
+        layout.addLayout(sublayout, 12, 0)
+
+        layout.setRowMinimumHeight(13, 0)
+        
+        sublayout = QtGui.QGridLayout()
         self.popup_solver_type_ = QtGui.QComboBox(self)
         self.popup_solver_type_items = ("Static", " ")
         self.popup_solver_type_.addItems(self.popup_solver_type_items)
-        self.popup_solver_type_.setFixedWidth(100)
-        self.popup_solver_type_.move(10, self.label_solver_type_.y()+20)
-
-        #analysis type
-        self.label_analysis_type_ = QtGui.QLabel("Analysis type:", self)
-        self.label_analysis_type_.move(200, self.label_main_.y()+30)
         self.popup_analysis_type_ = QtGui.QComboBox(self)
         self.popup_analysis_type_items = ('linear', 'nonlinear')
         self.popup_analysis_type_.addItems(self.popup_analysis_type_items)
-        self.popup_analysis_type_.setFixedWidth(100)
-        self.popup_analysis_type_.move(200, self.label_analysis_type_.y()+20)
 
-        #model part name
-        self.label_model_part_name_ = QtGui.QLabel("Model part name:", self)
-        self.label_model_part_name_.move(10, self.popup_analysis_type_.y()+30)
-        self.popup_model_part_name_ = QtGui.QComboBox(self)
-        self.popup_model_part_name_items = ("NurbsMesh", " ")
-        self.popup_model_part_name_.addItems(self.popup_model_part_name_items)
-        self.popup_model_part_name_.setFixedWidth(100)
-        self.popup_model_part_name_.move(10, self.label_model_part_name_.y()+20)
+        sublayout.addWidget(self.popup_solver_type_, 0, 0, QtCore.Qt.AlignLeft)
+        sublayout.setColumnMinimumWidth(1, 20)
+        sublayout.addWidget(self.popup_analysis_type_, 0, 2, QtCore.Qt.AlignLeft)
+        layout.addLayout(sublayout, 14, 0)
 
-        #echo level 
+        layout.setRowMinimumHeight(15, 3)
+
         self.label_echo_level3_ = QtGui.QLabel("Echo level:", self)
-        self.label_echo_level3_.move(200, self.popup_analysis_type_.y()+30)
+        layout.addWidget(self.label_echo_level3_, 16, 0, QtCore.Qt.AlignLeft)
+
+        layout.setRowMinimumHeight(17, 3)
+
         self.popup_echo_level3_ = QtGui.QComboBox(self)
         self.popup_echo_level3_items = ("0", "1", "2")
         self.popup_echo_level3_.addItems(self.popup_echo_level3_items)
-        self.popup_echo_level3_.setFixedWidth(100)
-        self.popup_echo_level3_.move(200, self.label_echo_level3_.y()+20)
+        layout.addWidget(self.popup_echo_level3_, 18, 0, QtCore.Qt.AlignLeft)
 
-        #Material import setting - Input type
-        self.label_input_type_ = QtGui.QLabel("Material import setting - Input type:", self)
-        self.label_input_type_.move(10, self.popup_echo_level3_.y()+35)
-        self.popup_input_type_ = QtGui.QComboBox(self)
-        self.popup_input_type_items = ("use_input_model_part", " ")
-        self.popup_input_type_.addItems(self.popup_input_type_items)
-        self.popup_input_type_.setFixedWidth(300)
-        self.popup_input_type_.move(10, self.label_input_type_.y()+20)
-
-        #linear solver settings head
-        self.label_main_ = QtGui.QLabel("Linear solver settings:", self)
-        self.label_main_.move(10, self.popup_input_type_.y()+40)
-       
-        self.label_main_.setFont(boldUnderlinedFont)
-        self.label_main_.setPalette(blueFont)
-
-        #Preconditioner type
-        self.label_preconditioner_type_ = QtGui.QLabel("Preconditioner type:", self)
-        self.label_preconditioner_type_.move(10, self.label_main_.y()+30)
-        self.popup_preconditioner_type_ = QtGui.QComboBox(self)
-        self.popup_preconditioner_type_items = ("additive_schwarz", " ")
-        self.popup_preconditioner_type_.addItems(self.popup_preconditioner_type_items)
-        self.popup_preconditioner_type_.setFixedWidth(300)
-        self.popup_preconditioner_type_.move(10, self.label_preconditioner_type_.y()+20)
-
-        #Solver type
-        self.label_solver_type2_ = QtGui.QLabel("Solver type:", self)
-        self.label_solver_type2_.move(10, self.popup_preconditioner_type_.y()+30)
-        self.popup_solver_type2_ = QtGui.QComboBox(self)
-        self.popup_solver_type2_items = ("bicgstab", "pardiso_lu")
-        self.popup_solver_type2_.addItems(self.popup_solver_type2_items)
-        self.popup_solver_type2_.setFixedWidth(300)
-        self.popup_solver_type2_.move(10, self.label_solver_type2_.y()+20)
-
-
-        #Tolerance
-        self.label_tolerance_ = QtGui.QLabel("Tolerance:", self)
-        self.label_tolerance_.move(200, self.popup_solver_type2_.y()+30)
-        self.textInput_tolerance_ = QtGui.QLineEdit(self)
-        self.textInput_tolerance_.setPlaceholderText("1e-6")
-        self.textInput_tolerance_.setFixedWidth(100)
-        self.textInput_tolerance_.move(200, self.label_tolerance_.y()+20)
-
-        #Rotation dofs
-        self.label_rotation_dofs_ = QtGui.QLabel("Rotation dof:", self)
-        self.label_rotation_dofs_.move(10, self.popup_solver_type2_.y()+30)
-        self.popup_rotation_dofs_ = QtGui.QComboBox(self)
-        self.popup_rotation_dofs_items = ("false", "true")
-        self.popup_rotation_dofs_.addItems(self.popup_rotation_dofs_items)
-        self.popup_rotation_dofs_.setFixedWidth(100)
-        self.popup_rotation_dofs_.move(10, self.label_rotation_dofs_.y()+20)
-
-        #use block builder
-        self.label_block_builder_ = QtGui.QLabel("Use block builder:", self)
-        self.label_block_builder_.move(200, self.textInput_tolerance_.y()+30)
-        self.popup_block_builder_ = QtGui.QComboBox(self)
-        self.popup_block_builder_items = ("true", "false")
-        self.popup_block_builder_.addItems(self.popup_block_builder_items)
-        self.popup_block_builder_.setFixedWidth(100)
-        self.popup_block_builder_.move(200, self.label_block_builder_.y()+20)
-
-        #Residual relative tolerance
-        self.label_relative_tolerance_ = QtGui.QLabel("Residual relative tol.:", self)
-        self.label_relative_tolerance_.move(10, self.textInput_tolerance_.y()+30)
-        self.textInput_relative_tolerance_ = QtGui.QLineEdit(self)
-        self.textInput_relative_tolerance_.setPlaceholderText("1e-6")
-        self.textInput_relative_tolerance_.setFixedWidth(100)
-        self.textInput_relative_tolerance_.move(10, self.label_relative_tolerance_.y()+20)
-
-        #Modelers head
-        self.label_main_ = QtGui.QLabel("Modelers:", self)
-        self.label_main_.move(10, self.textInput_relative_tolerance_.y()+40)
-       
-        self.label_main_.setFont(boldUnderlinedFont)
-        self.label_main_.setPalette(blueFont)
-
-        #Modeler Name
-        self.label_modeler_name_ = QtGui.QLabel("Modeler name:", self)
-        self.label_modeler_name_.move(10, self.label_main_.y()+30)
-        self.popup_modeler_name_ = QtGui.QComboBox(self)
-        self.popup_modeler_name_items = ("NurbsGeometryModeler", " ")
-        self.popup_modeler_name_.addItems(self.popup_modeler_name_items)
-        self.popup_modeler_name_.setFixedWidth(300)
-        self.popup_modeler_name_.move(10, self.label_modeler_name_.y()+20)
-
-        #Modeler Part Name
-        self.label_modeler_part_name_ = QtGui.QLabel("Modeler part name:", self)
-        self.label_modeler_part_name_.move(10, self.popup_modeler_name_.y()+30)
-        self.popup_modeler_part_name_ = QtGui.QComboBox(self)
-        self.popup_modeler_part_name_items = ("NurbsMesh", " ")
-        self.popup_modeler_part_name_.addItems(self.popup_modeler_part_name_items)
-        self.popup_modeler_part_name_.setFixedWidth(300)
-        self.popup_modeler_part_name_.move(10, self.label_modeler_part_name_.y()+20)
-
-        #Modeler Geometry Name
-        self.label_modeler_geometry_name_ = QtGui.QLabel("Modeler geometry name:", self)
-        self.label_modeler_geometry_name_.move(10, self.popup_modeler_part_name_.y()+30)
-        self.popup_modeler_geometry_name_ = QtGui.QComboBox(self)
-        self.popup_modeler_geometry_name_items = ("NurbsVolume", " ")
-        self.popup_modeler_geometry_name_.addItems(self.popup_modeler_geometry_name_items)
-        self.popup_modeler_geometry_name_.setFixedWidth(300)
-        self.popup_modeler_geometry_name_.move(10, self.label_modeler_geometry_name_.y()+20)
+        layout.setRowMinimumHeight(19, 7)
 
 
         #Material properties head
         self.label_main_ = QtGui.QLabel("Material Properties:", self)
-        self.label_main_.move(10, self.popup_modeler_geometry_name_.y()+30)
-       
         self.label_main_.setFont(boldUnderlinedFont)
         self.label_main_.setPalette(blueFont)
+        layout.addWidget(self.label_main_, 20, 0, QtCore.Qt.AlignCenter)
+
+        layout.setRowMinimumHeight(21, 5)
 
         #Density
+        sublayout = QtGui.QGridLayout()
         self.label_density_ = QtGui.QLabel("Density:", self)
-        self.label_density_.move(10, self.label_main_.y()+30)
+        self.label_young_modulus_ = QtGui.QLabel("Young Modulus:", self)
+        sublayout.addWidget(self.label_density_, 0, 0, QtCore.Qt.AlignLeft)
+        sublayout.setColumnMinimumWidth(1, 20)
+        sublayout.addWidget(self.label_young_modulus_, 0, 2, QtCore.Qt.AlignLeft)
+        layout.addLayout(sublayout, 22, 0)
+
+        layout.setRowMinimumHeight(23, 0)
+
+        sublayout = QtGui.QGridLayout()
         self.textInput_density_ = QtGui.QLineEdit(self)
         self.textInput_density_.setPlaceholderText("1.0")
-        self.textInput_density_.setFixedWidth(100)
-        self.textInput_density_.move(10, self.label_density_.y()+20)
-
-        #Young Modulus
-        self.label_young_modulus_ = QtGui.QLabel("Young Modulus:", self)
-        self.label_young_modulus_.move(200, self.label_main_.y()+30)
         self.textInput_young_modulus_ = QtGui.QLineEdit(self)
         self.textInput_young_modulus_.setPlaceholderText("100")
-        self.textInput_young_modulus_.setFixedWidth(100)
-        self.textInput_young_modulus_.move(200, self.label_young_modulus_.y()+20)
+        sublayout.addWidget(self.textInput_density_, 0, 0, QtCore.Qt.AlignLeft)
+        sublayout.setColumnMinimumWidth(1, 20)
+        sublayout.addWidget(self.textInput_young_modulus_, 0, 2, QtCore.Qt.AlignLeft)
+        layout.addLayout(sublayout, 24, 0)
+
+        layout.setRowMinimumHeight(25, 3)
 
         #Poisson Ratio
+        sublayout = QtGui.QGridLayout()
         self.label_poisson_ratio_ = QtGui.QLabel("Poisson Ratio:", self)
-        self.label_poisson_ratio_.move(10, self.textInput_young_modulus_.y()+30)
+        self.label_properties_id_ = QtGui.QLabel("Properties ID:", self)
+        sublayout.addWidget(self.label_poisson_ratio_, 0, 0, QtCore.Qt.AlignLeft)
+        sublayout.setColumnMinimumWidth(1, 20)
+        sublayout.addWidget(self.label_properties_id_, 0, 2, QtCore.Qt.AlignLeft)
+        layout.addLayout(sublayout, 26, 0)
+
+        layout.setRowMinimumHeight(27, 0)
+        
+        sublayout = QtGui.QGridLayout()
         self.textInput_poisson_ratio_ = QtGui.QLineEdit(self)
         self.textInput_poisson_ratio_.setPlaceholderText("0.0")
-        self.textInput_poisson_ratio_.setFixedWidth(100)
-        self.textInput_poisson_ratio_.move(10, self.label_poisson_ratio_.y()+20)
-
-        #Properties id
-        self.label_properties_id_ = QtGui.QLabel("Properties ID:", self)
-        self.label_properties_id_.move(200, self.textInput_young_modulus_.y()+30)
         self.textInput_properties_id_ = QtGui.QLineEdit(self)
         self.textInput_properties_id_.setPlaceholderText("1")
-        self.textInput_properties_id_.setFixedWidth(100)
-        self.textInput_properties_id_.move(200, self.label_properties_id_.y()+20)
+        sublayout.addWidget(self.textInput_poisson_ratio_, 0, 0, QtCore.Qt.AlignLeft)
+        sublayout.setColumnMinimumWidth(1, 20)
+        sublayout.addWidget(self.textInput_properties_id_, 0, 2, QtCore.Qt.AlignLeft)
+        layout.addLayout(sublayout, 28, 0)
+
+        layout.setRowMinimumHeight(29, 3)
 
         #Constitutive law
         self.label_constitutive_id_ = QtGui.QLabel("Constitutive law name:", self)
-        self.label_constitutive_id_.move(10, self.textInput_properties_id_.y()+30)
+        layout.addWidget(self.label_constitutive_id_, 30, 0, QtCore.Qt.AlignLeft)
+        
+        layout.setRowMinimumHeight(31, 0)
+
         self.popup_constitutive_id_ = QtGui.QComboBox(self)
         self.popup_constitutive_id_items = ("LinearElastic3DLaw", " ")
         self.popup_constitutive_id_.addItems(self.popup_constitutive_id_items)
-        self.popup_constitutive_id_.setFixedWidth(300)
-        self.popup_constitutive_id_.move(10, self.label_constitutive_id_.y()+20)
+        layout.addWidget(self.popup_constitutive_id_, 32, 0, QtCore.Qt.AlignLeft)
 
+        layout.setRowMinimumHeight(33, 20)
 
-        # cancel button
+        sublayout = QtGui.QHBoxLayout()
         self.cancelButton = QtGui.QPushButton('Cancel', self)
         self.cancelButton.clicked.connect(self.onCancel)
-        self.cancelButton.setFixedWidth(80)
-
-        # OK button
         self.okButton = QtGui.QPushButton('OK', self)
         self.okButton.clicked.connect(self.onOk)
         self.okButton.setAutoDefault(True)
-        self.okButton.setFixedWidth(80)
-        
-        self.container_okCancel = QtGui.QWidget(self)
-        self.container_okCancel.setContentsMargins(0, 0, 0, 0)
-    
-        self.layout_okCancel = QtGui.QHBoxLayout(self.container_okCancel)
-        self.layout_okCancel.setContentsMargins(0, 0, 0,0)
-        self.layout_okCancel.addWidget(self.okButton)
-        self.layout_okCancel.addWidget(self.cancelButton)
-        self.layout_okCancel.setSpacing(40)
+        sublayout.addWidget(self.okButton)
+        sublayout.addWidget(self.cancelButton)
+        sublayout.setSpacing(40)
+        layout.addLayout(sublayout, 34, 0, QtCore.Qt.AlignCenter)
 
-        self.container_okCancel.move(0.5*width - self.okButton.geometry().width() - 0.5*self.layout_okCancel.spacing(), 
-                                     self.popup_constitutive_id_.y()+50)
+        self.setLayout(layout)
+
+        width = self.sizeHint().width()
+        height = self.sizeHint().height()
+        centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
+        self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
+        self.setFixedSize(width, height)
+
     
     def onOk(self):
 
         self.result = "Ok"
-
 
         self.KratosParam = \
         {
@@ -1966,11 +1976,11 @@ class SolverSettingsBox(QtGui.QDialog):
             "solver_settings" : {
                 "solver_type"              : self.popup_solver_type_.currentText(),
                 "analysis_type"            : self.popup_analysis_type_.currentText(),
-                "model_part_name"          : self.popup_model_part_name_.currentText(),
+                "model_part_name"          : "NurbsMesh",
                 "echo_level"               : int(self.popup_echo_level3_.currentText()),
                 "domain_size"              : 3,
                 "model_import_settings"    : {
-                    "input_type"     : self.popup_input_type_.currentText()
+                    "input_type"     : "use_input_model_part"
                 },
                 "material_import_settings"        : {
                     "materials_filename" : "StructuralMaterials.json"
@@ -1979,30 +1989,73 @@ class SolverSettingsBox(QtGui.QDialog):
                     "time_step" : 1.1       
                 },
                 "linear_solver_settings":{
-                    "preconditioner_type" : self.popup_preconditioner_type_.currentText(),
-                    "solver_type": self.popup_solver_type2_.currentText(),
+                    "preconditioner_type" : "additive_schwarz",
+                    "solver_type": "pardiso_lu",
                     "max_iteration" : 5000,
-                    "tolerance" : float(self.textInput_tolerance_.text())
+                    "tolerance" : 1e-6
                 },
-                "rotation_dofs"            : self.popup_rotation_dofs_.currentText(),
+                "rotation_dofs"            : False,
                 "builder_and_solver_settings" : {
-                    "use_block_builder" : self.popup_block_builder_.currentText()
+                    "use_block_builder" : True
                 },
-                "residual_relative_tolerance"        : float(self.textInput_relative_tolerance_.text())
+                "residual_relative_tolerance"        : 1e-6
             },
             "modelers" : [{
-                        "modeler_name": self.popup_modeler_name_.currentText(),
+                        "modeler_name": "NurbsGeometryModeler",
                         "Parameters": {
-                            "model_part_name" : self.popup_modeler_part_name_.currentText(),
-                            "geometry_name"   : self.popup_modeler_geometry_name_.currentText()}
-                    }]
+                            "model_part_name" : "NurbsMesh",
+                            "geometry_name"   : "NurbsVolume"}
+                    }],
+            
+            "output_processes": 
+            {
+                "vtk_output": 
+                [
+                    {
+                        "python_module": "vtk_embedded_geometry_output_process",
+                        "kratos_module": "KratosMultiphysics.IgaApplication",
+                        "process_name": "VtkEmbeddedGeometryOutputProcess",
+                        "help": "This process writes postprocessing files for Paraview",
+                        "Parameters": {
+                            "mapping_parameters": {
+                                "main_model_part_name": "NurbsMesh",
+                                "nurbs_volume_name": "NurbsVolume",
+                                "embedded_model_part_name": "EmbeddedModelPart"
+                            },
+                            "vtk_parameters": {
+                                "model_part_name": "EmbeddedModelPart",
+                                "output_control_type": "step",
+                                "output_interval": 1,
+                                "file_format": "ascii",
+                                "output_precision": 7,
+                                "output_sub_model_parts": False,
+                                "output_path": "kratos_output",
+                                "save_output_files_in_folder": True,
+                                "nodal_solution_step_data_variables": [
+                                    "DISPLACEMENT"
+                                ],
+                                "nodal_data_value_variables": [
+                                    "CAUCHY_STRESS_VECTOR",
+                                    "VON_MISES_STRESS"
+                                ],
+                                "nodal_flags": [],
+                                "element_data_value_variables": [],
+                                "element_flags": [],
+                                "condition_data_value_variables": [],
+                                "condition_flags": [],
+                                "gauss_point_variables_extrapolated_to_nodes": []
+                            }
+                        }
+                    }
+                ]
+            }
         }
 
 
         self.StructuralMat = \
         {
             "properties" : [{
-                "model_part_name" : self.popup_modeler_part_name_.currentText(),
+                "model_part_name" : "NurbsMesh",
                 "properties_id"   : int(self.textInput_properties_id_.text()),
                 "Material"        : {
                     "constitutive_law" : {
