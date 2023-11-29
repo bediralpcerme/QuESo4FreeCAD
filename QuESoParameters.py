@@ -738,8 +738,6 @@ class QuESoParameters(QtGui.QMainWindow):
                            
                             iconDir = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Dirichlet BC_" + element_list.get('Component'))
 
-                            print("elelelelelellelee")
-
                             #print([v.Point for v in shape.Vertexes])
                             for i in [v.Point for v in shape.Vertexes]:
 
@@ -792,7 +790,7 @@ class QuESoParameters(QtGui.QMainWindow):
                                 fusion.Label = "Dirichlet_BC_" + element_list.get('Component') + "_" + str(n)
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).Selectable = False
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShowInTree = True
-                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShapeColor = (255,0,0)
+                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShapeColor = (1.0,0.0,0.0)
                                 FreeCAD.ActiveDocument.recompute()
 
                                 iconDir.addObject(fusion)
@@ -968,7 +966,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).Selectable = False
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShowInTree = True
-                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShapeColor = (0,0,255)
+                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShapeColor = (0.0,0.0,1.0)
 
                                 FreeCAD.ActiveDocument.recompute()
 
