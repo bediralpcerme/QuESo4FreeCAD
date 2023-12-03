@@ -978,6 +978,7 @@ class QuESoParameters(QtGui.QMainWindow):
                             shape = sel.Object.getSubObject(path)
 
                             neuVector = FreeCAD.Vector(float(self.SurfaceLoadBCBox_obj.x_val),float(self.SurfaceLoadBCBox_obj.y_val),float(self.SurfaceLoadBCBox_obj.z_val))
+                            exeptVector = FreeCAD.Vector(0.00,0.00,-1.00)
                             vX = FreeCAD.Vector(1,0,0)
                             vY = FreeCAD.Vector(0,1,0)
                             vZ = FreeCAD.Vector(0,0,1)
@@ -1024,7 +1025,13 @@ class QuESoParameters(QtGui.QMainWindow):
 
                                 fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1,angle1))
                                 fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2,180 - angle2))
-                                fusion_arrow.Placement = FreeCAD.Placement(i,FreeCAD.Rotation(axis3,angle3))
+                                fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis3,angle3))
+                                if neuVector == exeptVector:
+                                    print("NeuVector is 0 0 -1")
+                                    fusion_arrow.Placement = FreeCAD.Placement(i,FreeCAD.Rotation(FreeCAD.Vector(0,1,0),180))
+                                else:
+                                    print("NeuVector is 0 0 1")
+                                    fusion_arrow.Placement = FreeCAD.Placement(i,FreeCAD.Rotation(axis3,angle3))
 
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).Selectable = False
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShowInTree = True
