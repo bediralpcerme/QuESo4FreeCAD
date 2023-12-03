@@ -1241,8 +1241,9 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
                 with open('Gmsh_main.py', 'w') as f:
                     f.write(Gmsh_main_script)
                     pass
-
-                subprocess.run(["python3", "Gmsh_main.py"], capture_output=True, timeout=None, text=True)
+                
+                subprocess_command = "gnome-terminal --title='Running Gmsh' -- bash -c 'cd {dir}; python3 Gmsh_main.py'".format(dir=self.work_dir)
+                subprocess.run(subprocess_command, timeout=None, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
                 os.remove(self.step_directory)
                 os.remove(self.work_dir + "/Gmsh_main.py")
 
