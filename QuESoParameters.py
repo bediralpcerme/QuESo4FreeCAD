@@ -2,36 +2,45 @@ from FreeCAD_PySide import QtGui, QtCore
 import os, shutil
 import FreeCAD
 import FreeCADGui as Gui
-import Draft, Mesh, MeshPart, Part, ImportGui
+import Draft, Mesh, MeshPart, ImportGui
 import json
 from pivy import coin
-import numpy as np
 from collections import OrderedDict
 import math
 import subprocess
 import OpenSCADUtils
 
-class QuESoParameters(QtGui.QMainWindow):
+class QuESoParameters(QtGui.QMainWindow): 
 
-    def __init__(self):
+    def __init__(self): 
 
         super(QuESoParameters, self).__init__()
         self.initUI()
-        self.visulizerun=0
-        self.gridList=[]     
+        self.visulizerun    = 0
+        self.gridList       = []
+        self.mainObjectName = ""
             
 
     def initUI(self):
 
-        # Basic settings of the QuESo Parameters Window
+##########################################################################################
+##                                                                                      ##
+##                     SETTING UP THE QuESoParameters POP-UP WINDOW                     ##
+##                                                                                      ##
+##########################################################################################
 
-        self.viewport = QtGui.QDialog()
+        """The original QuESoParameters pop-up window is a QMainWindow object because we wanted to include scrolling option in it.
+        It is our primary window on which everything is displayed."""
+        """'viewport' is a QDialog object, and every label, text input box is an object of viewport.
+        The reason not creating the QuESoParameters primary window as QDialog object is solely to be able to use scrolling feature."""
+
+        self.viewport   = QtGui.QDialog()
         self.scrollArea = QtGui.QScrollArea()
-        layout_dialog = QtGui.QGridLayout()
+        layout_dialog   = QtGui.QGridLayout()
 
-        std_validate = QtGui.QIntValidator()
-        scientific_validate = QtGui.QDoubleValidator()
-        scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation)
+        std_validate        = QtGui.QIntValidator()                                # The validation method for an input to be integer.
+        scientific_validate = QtGui.QDoubleValidator()                             # The validation method for an input to be double.
+        scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation) # The validation method for an input to be in scientific notation.
         self.setWindowTitle("QuESo Parameters")
         self.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
@@ -44,18 +53,24 @@ class QuESoParameters(QtGui.QMainWindow):
         boldUnderlinedFont.setUnderline(True)
         blueFont = QtGui.QPalette()
         blueFont.setColor(QtGui.QPalette.WindowText, QtGui.QColor('#005293'))
-        back_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowBack)
-        cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
-        save_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogSaveButton)
-        browse_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DirOpenIcon)
 
-        ## BEGINNING OF GENERAL SETTINGS ##
+        # Introducing QtGui's built-in icons for visual enchancements
+
+        back_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowBack)
+        cancel_icon     = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
+        save_icon       = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogSaveButton)
+        browse_icon     = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DirOpenIcon)
 
         self.viewport.goback_button = QtGui.QPushButton("Go Back", self)
         self.viewport.goback_button.setIcon(back_arrow_icon)
         layout_dialog.addWidget(self.viewport.goback_button, 0, 0, QtCore.Qt.AlignLeft)
 
         layout_dialog.setRowMinimumHeight(1, 10)
+
+##**************************************************************************************##
+##                          Beginning of General Settings Head                          ##
+##**************************************************************************************##
+
 
         self.viewport.label_main_ = QtGui.QLabel("General settings", self)
         self.viewport.label_main_.setFont(boldUnderlinedFont)
@@ -69,7 +84,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(5, 0)
 
-        layout_QuESo_text = QtGui.QHBoxLayout()
+        layout_QuESo_text              = QtGui.QHBoxLayout()
         self.viewport.textInput_QuESo_ = QtGui.QLineEdit(self)
         self.viewport.textInput_QuESo_.setText("")
         self.viewport.textInput_QuESo_.setMinimumWidth(200)
@@ -89,7 +104,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(9, 0)
 
-        layout_kratos_text = QtGui.QHBoxLayout()
+        layout_kratos_text              = QtGui.QHBoxLayout()
         self.viewport.textInput_Kratos_ = QtGui.QLineEdit(self)
         self.viewport.textInput_Kratos_.setText("")
         self.viewport.textInput_Kratos_.setMinimumWidth(200)
@@ -116,9 +131,14 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.addWidget(self.viewport.textInput_echo_, 14, 0, QtCore.Qt.AlignLeft)
 
-        ## END OF GENERAL SETTINGS ##
-
         layout_dialog.setRowMinimumHeight(15, 10)
+
+##  **************************************************************************************
+
+##**************************************************************************************##
+##                           Beginning of Mesh Settings Head                            ##
+##**************************************************************************************##
+
 
         self.viewport.label_main_ = QtGui.QLabel("Mesh Settings", self)
         self.viewport.label_main_.setFont(boldUnderlinedFont)
@@ -126,6 +146,8 @@ class QuESoParameters(QtGui.QMainWindow):
         layout_dialog.addWidget(self.viewport.label_main_, 16, 0, QtCore.Qt.AlignHCenter)
 
         layout_dialog.setRowMinimumHeight(17, 5)
+        
+## ---- Mesher Type Section --------------------------------------------------------------
 
         self.viewport.label_mesh_type = QtGui.QLabel("Mesher Type:", self)
         self.viewport.label_mesh_type.setFont(boldFont)
@@ -133,11 +155,13 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(19, 0)
 
+        # Creating a subLayout for Mesher Type
+
         sublayout_mesh_types = QtGui.QGridLayout()
 
         self.viewport.standardUse_group = QtGui.QGroupBox("Standard mesher", self)
         self.viewport.standardUse_group.setCheckable(True)      
-        sublayout_standardUse = QtGui.QGridLayout()
+        sublayout_standardUse                 = QtGui.QGridLayout()
         self.viewport.surface_deviation_label = QtGui.QLabel("Surface Deviation:", self)
         sublayout_standardUse.addWidget(self.viewport.surface_deviation_label, 0, 0)
         sublayout_standardUse.setRowMinimumHeight(1, 0)
@@ -156,7 +180,7 @@ class QuESoParameters(QtGui.QMainWindow):
         self.viewport.gmshUse_group = QtGui.QGroupBox("Gmsh mesher", self)
         self.viewport.gmshUse_group.setCheckable(True)
         self.viewport.gmshUse_group.setChecked(False)     
-        sublayout_gmshUse = QtGui.QGridLayout()
+        sublayout_gmshUse             = QtGui.QGridLayout()
         self.viewport.maxElSize_label = QtGui.QLabel("Max Element Size:", self)
         sublayout_gmshUse.addWidget(self.viewport.maxElSize_label, 0, 0)
         sublayout_gmshUse.setRowMinimumHeight(1, 0)
@@ -177,9 +201,11 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.addLayout(sublayout_mesh_types, 20, 0)
 
+##  --------------------------------------------------------------------------------------
+
         layout_dialog.setRowMinimumHeight(21, 0)
 
-        ########
+## ---- Polynomial Order Section ---------------------------------------------------------
 
         self.viewport.label_polynomialOrder_ = QtGui.QLabel("Polynomial order:", self)
         self.viewport.label_polynomialOrder_.setFont(boldFont)
@@ -187,7 +213,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(23, 0)
 
-        # Creating SubLayout for Polynomial Order
+        # Creating a subLayout for Polynomial Order
 
         layout_poly_xyz = QtGui.QGridLayout()
 
@@ -230,11 +256,13 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_poly_xyz.addWidget(self.viewport.textInput_polynomialOrder_z_, 0, 10, QtCore.Qt.AlignLeft)
 
-        # End of SubLayout for Polynomial Order
-
         layout_dialog.addLayout(layout_poly_xyz, 24, 0, QtCore.Qt.AlignCenter)
 
+##  --------------------------------------------------------------------------------------
+
         layout_dialog.setRowMinimumHeight(25, 5)
+
+## ---- Number of Elements Section -------------------------------------------------------
 
         self.viewport.label_nElements_ = QtGui.QLabel("Number of elements:", self)
         self.viewport.label_nElements_.setFont(boldFont)
@@ -242,7 +270,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(27, 0)
 
-        # Creating SubLayout for Number of Elements
+        # Creating a subLayout for Number of Elements
 
         layout_nElements_ = QtGui.QGridLayout()
 
@@ -284,18 +312,27 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_nElements_.addWidget(self.viewport.textInput_nElements_z_, 0, 10, QtCore.Qt.AlignLeft)
 
-        ## End of SubLayout for Number of Elements
-
         layout_dialog.addLayout(layout_nElements_, 28, 0, QtCore.Qt.AlignCenter)
 
+##  --------------------------------------------------------------------------------------
+
         layout_dialog.setRowMinimumHeight(29, 5)
+
+## ---- Visualize Grids Section ----------------------------------------------------------
 
         self.viewport.visualizeButton = QtGui.QCheckBox('Visualize Grids', self)
         layout_dialog.addWidget(self.viewport.visualizeButton, 30, 0)
 
+##  --------------------------------------------------------------------------------------
+
         layout_dialog.setRowMinimumHeight(31, 10)
 
-        ## END OF MESH SETTINGS ##
+##  **************************************************************************************
+
+##**************************************************************************************##
+##                         Beginning of Solution Settings Head                          ##
+##**************************************************************************************##
+
 
         self.viewport.label_main_ = QtGui.QLabel("Solution Settings:", self)
         self.viewport.label_main_.setFont(boldUnderlinedFont)
@@ -322,7 +359,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(39, 0)
 
-        self.viewport.popup_integration = QtGui.QComboBox(self)
+        self.viewport.popup_integration       = QtGui.QComboBox(self)
         self.viewport.popup_integration_items = ("Gauss","Gauss_Reduced1","Gauss_Reduced2","GGQ_Optimal","GGQ_Reduced1", "GGQ_Reduced2")
         self.viewport.popup_integration.addItems(self.viewport.popup_integration_items)
         self.viewport.popup_integration.setMinimumWidth(140)
@@ -330,7 +367,12 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(41, 10)
 
-        ## END OF SOLUTION SETTINGS ##
+##  **************************************************************************************
+
+##**************************************************************************************##
+##                        Beginning of Boundary Conditions Head                         ##
+##**************************************************************************************##
+
 
         self.viewport.label_ApplyBC_ = QtGui.QLabel("Boundary Conditions", self)
         self.viewport.label_ApplyBC_.setFont(boldUnderlinedFont)
@@ -353,7 +395,12 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(47, 10)
 
-        ## END OF BOUNDARY CONDITIONS ##
+##  **************************************************************************************
+
+##**************************************************************************************##
+##                          Beginning of Solver Settings Head                           ##
+##**************************************************************************************##
+
 
         self.viewport.label_SolverSettings_ = QtGui.QLabel("Solver Settings", self)
         self.viewport.label_SolverSettings_.setFont(boldUnderlinedFont)
@@ -369,12 +416,14 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(51, 20)
 
-        ## END OF SOLVER SETTINGS
+##  **************************************************************************************
 
-        ## Sublayout for save-cancel
+##**************************************************************************************##
+##                           Placement of Save-Cancel buttons                           ##
+##**************************************************************************************##
 
         layout_saveCancel = QtGui.QHBoxLayout()
-        cancelButton = QtGui.QPushButton("Cancel", self)
+        cancelButton      = QtGui.QPushButton("Cancel", self)
         cancelButton.setIcon(cancel_icon)
         saveButton = QtGui.QPushButton("Save", self)
         saveButton.setIcon(save_icon)
@@ -382,25 +431,34 @@ class QuESoParameters(QtGui.QMainWindow):
         layout_saveCancel.addWidget(cancelButton)
         layout_saveCancel.setSpacing(40)
 
-        ## End of Sublayout save-cancel
-
         layout_dialog.addLayout(layout_saveCancel, 52, 0, QtCore.Qt.AlignCenter)
 
+##  **************************************************************************************
+
         self.viewport.setLayout(layout_dialog)
+
+##**************************************************************************************##
+## Adjusting the position and geometry of the QuESoParameters pop-up window as well as  ##
+##                  establishing the scrolling option and its features                  ##
+##**************************************************************************************##
 
         self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setWidget(self.viewport)
-
         self.setCentralWidget(self.scrollArea)
-
-        width = self.sizeHint().width()
-        height = self.viewport.sizeHint().height()
+        width       = self.sizeHint().width()
+        height      = self.viewport.sizeHint().height()
         centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         self.setMinimumWidth(self.sizeHint().width())
         self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
 
+##  **************************************************************************************
+
+##**************************************************************************************##
+##         Establishing the signal/slot pairs for the buttons/checkboxes put in         ##
+##                            QuESoParameters pop-up window                             ##
+##**************************************************************************************##
         
         self.viewport.goback_button.clicked.connect(self.onGoBackButton)
         self.viewport.fileBrowseButton_QuESo.clicked.connect(self.onBrowseButton_QuESodirectory)
@@ -414,12 +472,19 @@ class QuESoParameters(QtGui.QMainWindow):
         cancelButton.clicked.connect(self.onCancel)
         saveButton.clicked.connect(self.onSave)
 
+##  **************************************************************************************
 
-        # show the dialog box and creates instances of other required classes
+##**************************************************************************************##
+##      Creating the other class instances for the pop-up window to work properly       ##
+##**************************************************************************************##
+
+        """Since some of those class instances have some buttons/checkboxes that perform 
+        several tasks, their signal/slot pairs are also declared here."""
+
         self.PenaltySupportBCBox_obj = PenaltySupportBCBox()
-        self.SurfaceLoadBCBox_obj = SurfaceLoadBCBox()
-        self.projectNameWindow_obj = projectNameWindow()
-        self.SolverSettingsBox_obj = SolverSettingsBox()
+        self.SurfaceLoadBCBox_obj    = SurfaceLoadBCBox()
+        self.projectNameWindow_obj   = projectNameWindow()
+        self.SolverSettingsBox_obj   = SolverSettingsBox()
 
         self.PenaltySupportFacesList_Obj = PenaltySupportFacesList()
         self.PenaltySupportFacesList_Obj.Modify_button.clicked.connect(self.ModifyButtonClicked_PenaltySupportFacesList)
@@ -433,36 +498,74 @@ class QuESoParameters(QtGui.QMainWindow):
         self.SurfaceLoadFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_SurfaceLoadFacesList)
         self.SurfaceLoadFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_SurfaceLoadFacesList)
 
+##  **************************************************************************************
+
+##**************************************************************************************##
+##           Creating the arrays/dictionaries that will be used in the script           ##
+##**************************************************************************************##
+
+        """The main idea is keeping track of the boudnary conditions applied"""
+
         self.PenaltySupport_displacement_arr = []
-        self.mainObjectName = ""
-        self.SurfaceLoad_modulus_arr=[]
-        self.SurfaceLoad_force_arr = []
-        self.PenaltySupportSelectionList = []
-        self.SurfaceLoadSelectionList = []
-        self.Dirichlet_BC_icons = {}
-        self.Neumann_BC_icons = {}
-        self.PenaltySupport_faces = []
-        self.SurfaceLoad_faces = []
+        self.SurfaceLoad_modulus_arr         = []
+        self.SurfaceLoad_force_arr           = []
+        self.PenaltySupportSelectionList     = []
+        self.SurfaceLoadSelectionList        = []
+        self.Dirichlet_BC_icons              = {}
+        self.Neumann_BC_icons                = {}
+        self.PenaltySupport_faces            = []
+        self.SurfaceLoad_faces               = []
+
+##  **************************************************************************************
+
+##**************************************************************************************##
+##  Executing the dialog box, in which the project name and its directory is given by   ##
+##                                       the user                                       ##
+##**************************************************************************************##
+
+        """Although our primary pop-up window is the QuESoParameters window, it is not the 
+        pop-up window that is shown to the user firstly, when the user wants to user the 
+        whole plug-in. Instead, the first pop-up window shown is the project name window
+        (which is an instance of the class 'projectNameWindow', and belongs to our primary 
+        window 'QuESoParameters' QMainWindow). The user enters the name and directory of the 
+        project. If they are not blank and the 'Ok' button is clicked on the project name 
+        window, it is checked whether the project name already exists within the directory
+        provided by the user. If yes, previous values are used to fill the relevant sections
+        in the QuESoParameters main window. If not, a blank QuESoParameters main window is
+        shown."""
         
         self.projectNameWindow_obj.exec_()
-        self.work_dir = self.projectNameWindow_obj.project_dir
+        self.work_dir            = self.projectNameWindow_obj.project_dir
         self.ActiveDocument_Name = FreeCAD.ActiveDocument.Name
 
-        if (self.projectNameWindow_obj.project_Name != "") and (self.projectNameWindow_obj.project_dir != "") and (self.projectNameWindow_obj.okFlag == True):
-            self.previousValuesCheck_QuESoParam()
+        if (self.projectNameWindow_obj.project_Name != "") and (self.projectNameWindow_obj.project_dir != "") and (self.projectNameWindow_obj.okFlag == True): 
+            self.previousValuesCheck_QuESoKratosParam()
             self.previousValuesCheck_BC()
             self.show()
-        else:
+        else: 
             pass
 
+##  **************************************************************************************
 
-    #################################################################################################################################
-                            ############################# FUNCTION DEFINITIONS #############################
-    #################################################################################################################################
+## #######################################################################################
 
-                                                ##### Browse Files Function #####
 
-    def previousValuesCheck_QuESoParam(self):
+##########################################################################################
+##                                                                                      ##
+##            FUNCTION DEFINITIONS OF PREVOUS VALUE/BOUNDARY CONDITION CHECK            ##
+##                                                                                      ##
+##########################################################################################
+
+
+
+##**************************************************************************************##
+##      Checking the Previous Values of QuESO and Kratos Parameters (if possible)       ##
+##**************************************************************************************##
+
+
+    def previousValuesCheck_QuESoKratosParam(self):
+
+## ---- Reading the directory information ------------------------------------------------
 
         try:
             os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
@@ -482,7 +585,9 @@ class QuESoParameters(QtGui.QMainWindow):
         except:
             pass
 
-                        ## Setting Up QuESo Parameters and changing values on the pop-up screen ##
+##  --------------------------------------------------------------------------------------
+
+## ---- Setting Up QuESo Parameters and changing values on the pop-up screen -------------
 
         try:
             os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
@@ -509,18 +614,13 @@ class QuESoParameters(QtGui.QMainWindow):
             number_of_elements_z = str(number_of_elements[2])
 
             # Reading trimmed_quadrature_rule_settings
-
             trimmed_quadrature_rule_settings = mydata_QuESo['trimmed_quadrature_rule_settings']
             moment_fitting_residual = str(trimmed_quadrature_rule_settings['moment_fitting_residual'])
 
             # Reading non_trimmed_quadrature_rule_settings
-
             non_trimmed_quadrature_rule_settings = mydata_QuESo['non_trimmed_quadrature_rule_settings']
             integration_method = str(non_trimmed_quadrature_rule_settings['integration_method'])
             myfile.close()
-            #######
-
-            #######
 
             self.viewport.textInput_echo_.setText(echo_level)
             self.viewport.textInput_polynomialOrder_x_.setText(polynomial_order_x)
@@ -535,8 +635,10 @@ class QuESoParameters(QtGui.QMainWindow):
         except:
             pass
 
-                        ## Setting Up Kratos Parameters and changing values on the pop-up screen ##
-        
+##  --------------------------------------------------------------------------------------
+
+## ---- Setting Up Kratos Parameters and changing values on the pop-up screen ------------
+      
         try:
             os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
             work_dir = os.getcwd()
@@ -557,9 +659,7 @@ class QuESoParameters(QtGui.QMainWindow):
             solver_type = str(solver_settings['solver_type'])
             analysis_type = str(solver_settings['analysis_type'])
             echo_level_solversettings = str(solver_settings['echo_level'])
-
             myfile.close()
-
 
             self.SolverSettingsBox_obj.popup_parallel_type_.setCurrentText(parallel_type)
             self.SolverSettingsBox_obj.popup_echo_level2_.setCurrentText(echo_level_problemdata)
@@ -572,7 +672,9 @@ class QuESoParameters(QtGui.QMainWindow):
         except:
             pass
 
-            ## Setting Up Structural Materials Parameters and changing values on the pop-up screen ##
+##  --------------------------------------------------------------------------------------
+
+## ---- Setting Up Structural Materials Parameters and changing values on the pop-up screen ----
 
         try:
             os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
@@ -601,7 +703,15 @@ class QuESoParameters(QtGui.QMainWindow):
 
         except:
             pass
-    
+
+##  --------------------------------------------------------------------------------------
+
+##  **************************************************************************************
+        
+##**************************************************************************************##
+##                      Checking the previous boundary conditions                       ##
+##**************************************************************************************##
+
     def previousValuesCheck_BC(self):
 
         try:
@@ -650,6 +760,10 @@ class QuESoParameters(QtGui.QMainWindow):
         except:
             pass
 
+##  **************************************************************************************
+        
+##  ######################################################################################
+        
     def onGoBackButton(self):
 
         self.projectNameWindow_obj.textInput_dir.setText(self.projectNameWindow_obj.project_dir)
@@ -695,15 +809,139 @@ class QuESoParameters(QtGui.QMainWindow):
             self.setVisible(False)
             self.PenaltySupportFacesList_Obj.show()
 
-            ############################ PenaltySupport FACES LIST FUNCTIONS #################################
+    def onSolverSettingsButton(self):
+
+        self.SolverSettingsBox_obj.exec_()
+
+
+    def onSurfaceLoadBC(self):
+        infoBox = QtGui.QMessageBox.information(self, "Apply SurfaceLoad Boundary Conditions", \
+                                                "Please select faces subject to SurfaceLoad BC one by one!")
+
+        if infoBox == QtGui.QMessageBox.StandardButton.Ok:
+            self.view = Gui.ActiveDocument.ActiveView
+            self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_SurfaceLoadBCBox)
+            self.setVisible(False)
+            self.SurfaceLoadFacesList_Obj.show()
+
+    def onVisualize(self):
+            
+            if (self.viewport.visualizeButton.isChecked()):
+                self.VisualizeGrid_Fun()
+            else:
+                self.deVisualizeGrid_Fun()
+
+    def VisualizeGrid_Fun(self):
+
+        mybounds=self.bounds()
+        self.visulizerun=self.visulizerun+1
+
+        #bounds with 0.1 offset in total
+        self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
+        self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
+        self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
+        self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
+        self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
+        self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
+        #BOUNDINGBOX&GRID
+        #if vizualize run for the first time
+        '''
+        if self.visulizerun>1:
+            FreeCAD.activeDocument().removeObject('Grid')
+            for i in self.gridList:
+                FreeCAD.activeDocument().removeObject(i)
+            self.gridList=[]
+        '''
+        BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
+        conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
+            
+        
+        BDvol.Length.Value = (self.upperbound_x_-self.lowerbound_x_)
+        BDvol.Width.Value  = (self.upperbound_y_-self.lowerbound_y_)
+        BDvol.Height.Value = (self.upperbound_z_-self.lowerbound_z_)
+        BDvol.Placement = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
+        BDPl = BDvol.Placement
+        oripl_X=BDvol.Placement.Base.x
+        oripl_Y=BDvol.Placement.Base.y
+        oripl_Z=BDvol.Placement.Base.z
+        Gui.ActiveDocument.getObject(BDvol.Name).Transparency = 100
+        
+
+        if (mybounds[6] and mybounds[7]) > 0.0:
+            pl_z_first=[]
+            pl_z_sec=[]
+            stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.viewport.textInput_nElements_z_.text())
+            
+            for i in range(int(self.viewport.textInput_nElements_z_.text())+1):
+
+                pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_z_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
+                conteneurRectangle.addObject(duble)
+
+
+        if (mybounds[6] and mybounds[8]) > 0.0:
+            pl_y_first=[]
+            pl_y_sec=[]
+            stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.viewport.textInput_nElements_y_.text())
+
+            for i in range(int(self.viewport.textInput_nElements_y_.text())+1):
+
+                pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_y_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (0.0 , 1.0, 0.0)
+                conteneurRectangle.addObject(duble)
+
+        if (mybounds[7] and mybounds[8]) > 0.0:
+            pl_x_first=[]
+            pl_x_sec=[]
+            stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.viewport.textInput_nElements_x_.text())
+
+            for i in range(int(self.viewport.textInput_nElements_x_.text())+1):
+
+                pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_x_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (0.0 , 0.0, 1.0)
+                conteneurRectangle.addObject(duble)
+
+        FreeCAD.ActiveDocument.recompute()
+        FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
+
+    def deVisualizeGrid_Fun(self):
+
+        ######### INSERT YOUR CODE HERE #########
+
+        if self.visulizerun>0:
+            FreeCAD.activeDocument().removeObject('Grid')
+            for i in self.gridList:
+                FreeCAD.activeDocument().removeObject(i)
+            self.gridList=[]
+            self.visulizerun = 0
+
+##########################################################################################
+##                                                                                      ##
+##   PenaltySupportFacesList CLASS INSTANCE'S FUNCTIONS THAT INVOLVE AT AN ACTION OF    ##
+##                             QuESoParameters MAIN WINDOW                              ##
+##                                                                                      ##
+##########################################################################################
 
     def okButtonClicked_PenaltySupportFacesList(self):
+
+        # To confirm the applied penalty support boundary conditions and their values
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.PenaltySupportFacesList_Obj.result = True
         self.PenaltySupportFacesList_Obj.close()
 
     def DiscardButtonClicked_PenaltySupportFacesList(self):
+
+        # To completely discard all the penalty support boundary conditions applied (Face IDs and values)
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.PenaltySupportFacesList_Obj.result = False
@@ -713,6 +951,8 @@ class QuESoParameters(QtGui.QMainWindow):
         self.PenaltySupportFacesList_Obj.close()
 
     def DeleteButtonClicked_PenaltySupportFacesList(self):
+
+        # To delete the penalty support boundary condition selected on the list
         current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
         current_Item_text = self.PenaltySupportFacesList_Obj.listwidget.currentItem().text()
         indexToDel = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
@@ -732,6 +972,8 @@ class QuESoParameters(QtGui.QMainWindow):
         self.PenaltySupportFacesList_Obj.listwidget.takeItem(self.PenaltySupportFacesList_Obj.listwidget.row(current_Item))
 
     def ModifyButtonClicked_PenaltySupportFacesList(self):
+
+        # To modify the value of the penalty support boundary condition selected on the list
         current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
         indexToMod = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
         print("whole surface load arr = " + str(self.PenaltySupport_displacement_arr))
@@ -748,8 +990,88 @@ class QuESoParameters(QtGui.QMainWindow):
                                                     [float(self.PenaltySupportBCBox_obj.x_val),\
                                                      float(self.PenaltySupportBCBox_obj.y_val),\
                                                      float(self.PenaltySupportBCBox_obj.z_val)]
+        
+##  ######################################################################################
 
+##########################################################################################
+##                                                                                      ##
+##     SurfaceLoadFacesList CLASS INSTANCE'S FUNCTIONS THAT INVOLVE AT AN ACTION OF     ##
+##                             QuESoParameters MAIN WINDOW                              ##
+##                                                                                      ##
+##########################################################################################
 
+    def okButtonClicked_SurfaceLoadFacesList(self):
+
+        # To confirm the applied surface load boundary conditions and their values
+        self.setVisible(True)
+        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
+        self.SurfaceLoadFacesList_Obj.result = True
+        self.SurfaceLoadFacesList_Obj.close()
+
+    def DiscardButtonClicked_SurfaceLoadFacesList(self):
+
+        # To completely discard all the surface load boundary conditions applied (Face IDs and values)
+        self.setVisible(True)
+        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
+        self.SurfaceLoadFacesList_Obj.result = False
+        self.SurfaceLoad_force_arr = []
+        self.SurfaceLoad_faces = []
+        self.SurfaceLoad_modulus_arr=[]
+        self.SurfaceLoadSelectionList = []
+        self.SurfaceLoadFacesList_Obj.close()
+
+    def DeleteButtonClicked_SurfaceLoadFacesList(self):
+
+        # To delete the penalty surface load condition selected on the list
+        current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
+        current_Item_text = self.SurfaceLoadFacesList_Obj.listwidget.currentItem().text()
+        indexToDel = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        del self.SurfaceLoad_force_arr[indexToDel]
+        k = self.Neumann_BC_icons[current_Item_text]
+        for i in range (1, int(k), 1):
+            obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Neumann_BC_" + str(current_Item_text) + "_" + str(i))
+            OpenSCADUtils.removesubtree(obj)
+        else:
+            print()
+        FreeCAD.ActiveDocument.removeObject('Neumann_BC_' + current_Item_text)
+        self.Neumann_BC_icons.pop(str(current_Item_text))
+        print('BC Container: ', str(self.Neumann_BC_icons))
+        del self.SurfaceLoad_faces[indexToDel]
+        del self.SurfaceLoad_modulus_arr[indexToDel]
+        del self.SurfaceLoadSelectionList[indexToDel]
+        print(str(self.SurfaceLoad_force_arr))
+        print(str(self.SurfaceLoad_modulus_arr))
+        self.SurfaceLoadFacesList_Obj.listwidget.takeItem(self.SurfaceLoadFacesList_Obj.listwidget.row(current_Item))
+
+    def ModifyButtonClicked_SurfaceLoadFacesList(self):
+
+        # To modify the penalty surface load condition selected on the list
+        current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
+        print(current_Item)
+        indexToMod = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
+        print(indexToMod)
+        print(str(self.SurfaceLoad_force_arr))
+        print(str(self.SurfaceLoad_modulus_arr))
+        prev_vals_direction = self.SurfaceLoad_force_arr[indexToMod]
+        prev_vals_modulus = self.SurfaceLoad_modulus_arr[indexToMod]
+        prev_x = prev_vals_direction[0]
+        prev_y = prev_vals_direction[1]
+        prev_z = prev_vals_direction[2]
+        self.SurfaceLoadBCBox_obj.text_x_constraint.setText(str(prev_x))
+        self.SurfaceLoadBCBox_obj.text_y_constraint.setText(str(prev_y))
+        self.SurfaceLoadBCBox_obj.text_z_constraint.setText(str(prev_z))
+        self.SurfaceLoadBCBox_obj.text_SurfaceLoad_modulus.setText(str(prev_vals_modulus))
+        self.SurfaceLoadBCBox_obj.exec_()
+
+        self.SurfaceLoad_force_arr[indexToMod] = \
+                                                    [float(self.SurfaceLoadBCBox_obj.x_val),\
+                                                     float(self.SurfaceLoadBCBox_obj.y_val),\
+                                                     float(self.SurfaceLoadBCBox_obj.z_val)]
+        self.SurfaceLoad_modulus_arr[indexToMod] = float(self.SurfaceLoadBCBox_obj.modulus_val)
+        print(str(self.SurfaceLoad_force_arr))
+        Gui.Selection.clearSelection()
+
+##  ######################################################################################
 
                                                 ##### PenaltySupport Event Button #####
 
@@ -776,7 +1098,6 @@ class QuESoParameters(QtGui.QMainWindow):
                     Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
                                                element_list.get('Component'), element_list.get('x'), element_list.get('y'))
                     sel = Gui.Selection.getSelectionEx()
-                    # object = Draft.makeFacebinder(sel, 'D' + str(self.PenaltySupportBCBox_obj.PenaltySupport_count))
                     self.PenaltySupportSelectionList.append(sel)
                     self.PenaltySupport_faces.append(element_list['Component'])
                     self.mainObjectName = element_list['Object']
@@ -850,86 +1171,6 @@ class QuESoParameters(QtGui.QMainWindow):
                     self.Dirichlet_BC_icons.update({str(element_list.get('Component')): str(n)})
                     print('BC Container: ', str(self.Dirichlet_BC_icons))
                     Gui.Selection.clearSelection()                                        
-
-    def onSolverSettingsButton(self):
-
-        self.SolverSettingsBox_obj.exec_()
-
-
-    def onSurfaceLoadBC(self):
-        infoBox = QtGui.QMessageBox.information(self, "Apply SurfaceLoad Boundary Conditions", \
-                                                "Please select faces subject to SurfaceLoad BC one by one!")
-
-        if infoBox == QtGui.QMessageBox.StandardButton.Ok:
-            self.view = Gui.ActiveDocument.ActiveView
-            self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_SurfaceLoadBCBox)
-            self.setVisible(False)
-            self.SurfaceLoadFacesList_Obj.show()
-
-            ############################ SurfaceLoad FACES LIST FUNCTIONS #################################
-
-    def okButtonClicked_SurfaceLoadFacesList(self):
-        self.setVisible(True)
-        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
-        self.SurfaceLoadFacesList_Obj.result = True
-        self.SurfaceLoadFacesList_Obj.close()
-
-    def DiscardButtonClicked_SurfaceLoadFacesList(self):
-        self.setVisible(True)
-        self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
-        self.SurfaceLoadFacesList_Obj.result = False
-        self.SurfaceLoad_force_arr = []
-        self.SurfaceLoad_faces = []
-        self.SurfaceLoad_modulus_arr=[]
-        self.SurfaceLoadSelectionList = []
-        self.SurfaceLoadFacesList_Obj.close()
-
-    def DeleteButtonClicked_SurfaceLoadFacesList(self):
-        current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
-        current_Item_text = self.SurfaceLoadFacesList_Obj.listwidget.currentItem().text()
-        indexToDel = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        del self.SurfaceLoad_force_arr[indexToDel]
-        k = self.Neumann_BC_icons[current_Item_text]
-        for i in range (1, int(k), 1):
-            obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Neumann_BC_" + str(current_Item_text) + "_" + str(i))
-            OpenSCADUtils.removesubtree(obj)
-        else:
-            print()
-        FreeCAD.ActiveDocument.removeObject('Neumann_BC_' + current_Item_text)
-        self.Neumann_BC_icons.pop(str(current_Item_text))
-        print('BC Container: ', str(self.Neumann_BC_icons))
-        del self.SurfaceLoad_faces[indexToDel]
-        del self.SurfaceLoad_modulus_arr[indexToDel]
-        del self.SurfaceLoadSelectionList[indexToDel]
-        print(str(self.SurfaceLoad_force_arr))
-        print(str(self.SurfaceLoad_modulus_arr))
-        self.SurfaceLoadFacesList_Obj.listwidget.takeItem(self.SurfaceLoadFacesList_Obj.listwidget.row(current_Item))
-
-    def ModifyButtonClicked_SurfaceLoadFacesList(self):
-        current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
-        print(current_Item)
-        indexToMod = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        print(indexToMod)
-        print(str(self.SurfaceLoad_force_arr))
-        print(str(self.SurfaceLoad_modulus_arr))
-        prev_vals_direction = self.SurfaceLoad_force_arr[indexToMod]
-        prev_vals_modulus = self.SurfaceLoad_modulus_arr[indexToMod]
-        prev_x = prev_vals_direction[0]
-        prev_y = prev_vals_direction[1]
-        prev_z = prev_vals_direction[2]
-        self.SurfaceLoadBCBox_obj.text_x_constraint.setText(str(prev_x))
-        self.SurfaceLoadBCBox_obj.text_y_constraint.setText(str(prev_y))
-        self.SurfaceLoadBCBox_obj.text_z_constraint.setText(str(prev_z))
-        self.SurfaceLoadBCBox_obj.text_SurfaceLoad_modulus.setText(str(prev_vals_modulus))
-        self.SurfaceLoadBCBox_obj.exec_()
-
-        self.SurfaceLoad_force_arr[indexToMod] = \
-                                                    [float(self.SurfaceLoadBCBox_obj.x_val),\
-                                                     float(self.SurfaceLoadBCBox_obj.y_val),\
-                                                     float(self.SurfaceLoadBCBox_obj.z_val)]
-        self.SurfaceLoad_modulus_arr[indexToMod] = float(self.SurfaceLoadBCBox_obj.modulus_val)
-        print(str(self.SurfaceLoad_force_arr))
-        Gui.Selection.clearSelection()
 
     def getMouseClick_SurfaceLoadBCBox(self, event_cb):
         event = event_cb.getEvent()
@@ -1036,14 +1277,6 @@ class QuESoParameters(QtGui.QMainWindow):
                     self.SurfaceLoad_faces.append(element_list['Component'])
                     self.mainObjectName = element_list['Object']
                     Gui.Selection.clearSelection()
-
-    def onVisualize(self):
-            
-            if (self.viewport.visualizeButton.isChecked()):
-                self.VisualizeGrid_Fun()
-            else:
-                self.deVisualizeGrid_Fun()
-
 
     def onSave(self):
         #bounds
@@ -1324,6 +1557,15 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
         self.result = "Cancel"
         self.close()
 
+##########################################################################################
+##                                                                                      ##
+##                          SUPPLEMENTARY FUNCTION DEFINITIONS                          ##
+##                                                                                      ##
+##########################################################################################
+
+##**************************************************************************************##
+##                          Obtaining the bounds of the grid box                        ##
+##**************************************************************************************##
 
     def bounds(self):
         try:
@@ -1357,100 +1599,12 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
         boundBoxLZ=boundBox_.ZLength
 
         return [boundBoxXMin, boundBoxYMin, boundBoxZMin, boundBoxXMax, boundBoxYMax, boundBoxZMax, boundBoxLX, boundBoxLY, boundBoxLZ]
-    
-    def VisualizeGrid_Fun(self):
 
-        mybounds=self.bounds()
-        self.visulizerun=self.visulizerun+1
+##  **************************************************************************************
 
-        #bounds with 0.1 offset in total
-        self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
-        self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
-        self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
-        self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
-        self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
-        self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
-        #BOUNDINGBOX&GRID
-        #if vizualize run for the first time
-        '''
-        if self.visulizerun>1:
-            FreeCAD.activeDocument().removeObject('Grid')
-            for i in self.gridList:
-                FreeCAD.activeDocument().removeObject(i)
-            self.gridList=[]
-        '''
-        BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
-        conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
-            
-        
-        BDvol.Length.Value = (self.upperbound_x_-self.lowerbound_x_)
-        BDvol.Width.Value  = (self.upperbound_y_-self.lowerbound_y_)
-        BDvol.Height.Value = (self.upperbound_z_-self.lowerbound_z_)
-        BDvol.Placement = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
-        BDPl = BDvol.Placement
-        oripl_X=BDvol.Placement.Base.x
-        oripl_Y=BDvol.Placement.Base.y
-        oripl_Z=BDvol.Placement.Base.z
-        Gui.ActiveDocument.getObject(BDvol.Name).Transparency = 100
-        
-
-        if (mybounds[6] and mybounds[7]) > 0.0:
-            pl_z_first=[]
-            pl_z_sec=[]
-            stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.viewport.textInput_nElements_z_.text())
-            
-            for i in range(int(self.viewport.textInput_nElements_z_.text())+1):
-
-                pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
-                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_z_fill"+str(i)
-                self.gridList.append(duble.Name)
-                Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
-                conteneurRectangle.addObject(duble)
-
-
-        if (mybounds[6] and mybounds[8]) > 0.0:
-            pl_y_first=[]
-            pl_y_sec=[]
-            stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.viewport.textInput_nElements_y_.text())
-
-            for i in range(int(self.viewport.textInput_nElements_y_.text())+1):
-
-                pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
-                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_y_fill"+str(i)
-                self.gridList.append(duble.Name)
-                Gui.activeDocument().activeObject().LineColor = (0.0 , 1.0, 0.0)
-                conteneurRectangle.addObject(duble)
-
-        if (mybounds[7] and mybounds[8]) > 0.0:
-            pl_x_first=[]
-            pl_x_sec=[]
-            stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.viewport.textInput_nElements_x_.text())
-
-            for i in range(int(self.viewport.textInput_nElements_x_.text())+1):
-
-                pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
-                duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_x_fill"+str(i)
-                self.gridList.append(duble.Name)
-                Gui.activeDocument().activeObject().LineColor = (0.0 , 0.0, 1.0)
-                conteneurRectangle.addObject(duble)
-
-        FreeCAD.ActiveDocument.recompute()
-        FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
-
-    def deVisualizeGrid_Fun(self):
-
-        ######### INSERT YOUR CODE HERE #########
-
-        if self.visulizerun>0:
-            FreeCAD.activeDocument().removeObject('Grid')
-            for i in self.gridList:
-                FreeCAD.activeDocument().removeObject(i)
-            self.gridList=[]
-            self.visulizerun = 0
-            
+##**************************************************************************************##
+##               Appending boundary conditions to the relevant JSON file                ##
+##**************************************************************************************##
 
 
     def append_json(self, entry, filename='QuESoParameters.json'):
@@ -1462,7 +1616,9 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
             with open(filename, "w") as file:
                 json.dump(data, file, indent = 4, separators=(", ", ": "), sort_keys=False)
 
-            
+##  **************************************************************************************
+
+##  ######################################################################################
 
 ################################## OTHER REQUIRED CLASS DEFINITIONS #############################################
 
