@@ -11,17 +11,6 @@ import math
 import subprocess
 import OpenSCADUtils
 
-##################
-
-# The code is not finished yet
-
-##################
-
-#TO DO LIST:
-# - Normalization of the force direction
-# - Visual improvements and name changes
-
-
 class QuESoParameters(QtGui.QMainWindow):
 
     def __init__(self):
@@ -1251,8 +1240,6 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
                 
                 subprocess_command = "gnome-terminal --title='Running Gmsh' -- bash -c 'cd {dir}; python3 Gmsh_main.py'".format(dir=self.work_dir)
                 subprocess.run(subprocess_command, timeout=None, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
-                #os.remove(self.step_directory)
-                #os.remove(self.work_dir + "/Gmsh_main.py")
 
             elif self.gmsh_use_flag == False:
                 object = []
