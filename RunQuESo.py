@@ -48,13 +48,15 @@ class RunQuESo(QtGui.QDialog):
 
     def onOk(self):
        
-        #By subprocess
+        #Changing working directory to read JSON file containing the directory info
 
         docName =  "/" + FreeCAD.ActiveDocument.Label + ".FCStd"
         work_dir = FreeCAD.ActiveDocument.FileName
         work_dir = work_dir.replace(docName,"")
 
         os.chdir(work_dir)
+
+        #Reading the directories
 
         with open('OtherInfos.json', 'r') as myfile:
             mydata = json.load(myfile)
@@ -64,7 +66,8 @@ class RunQuESo(QtGui.QDialog):
         QuESo_dirOrg = mydata['QuESo_directory']
         QuESo_lib_dirOrg = mydata['QuESo_lib_directory']
 
-        os.chdir(work_dir)
+        #Creating the bash file based on the operating system (except macOS). The extension of the file is ".sh" for Linux and ".bat" for Windows.
+        #The bash file is made to be executable, and run as subprocess.
 
         if platform.system() == 'Linux':
 
