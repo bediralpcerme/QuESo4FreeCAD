@@ -42,10 +42,12 @@ class QuESoParameters(QtGui.QMainWindow):
 ##                                                                                      ##
 ##########################################################################################
 
-        """The original QuESoParameters pop-up window is a QMainWindow object because we wanted to include scrolling option in it.
-        It is our primary window on which everything is displayed."""
-        """'viewport' is a QDialog object, and every label, text input box is an object of viewport.
-        The reason not creating the QuESoParameters primary window as QDialog object is solely to be able to use scrolling feature."""
+        #The original QuESoParameters pop-up window is a QMainWindow object because we 
+        #wanted to include scrolling option in it. It is our primary window on which everything 
+        #is displayed.\n
+        #'viewport' is a QDialog object, and every label, text input box is an object of viewport.
+        #The reason not creating the QuESoParameters primary window as QDialog object is solely 
+        #to be able to use scrolling feature.
 
         self.viewport   = QtGui.QDialog()
         self.scrollArea = QtGui.QScrollArea()
@@ -491,8 +493,8 @@ class QuESoParameters(QtGui.QMainWindow):
 ##      Creating the other class instances for the pop-up window to work properly       ##
 ##**************************************************************************************##
 
-        """Since some of those class instances have some buttons/checkboxes that perform 
-        several tasks, their signal/slot pairs are also declared here."""
+        #Since some of those class instances have some buttons/checkboxes that perform 
+        #several tasks, their signal/slot pairs are also declared here.
 
         self.PenaltySupportBCBox_obj = PenaltySupportBCBox()
         self.SurfaceLoadBCBox_obj    = SurfaceLoadBCBox()
@@ -517,7 +519,7 @@ class QuESoParameters(QtGui.QMainWindow):
 ##           Creating the arrays/dictionaries that will be used in the script           ##
 ##**************************************************************************************##
 
-        """The main idea is keeping track of the boudnary conditions applied"""
+        #The main idea is keeping track of the boudnary conditions applied.
 
         self.PenaltySupport_displacement_arr = []
         self.SurfaceLoad_modulus_arr         = []
@@ -536,16 +538,16 @@ class QuESoParameters(QtGui.QMainWindow):
 ##                                       the user                                       ##
 ##**************************************************************************************##
 
-        """Although our primary pop-up window is the QuESoParameters window, it is not the 
-        pop-up window that is shown to the user firstly, when the user wants to user the 
-        whole plug-in. Instead, the first pop-up window shown is the project name window
-        (which is an instance of the class 'projectNameWindow', and belongs to our primary 
-        window 'QuESoParameters' QMainWindow). The user enters the name and directory of the 
-        project. If they are not blank and the 'Ok' button is clicked on the project name 
-        window, it is checked whether the project name already exists within the directory
-        provided by the user. If yes, previous values are used to fill the relevant sections
-        in the QuESoParameters main window. If not, a blank QuESoParameters main window is
-        shown."""
+        #Although our primary pop-up window is the QuESoParameters window, it is not the 
+        #pop-up window that is shown to the user firstly, when the user wants to user the 
+        #whole plug-in. Instead, the first pop-up window shown is the project name window
+        #(which is an instance of the class 'projectNameWindow', and belongs to our primary 
+        #window 'QuESoParameters' QMainWindow). The user enters the name and directory of the 
+        #project. If they are not blank and the 'Ok' button is clicked on the project name 
+        #window, it is checked whether the project name already exists within the directory
+        #provided by the user. If yes, previous values are used to fill the relevant sections
+        #in the QuESoParameters main window. If not, a blank QuESoParameters main window is
+        #shown.
         
         self.projectNameWindow_obj.exec_()
         self.work_dir            = self.projectNameWindow_obj.project_dir
@@ -777,6 +779,15 @@ class QuESoParameters(QtGui.QMainWindow):
         
 ##  ######################################################################################
         
+##########################################################################################
+##                                                                                      ##
+##   SIGNAL/SLOT FUNCTIONS FOR THE BUTTONS AND CHECKBOXES ON THE QuESoParameters MAIN   ##
+##                         WINDOW (EXCEPT Ok and Cancel Button)                         ##
+##                                                                                      ##
+##########################################################################################
+
+## ---- Go back button from QuESoParameters main window to the Project Name and Directory Dialog Box ----
+
     def onGoBackButton(self):
 
         self.projectNameWindow_obj.textInput_dir.setText(self.projectNameWindow_obj.project_dir)
@@ -792,6 +803,10 @@ class QuESoParameters(QtGui.QMainWindow):
         else:
             pass
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Selecting between Gmsh or FreeCAD's Standard Mesher (Exclusive Group Box Objects) ----
+
     def onStandardUseButton(self):
         if self.viewport.standardUse_group.isChecked():
             self.viewport.gmshUse_group.setChecked(False)
@@ -799,6 +814,10 @@ class QuESoParameters(QtGui.QMainWindow):
     def onGmshUseButton(self):
         if self.viewport.gmshUse_group.isChecked():
             self.viewport.standardUse_group.setChecked(False)
+
+##  --------------------------------------------------------------------------------------
+
+## ---- Browse Files to set up the directory of QuESo and Kratos -------------------------
 
     def onBrowseButton_QuESodirectory(self):
         self.QuESo_directory = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory", self.work_dir, QtGui.QFileDialog.ShowDirsOnly)
@@ -811,6 +830,13 @@ class QuESoParameters(QtGui.QMainWindow):
         self.Kratos_directory = self.Kratos_directory + '/bin/Release'
         self.Kratos_lib_directory = self.Kratos_directory + '/libs'
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Apply Boundary Condition buttons -------------------------------------------------
+
+    #The lines involving self.callback = ... enable FreeCAD to keep track of that where 
+    #is clicked (which coordinates, edge, line etc.) by the user. It activates recognizing
+    #the mouse button events by FreeCAD.
 
     def onPenaltySupportBC(self):
         infoBox = QtGui.QMessageBox.information(self, "Apply PenaltySupport Boundary Conditions", \
@@ -822,11 +848,6 @@ class QuESoParameters(QtGui.QMainWindow):
             self.setVisible(False)
             self.PenaltySupportFacesList_Obj.show()
 
-    def onSolverSettingsButton(self):
-
-        self.SolverSettingsBox_obj.exec_()
-
-
     def onSurfaceLoadBC(self):
         infoBox = QtGui.QMessageBox.information(self, "Apply SurfaceLoad Boundary Conditions", \
                                                 "Please select faces subject to SurfaceLoad BC one by one!")
@@ -836,6 +857,21 @@ class QuESoParameters(QtGui.QMainWindow):
             self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_SurfaceLoadBCBox)
             self.setVisible(False)
             self.SurfaceLoadFacesList_Obj.show()
+
+##  --------------------------------------------------------------------------------------
+
+## ---- The pop-up window (an object of QuESoParameters main window still) to set up Solver Settings ----
+
+    def onSolverSettingsButton(self):
+
+        self.SolverSettingsBox_obj.exec_()
+
+##  --------------------------------------------------------------------------------------
+        
+## ---- Visualizing the bounding box grids -----------------------------------------------
+
+    #Visualizing grids uses a function called 'bounds'. Its definition is given in the
+    #Supplementary Functions Section. (At the end of methods of QuESoParameters main window)
 
     def onVisualize(self):
             
@@ -856,15 +892,8 @@ class QuESoParameters(QtGui.QMainWindow):
         self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
         self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
         self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
+
         #BOUNDINGBOX&GRID
-        #if vizualize run for the first time
-        '''
-        if self.visulizerun>1:
-            FreeCAD.activeDocument().removeObject('Grid')
-            for i in self.gridList:
-                FreeCAD.activeDocument().removeObject(i)
-            self.gridList=[]
-        '''
         BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
         conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
             
@@ -893,7 +922,6 @@ class QuESoParameters(QtGui.QMainWindow):
                 self.gridList.append(duble.Name)
                 Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
                 conteneurRectangle.addObject(duble)
-
 
         if (mybounds[6] and mybounds[8]) > 0.0:
             pl_y_first=[]
@@ -928,8 +956,6 @@ class QuESoParameters(QtGui.QMainWindow):
 
     def deVisualizeGrid_Fun(self):
 
-        ######### INSERT YOUR CODE HERE #########
-
         if self.visulizerun>0:
             FreeCAD.activeDocument().removeObject('Grid')
             for i in self.gridList:
@@ -937,24 +963,32 @@ class QuESoParameters(QtGui.QMainWindow):
             self.gridList=[]
             self.visulizerun = 0
 
+##  --------------------------------------------------------------------------------------
+            
+##  ######################################################################################
+
 ##########################################################################################
 ##                                                                                      ##
 ##   PenaltySupportFacesList CLASS INSTANCE'S FUNCTIONS THAT INVOLVE AT AN ACTION OF    ##
 ##                             QuESoParameters MAIN WINDOW                              ##
 ##                                                                                      ##
 ##########################################################################################
+            
+## ---- To confirm the applied penalty support boundary conditions and their values ------
 
     def okButtonClicked_PenaltySupportFacesList(self):
 
-        # To confirm the applied penalty support boundary conditions and their values
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.PenaltySupportFacesList_Obj.result = True
         self.PenaltySupportFacesList_Obj.close()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- To completely discard all the penalty support boundary conditions applied (Face IDs and values) ----
+
     def DiscardButtonClicked_PenaltySupportFacesList(self):
 
-        # To completely discard all the penalty support boundary conditions applied (Face IDs and values)
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.PenaltySupportFacesList_Obj.result = False
@@ -963,9 +997,12 @@ class QuESoParameters(QtGui.QMainWindow):
         self.PenaltySupportSelectionList = []
         self.PenaltySupportFacesList_Obj.close()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- To delete the penalty support boundary condition selected on the list ------------
+
     def DeleteButtonClicked_PenaltySupportFacesList(self):
 
-        # To delete the penalty support boundary condition selected on the list
         current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
         current_Item_text = self.PenaltySupportFacesList_Obj.listwidget.currentItem().text()
         indexToDel = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
@@ -984,9 +1021,12 @@ class QuESoParameters(QtGui.QMainWindow):
         print(str(self.PenaltySupport_displacement_arr))
         self.PenaltySupportFacesList_Obj.listwidget.takeItem(self.PenaltySupportFacesList_Obj.listwidget.row(current_Item))
 
+##  --------------------------------------------------------------------------------------
+        
+## ---- To modify the value of the penalty support boundary condition selected on the list ----
+
     def ModifyButtonClicked_PenaltySupportFacesList(self):
 
-        # To modify the value of the penalty support boundary condition selected on the list
         current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
         indexToMod = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
         print("whole surface load arr = " + str(self.PenaltySupport_displacement_arr))
@@ -1004,6 +1044,8 @@ class QuESoParameters(QtGui.QMainWindow):
                                                      float(self.PenaltySupportBCBox_obj.y_val),\
                                                      float(self.PenaltySupportBCBox_obj.z_val)]
         
+##  --------------------------------------------------------------------------------------
+        
 ##  ######################################################################################
 
 ##########################################################################################
@@ -1012,18 +1054,24 @@ class QuESoParameters(QtGui.QMainWindow):
 ##                             QuESoParameters MAIN WINDOW                              ##
 ##                                                                                      ##
 ##########################################################################################
+        
+## ---- To confirm the applied surface load boundary conditions and their values ---------
+
 
     def okButtonClicked_SurfaceLoadFacesList(self):
 
-        # To confirm the applied surface load boundary conditions and their values
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.SurfaceLoadFacesList_Obj.result = True
         self.SurfaceLoadFacesList_Obj.close()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- To completely discard all the surface load boundary conditions applied (Face IDs and values) ----
+
+
     def DiscardButtonClicked_SurfaceLoadFacesList(self):
 
-        # To completely discard all the surface load boundary conditions applied (Face IDs and values)
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.SurfaceLoadFacesList_Obj.result = False
@@ -1033,9 +1081,12 @@ class QuESoParameters(QtGui.QMainWindow):
         self.SurfaceLoadSelectionList = []
         self.SurfaceLoadFacesList_Obj.close()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- To delete the penalty surface load condition selected on the list ----------------
+
     def DeleteButtonClicked_SurfaceLoadFacesList(self):
 
-        # To delete the penalty surface load condition selected on the list
         current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
         current_Item_text = self.SurfaceLoadFacesList_Obj.listwidget.currentItem().text()
         indexToDel = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
@@ -1056,9 +1107,12 @@ class QuESoParameters(QtGui.QMainWindow):
         print(str(self.SurfaceLoad_modulus_arr))
         self.SurfaceLoadFacesList_Obj.listwidget.takeItem(self.SurfaceLoadFacesList_Obj.listwidget.row(current_Item))
 
+##  --------------------------------------------------------------------------------------
+
+## ---- To modify the penalty surface load condition selected on the list ----------------
+
     def ModifyButtonClicked_SurfaceLoadFacesList(self):
 
-        # To modify the penalty surface load condition selected on the list
         current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
         print(current_Item)
         indexToMod = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
@@ -1083,6 +1137,8 @@ class QuESoParameters(QtGui.QMainWindow):
         self.SurfaceLoad_modulus_arr[indexToMod] = float(self.SurfaceLoadBCBox_obj.modulus_val)
         print(str(self.SurfaceLoad_force_arr))
         Gui.Selection.clearSelection()
+
+##  --------------------------------------------------------------------------------------
 
 ##  ######################################################################################
 
@@ -1864,7 +1920,6 @@ class SurfaceLoadBCBox(QtGui.QDialog):
         event.accept()
 
     def okButton_SurfaceLoadBCBox(self):
-        #print("Mouse Click " + str(self.SurfaceLoad_count))
         self.SurfaceLoad_count = self.SurfaceLoad_count + 1
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
