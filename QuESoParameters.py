@@ -768,9 +768,6 @@ class QuESoParameters(QtGui.QMainWindow):
                         sel = Gui.Selection.getSelectionEx()
                         self.PenaltySupportSelectionList.append(sel)
                         Gui.Selection.clearSelection()
-            
-            print(str(self.SurfaceLoadSelectionList))
-            print(str(self.PenaltySupportSelectionList))
 
         except:
             pass
@@ -1012,13 +1009,11 @@ class QuESoParameters(QtGui.QMainWindow):
             obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Dirichlet_BC_" + str(current_Item_text) + "_" + str(i))
             OpenSCADUtils.removesubtree(obj)
         else:
-            print()
+            pass
         FreeCAD.ActiveDocument.removeObject('Dirichlet_BC_' + current_Item_text)
         self.Dirichlet_BC_icons.pop(str(current_Item_text))
-        print('BC Container: ', str(self.Dirichlet_BC_icons))
         del self.PenaltySupport_faces[indexToDel]
         del self.PenaltySupportSelectionList[indexToDel]
-        print(str(self.PenaltySupport_displacement_arr))
         self.PenaltySupportFacesList_Obj.listwidget.takeItem(self.PenaltySupportFacesList_Obj.listwidget.row(current_Item))
 
 ##  --------------------------------------------------------------------------------------
@@ -1029,7 +1024,6 @@ class QuESoParameters(QtGui.QMainWindow):
 
         current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
         indexToMod = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        print("whole surface load arr = " + str(self.PenaltySupport_displacement_arr))
         prev_vals = self.PenaltySupport_displacement_arr[indexToMod]
         prev_x = prev_vals[0]
         prev_y = prev_vals[1]
@@ -1096,15 +1090,12 @@ class QuESoParameters(QtGui.QMainWindow):
             obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Neumann_BC_" + str(current_Item_text) + "_" + str(i))
             OpenSCADUtils.removesubtree(obj)
         else:
-            print()
+            pass
         FreeCAD.ActiveDocument.removeObject('Neumann_BC_' + current_Item_text)
         self.Neumann_BC_icons.pop(str(current_Item_text))
-        print('BC Container: ', str(self.Neumann_BC_icons))
         del self.SurfaceLoad_faces[indexToDel]
         del self.SurfaceLoad_modulus_arr[indexToDel]
         del self.SurfaceLoadSelectionList[indexToDel]
-        print(str(self.SurfaceLoad_force_arr))
-        print(str(self.SurfaceLoad_modulus_arr))
         self.SurfaceLoadFacesList_Obj.listwidget.takeItem(self.SurfaceLoadFacesList_Obj.listwidget.row(current_Item))
 
 ##  --------------------------------------------------------------------------------------
@@ -1114,11 +1105,7 @@ class QuESoParameters(QtGui.QMainWindow):
     def ModifyButtonClicked_SurfaceLoadFacesList(self):
 
         current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
-        print(current_Item)
         indexToMod = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        print(indexToMod)
-        print(str(self.SurfaceLoad_force_arr))
-        print(str(self.SurfaceLoad_modulus_arr))
         prev_vals_direction = self.SurfaceLoad_force_arr[indexToMod]
         prev_vals_modulus = self.SurfaceLoad_modulus_arr[indexToMod]
         prev_x = prev_vals_direction[0]
@@ -1135,23 +1122,32 @@ class QuESoParameters(QtGui.QMainWindow):
                                                      float(self.SurfaceLoadBCBox_obj.y_val),\
                                                      float(self.SurfaceLoadBCBox_obj.z_val)]
         self.SurfaceLoad_modulus_arr[indexToMod] = float(self.SurfaceLoadBCBox_obj.modulus_val)
-        print(str(self.SurfaceLoad_force_arr))
         Gui.Selection.clearSelection()
 
 ##  --------------------------------------------------------------------------------------
 
 ##  ######################################################################################
 
-                                                ##### PenaltySupport Event Button #####
+##########################################################################################
+##                                                                                      ##
+##   PENALTY SUPPORT MOUSE CLICK EVENT- Getting the coordinate of where the mouse is    ##
+##                 clicked to apply penalty support boundary condition                  ##
+##                                                                                      ##
+##########################################################################################
 
     def getMouseClick_PenaltySupportBCBox(self, event_cb):
         event = event_cb.getEvent()
+
+##**************************************************************************************##
+##  Getting the coordinate of the mouse click and asking the user to enter the penalty  ##
+## support boundary condition value - Storing the Face IDs and corresponding values in  ##
+##                                     a dictionary                                     ##
+##**************************************************************************************##
 
         if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
         &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
             pos = event.getPosition().getValue()
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
-            print(str(element_list))
             if(element_list != None):
                 self.PenaltySupportBCBox_obj.element_list = element_list
                 self.PenaltySupportBCBox_obj.okButton_Flag = False
@@ -1161,7 +1157,6 @@ class QuESoParameters(QtGui.QMainWindow):
                                                                 [float(self.PenaltySupportBCBox_obj.x_val), \
                                                                  float(self.PenaltySupportBCBox_obj.y_val), \
                                                                  float(self.PenaltySupportBCBox_obj.z_val)])
-                    print(str(self.PenaltySupport_displacement_arr))
                     self.PenaltySupportFacesList_Obj.listwidget.addItem(element_list.get('Component'))
 
                     Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
@@ -1170,16 +1165,22 @@ class QuESoParameters(QtGui.QMainWindow):
                     self.PenaltySupportSelectionList.append(sel)
                     self.PenaltySupport_faces.append(element_list['Component'])
                     self.mainObjectName = element_list['Object']
+
+##  **************************************************************************************
                                         
+##**************************************************************************************##
+##   Preprocessing Icons to visualize them on the model for Penalty Support Boundary    ##
+##                                      Condition                                       ##
+##**************************************************************************************##
+                    
                     n = 1 
-                                                               ##### Preprocessing Icons -> Dirichlet BC #####
+
                     for sel in Gui.Selection.getSelectionEx('', 0): 
                         for path in sel.SubElementNames if sel.SubElementNames else ['']:
                             shape = sel.Object.getSubObject(path)
                            
                             iconDir = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Dirichlet BC_" + element_list.get('Component'))
 
-                            #print([v.Point for v in shape.Vertexes])
                             for i in [v.Point for v in shape.Vertexes]:
 
                                 # i <- coordinates of vertex
@@ -1238,17 +1239,34 @@ class QuESoParameters(QtGui.QMainWindow):
                                 n +=1
 
                     self.Dirichlet_BC_icons.update({str(element_list.get('Component')): str(n)})
-                    print('BC Container: ', str(self.Dirichlet_BC_icons))
-                    Gui.Selection.clearSelection()                                        
+                    Gui.Selection.clearSelection()
+
+##  **************************************************************************************
+
+##  ######################################################################################
+
+##########################################################################################
+##                                                                                      ##
+##     SURFACE LOAD MOUSE CLICK EVENT- Getting the coordinate of where the mouse is     ##
+##                   clicked to apply surface load boundary condition                   ##
+##                                                                                      ##
+##########################################################################################
 
     def getMouseClick_SurfaceLoadBCBox(self, event_cb):
         event = event_cb.getEvent()
+
+##**************************************************************************************##
+##                                                                                      ##
+##  Getting the coordinate of the mouse click and asking the user to enter the penalty  ##
+## support boundary condition value - Storing the Face IDs and corresponding values in  ##
+##                                     a dictionary                                     ##
+##                                                                                      ##
+##**************************************************************************************##
 
         if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
         &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
             pos = event.getPosition().getValue()
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
-            print(str(element_list))
             if(element_list != None):
                 self.SurfaceLoadBCBox_obj.element_list = element_list
                 self.SurfaceLoadBCBox_obj.okButton_Flag = False
@@ -1260,17 +1278,19 @@ class QuESoParameters(QtGui.QMainWindow):
                                                                  float(self.SurfaceLoadBCBox_obj.z_val)])
                     self.SurfaceLoad_modulus_arr.append(\
                                                                 float(self.SurfaceLoadBCBox_obj.modulus_val))
-                    print(str(self.SurfaceLoad_force_arr))
                     self.SurfaceLoadFacesList_Obj.listwidget.addItem(element_list.get('Component'))
 
                     Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
                                                element_list.get('Component'), element_list.get('x'), element_list.get('y'))
                     sel = Gui.Selection.getSelectionEx()
-                    # object = Draft.makeFacebinder(sel, 'D' + str(self.PenaltySupportBCBox_obj.PenaltySupport_count))
                     self.SurfaceLoadSelectionList.append(sel)
 
-
-                                                               ##### Preprocessing Icons -> Dirichlet BC #####
+##  **************************************************************************************
+                                        
+##**************************************************************************************##
+##   Preprocessing Icons to visualize them on the model for Surface load Boundary       ##
+##                                      Condition                                       ##
+##**************************************************************************************##
 					
                     for sel in Gui.Selection.getSelectionEx('', 0):
                         for path in sel.SubElementNames if sel.SubElementNames else ['']:
@@ -1290,12 +1310,8 @@ class QuESoParameters(QtGui.QMainWindow):
                             angle2 = math.degrees(vY.getAngle(neuVector))
                             angle3 = math.degrees(vZ.getAngle(neuVector))
 
-                            #prepIcons = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Prep_icons")
                             iconNeu = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Neumann BC_" + element_list.get('Component'))
-                            #prepIcons.addObject(iconNeu)
-
                             n = 1 
-                            #print([v.Point for v in shape.Vertexes])
                             for i in [v.Point for v in shape.Vertexes]:
                               
                                 bcTip = FreeCAD.ActiveDocument.addObject("Part::Cone")
@@ -1342,13 +1358,21 @@ class QuESoParameters(QtGui.QMainWindow):
                                 n +=1
 
                     self.Neumann_BC_icons.update({str(element_list.get('Component')): str(n)})
-                    print('BC Container: ', str(self.Neumann_BC_icons))
                     self.SurfaceLoad_faces.append(element_list['Component'])
                     self.mainObjectName = element_list['Object']
                     Gui.Selection.clearSelection()
 
+##  **************************************************************************************
+                    
+##  ######################################################################################
+                    
+##########################################################################################
+##                                                                                      ##
+##             TASKS DONE BY THE SAVE BUTTON ON QuESoParameters MAIN WINDOW             ##
+##                                                                                      ##
+##########################################################################################
+
     def onSave(self):
-        #bounds
 
         if (self.viewport.standardUse_group.isChecked() == False) & (self.viewport.gmshUse_group.isChecked() == False):
             errorMsg = QtGui.QMessageBox.critical(self, "Error: No mesher selected", "You must select a mesher type!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
@@ -1373,7 +1397,11 @@ class QuESoParameters(QtGui.QMainWindow):
 
         elif reply == QtGui.QMessageBox.Yes:
 
-            #  Creating Project and data directories (changing to project directory):
+##**************************************************************************************##
+##    Creating Project (if they don't already exist) and data directories as well as    ##
+##                     changing the working directory of the script                     ##
+##**************************************************************************************##
+
             os.chdir(self.work_dir)
 
             if os.path.isdir(os.getcwd() + "/" + self.projectNameWindow_obj.project_Name):
@@ -1395,12 +1423,17 @@ class QuESoParameters(QtGui.QMainWindow):
             temp_name = FreeCAD.ActiveDocument.Name
             FreeCAD.getDocument(temp_name).saveAs(self.work_dir + "/" + self.projectNameWindow_obj.project_Name + ".FCStd")
 
+            #Step directory is needed in case the user wants to use Gmsh mesher
             self.STL_directory = self.data_dir + "/" + self.projectNameWindow_obj.project_Name + ".stl"
             self.step_directory = self.data_dir + "/" + self.projectNameWindow_obj.project_Name + ".step"
+
+## **************************************************************************************
+            
+##**************************************************************************************##
+##                        Bounding Box with 0.1 offset in total                         ##
+##**************************************************************************************##
+
             mybounds=self.bounds()
-
-            #bounds with 0.1 offset in total
-
             self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
             self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
             self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
@@ -1408,6 +1441,11 @@ class QuESoParameters(QtGui.QMainWindow):
             self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
             self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
 
+## **************************************************************************************
+            
+##**************************************************************************************##
+##          Creating QuESoParameters.json file and Exporting surface STL files          ##
+##**************************************************************************************##
 
             QuESoParam = \
             {
@@ -1434,32 +1472,17 @@ class QuESoParameters(QtGui.QMainWindow):
                 ]
             }
 
-            self.OtherInfos = \
-            {
-                "mainObjectName"        : self.mainObjectName,
-                "SurfaceLoadFaces"      : self.SurfaceLoad_faces,
-                "PenaltySupportFaces"   : self.PenaltySupport_faces,
-                "working_directory"     : self.work_dir,
-                "STL_directory"         : self.STL_directory,
-                "QuESo_directory"       : self.viewport.textInput_QuESo_.text(),
-                "QuESo_lib_directory"   : self.viewport.textInput_QuESo_.text() + "/libs",
-                "kratos_directory"      : self.viewport.textInput_Kratos_.text() + '/bin/Release',
-                "kratos_lib_directory"  : self.viewport.textInput_Kratos_.text() + '/bin/Release/libs'
-            }
-
-
-            # Creating QuESoParameters.json file and Exporting surface STL files:
+            #In the QuESoParameters.json file, in order to include the name of the surfaces that \n
+            #are subject to boundary conditions, the function called 'append_json' is used. \n
+            #Its definition is at the Supplementary Functions section (at the end of the \n
+            #QuESoParameters main window's methods)
+            #It basically appends the names of the respective surfaces in the 'conditions' key.
 
             with open('QuESoParameters.json', 'w') as f:
                 json.dump(QuESoParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
 
             for i in range (int(len(self.SurfaceLoad_force_arr))):
-                print("i = " + str(i))
-                print("surface load arr = " + str(self.SurfaceLoad_force_arr[i]))
-                print("whole surface load arr = " + str(self.SurfaceLoad_force_arr))
-                print("magnitude = " + str(self.SurfaceLoad_modulus_arr[i]))
-                print("whole magnitude arr = " + str(self.SurfaceLoad_modulus_arr))
                 force_direction = list(self.SurfaceLoad_force_arr[i])
                 magnitude = self.SurfaceLoad_modulus_arr[i]
                 SurfaceLoad_json = {"SurfaceLoadCondition": {
@@ -1490,20 +1513,50 @@ class QuESoParameters(QtGui.QMainWindow):
                 PenaltySupport_STL_Face_Object = [(FreeCAD.getDocument(self.ActiveDocument_Name).getObject(faceObject_Name))]
                 Mesh.export(PenaltySupport_STL_Face_Object, self.data_dir + "/" + faceObject_Name + '.stl')
 
-            # Creating KratosParameters.json file:
+## **************************************************************************************
+                
+##**************************************************************************************##
+##    Creating the OtherInfos.json file, which contains other several things for the    ##
+##                         proper functionality of the plug-in                          ##
+##**************************************************************************************##
+
+            self.OtherInfos = \
+            {
+                "mainObjectName"        : self.mainObjectName,
+                "SurfaceLoadFaces"      : self.SurfaceLoad_faces,
+                "PenaltySupportFaces"   : self.PenaltySupport_faces,
+                "working_directory"     : self.work_dir,
+                "STL_directory"         : self.STL_directory,
+                "QuESo_directory"       : self.viewport.textInput_QuESo_.text(),
+                "QuESo_lib_directory"   : self.viewport.textInput_QuESo_.text() + "/libs",
+                "kratos_directory"      : self.viewport.textInput_Kratos_.text() + '/bin/Release',
+                "kratos_lib_directory"  : self.viewport.textInput_Kratos_.text() + '/bin/Release/libs'
+            }
+
+            with open('OtherInfos.json', 'w') as f:
+                json.dump(self.OtherInfos, f, indent=4, separators=(", ", ": "), sort_keys=False)
+                pass
+
+## **************************************************************************************
+
+##**************************************************************************************##
+##          Creating KratosParameters.json and StructuralMaterials.json files           ##
+##**************************************************************************************##
+
             with open('KratosParameters.json', 'w') as f:
                 json.dump(self.SolverSettingsBox_obj.KratosParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
             
-            # Creating StructuralMaterials.json file:
             with open('StructuralMaterials.json', 'w') as f:
                 json.dump(self.SolverSettingsBox_obj.StructuralMat, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
 
-            # Creating OtherInfos.json file:
-            with open('OtherInfos.json', 'w') as f:
-                json.dump(self.OtherInfos, f, indent=4, separators=(", ", ": "), sort_keys=False)
-                pass
+## **************************************************************************************
+
+##**************************************************************************************##
+##   Creating the QuESo_main.py file, which must be run by Python interpreter so that   ##
+##                    QuESo and then Kratos can perform their tasks                     ##
+##**************************************************************************************##
 
             QuESo_main_script = \
 '''from QuESo_PythonApplication.PyQuESo import PyQuESo
@@ -1516,10 +1569,18 @@ def main():
 if __name__ == "__main__":
     main()'''.format(QuESo_param_json="QuESoParameters.json")
 
-            # Creating QuESo_main.py file:
             with open('QuESo_main.py', 'w') as f:
                 f.write(QuESo_main_script)
                 pass
+
+## **************************************************************************************
+            
+##**************************************************************************************##
+##  Performing the surface mesh and saving the resultant STL file to be used later by   ##
+##                                        QuESo                                         ##
+##**************************************************************************************##
+            
+## ---- In case user wants to use Gmsh mesher (Gmsh takes STEP file as input and saves STL as output) ----
 
             if self.gmsh_use_flag == True:
                 object = []
@@ -1539,9 +1600,18 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
                 with open('Gmsh_main.py', 'w') as f:
                     f.write(Gmsh_main_script)
                     pass
+
+                #Although Gmsh_main.py is to be run by Python interpreter, we wanted to \n
+                #open it in a separate system console so that the user can see the \n
+                #progress. Therefore, Gmsh_main.py is run by Python interpreter in \n
+                #a subprocess
                 
                 subprocess_command = "gnome-terminal --title='Running Gmsh' -- bash -c 'cd {dir}; python3 Gmsh_main.py'".format(dir=self.work_dir)
                 subprocess.run(subprocess_command, timeout=None, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
+
+##  --------------------------------------------------------------------------------------
+
+## ---- In case user wants to use FreeCAD's Standard mesher ------------------------------
 
             elif self.gmsh_use_flag == False:
                 object = []
@@ -1550,8 +1620,13 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
                 msh.Mesh = MeshPart.meshFromShape(Shape=object[0].Shape, LinearDeflection = float(self.viewport.surface_deviation_textInput.text()), AngularDeflection = float(self.viewport.angular_deviation_textInput.text()), Relative = True)
                 Mesh.export([FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject("Mesh")], str(self.STL_directory))
 
+##  --------------------------------------------------------------------------------------
+                
+##  **************************************************************************************
 
-            #BOUNDINGBOX&GRID
+##**************************************************************************************##
+##                      Visualizing the bounding box for the model                      ##
+##**************************************************************************************##
 
             if self.visulizerun>0:
                 FreeCAD.activeDocument().removeObject('Grid')
@@ -1572,7 +1647,6 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
             oripl_Y=BDvol.Placement.Base.y
             oripl_Z=BDvol.Placement.Base.z
 
-
             if (mybounds[6] and mybounds[7]) > 0.0:
                 pl_z_first=[]
                 pl_z_sec=[]
@@ -1586,7 +1660,6 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
                     duble.Label = "_BoundBoxRectangle_z_fill"+str(i)
                     Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
                     conteneurRectangle.addObject(duble)
-    
     
             if (mybounds[6] and mybounds[8]) > 0.0:
                 pl_y_first=[]
@@ -1622,9 +1695,21 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
             os.chdir(self.work_dir)
             self.close()
 
+## **************************************************************************************
+
+## ######################################################################################
+            
+##########################################################################################
+##                                                                                      ##
+##            TASKS DONE BY THE CANCEL BUTTON ON QuESoParameters MAIN WINDOW            ##
+##                                                                                      ##
+##########################################################################################
+
     def onCancel(self):
         self.result = "Cancel"
         self.close()
+
+## ######################################################################################
 
 ##########################################################################################
 ##                                                                                      ##
@@ -1647,7 +1732,6 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
             Mesh.export(object, STL_temp_directory)
             mesh = Mesh.Mesh(STL_temp_directory)
 
-        # boundBox
         boundBox_    = mesh.BoundBox
 
         try:
@@ -1688,6 +1772,9 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
 ##  **************************************************************************************
 
 ##  ######################################################################################
+                
+## _______________________________________________________________________________________
+## _______________________________________________________________________________________
 
 ################################## OTHER REQUIRED CLASS DEFINITIONS #############################################
 
@@ -1839,7 +1926,6 @@ class PenaltySupportBCBox(QtGui.QDialog):
         event.accept()
 
     def okButton_PenaltySupportBCBox(self):
-        #print("Mouse Click " + str(self.PenaltySupport_count))
         self.PenaltySupport_count = self.PenaltySupport_count + 1
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
