@@ -1776,7 +1776,15 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
 ## _______________________________________________________________________________________
 ## _______________________________________________________________________________________
 
-################################## OTHER REQUIRED CLASS DEFINITIONS #############################################
+##########################################################################################
+##                                                                                      ##
+##                           OTHER REQUIRED CLASS DEFINITIONS                           ##
+##                                                                                      ##
+##########################################################################################
+
+##**************************************************************************************##
+##             Dialog Box to give project a name and specify its directory              ##
+##**************************************************************************************##
 
 class projectNameWindow(QtGui.QDialog):
 
@@ -1792,6 +1800,8 @@ class projectNameWindow(QtGui.QDialog):
         layout = QtGui.QGridLayout()
 
         self.setWindowTitle("Project Name")
+
+        # Introducing QtGui's built-in icons for visual enchancements
         forward_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowForward)
         cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
         browse_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DirOpenIcon)
@@ -1835,6 +1845,7 @@ class projectNameWindow(QtGui.QDialog):
         cancelButton.setIcon(cancel_icon)
         okButton = QtGui.QPushButton('Next', self)
         okButton.setAutoDefault(True)
+
         okButton.clicked.connect(self.onOkButton)
         okButton.setAutoDefault(True)
         okButton.setIcon(forward_arrow_icon)
@@ -1869,9 +1880,26 @@ class projectNameWindow(QtGui.QDialog):
         project_dir = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory",os.getcwd(), QtGui.QFileDialog.ShowDirsOnly)
         self.textInput_dir.setText(project_dir)
 
+##  **************************************************************************************
+        
+##**************************************************************************************##
+## Penalty Support Boundary Condition Dialog Box - the one that appears after clicking  ##
+##                     on a surface and on which values are entered                     ##
+##**************************************************************************************##
+
+# The reason of implementing it separately from QuESoParameters main window is to be \n
+# able reset the values in the text input fields upon closing the dialog box. Also, \n
+# error handling is easier that such that if the user leaves the value input fields, \n
+# we can pop an error message and return to dialog box again. Also, it is not really \n
+# dependent QuESoParameters main window - i.e. it is not a button or checkbox that is \n
+# located directly on the main window. It is a separate dialog box, and we may want to \n
+# show/execute it (depending on the situation) several times when the user decides so.
+# It is also more convenient script-based, because we already created an instace of it \n
+# that is an object of QuESoParameters main window. So, it does not go out of scope \n
+# and we can show/execute it whenever we want.
 
 class PenaltySupportBCBox(QtGui.QDialog):
-    """"""
+
     def __init__(self):
         super(PenaltySupportBCBox, self).__init__()
         self.initUI()
@@ -1879,15 +1907,15 @@ class PenaltySupportBCBox(QtGui.QDialog):
     def initUI(self):
             width = 350
             height = 120
-            std_validate = QtGui.QDoubleValidator()
+            std_validate = QtGui.QDoubleValidator() #Validating the input to be a double
             std_validate.setNotation(QtGui.QDoubleValidator.StandardNotation)
             centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
             self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
             self.setWindowTitle("Apply PenaltySupport Boundary Condition")
             self.label_PenaltySupport = QtGui.QLabel("Please enter the displacement constraint values:", self)
             self.label_PenaltySupport.move(10, 20)
-            self.element_list = []
-            self.icon_element_list = []
+            # self.element_list = [] #It seems redundant?
+            # self.icon_element_list = [] #It seems redundant?
 
             self.x_val = 0
             self.y_val = 0
@@ -1921,6 +1949,8 @@ class PenaltySupportBCBox(QtGui.QDialog):
 
             self.PenaltySupport_count = 0
 
+    # Adding the feature of resetting the input values upon closing the dialog box
+
     def closeEvent(self, event):
         self.resetInputValues()
         event.accept()
@@ -1939,13 +1969,33 @@ class PenaltySupportBCBox(QtGui.QDialog):
         self.okButton_Flag = True
         self.close()
 
+    # The simple function to reset values in the text input fields
+
     def resetInputValues(self):
         self.text_x_constraint.setText("")
         self.text_y_constraint.setText("")
         self.text_z_constraint.setText("")
 
+##  **************************************************************************************
+
+##**************************************************************************************##
+##    Surface Load Boundary Condition Dialog Box - the one that appears after clicking  ##
+##                     on a surface and on which values are entered                     ##
+##**************************************************************************************##
+
+# The reason of implementing it separately from QuESoParameters main window is to be \n
+# able reset the values in the text input fields upon closing the dialog box. Also, \n
+# error handling is easier that such that if the user leaves the value input fields, \n
+# we can pop an error message and return to dialog box again. Also, it is not really \n
+# dependent QuESoParameters main window - i.e. it is not a button or checkbox that is \n
+# located directly on the main window. It is a separate dialog box, and we may want to \n
+# show/execute it (depending on the situation) several times when the user decides so.
+# It is also more convenient script-based, because we already created an instace of it \n
+# that is an object of QuESoParameters main window. So, it does not go out of scope \n
+# and we can show/execute it whenever we want.
+
 class SurfaceLoadBCBox(QtGui.QDialog):
-    """"""
+
     def __init__(self):
         super(SurfaceLoadBCBox, self).__init__()
         self.initUI()
@@ -1953,7 +2003,7 @@ class SurfaceLoadBCBox(QtGui.QDialog):
     def initUI(self):
             width = 350
             height = 175
-            std_validate = QtGui.QDoubleValidator()
+            std_validate = QtGui.QDoubleValidator() #Validating the input to be a double
             std_validate.setNotation(QtGui.QDoubleValidator.StandardNotation)
             centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
             self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
@@ -1968,7 +2018,7 @@ class SurfaceLoadBCBox(QtGui.QDialog):
 
             self.label_SurfaceLoad_direction = QtGui.QLabel("Please enter the acting direction of the force :", self)
             self.label_SurfaceLoad_direction.move(10, self.text_SurfaceLoad_modulus.y()+30)
-            self.element_list = []
+            # self.element_list = [] # it seems reduntant?
             self.x_val = 0
             self.y_val = 0
             self.z_val = 0
@@ -1999,14 +2049,16 @@ class SurfaceLoadBCBox(QtGui.QDialog):
             okButton_SurfaceLoadBCBox.clicked.connect(self.okButton_SurfaceLoadBCBox)
             okButton_SurfaceLoadBCBox.setAutoDefault(True)
 
-            self.SurfaceLoad_count = 1
+            #self.SurfaceLoad_count = 1 #it seems redundant?
+
+    # Adding the feature of resetting the input values upon closing the dialog box
 
     def closeEvent(self, event):
         self.resetInputValues()
         event.accept()
 
     def okButton_SurfaceLoadBCBox(self):
-        self.SurfaceLoad_count = self.SurfaceLoad_count + 1
+        #self.SurfaceLoad_count = self.SurfaceLoad_count + 1 #it seems redundant
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
         self.z_val = self.text_z_constraint.text()
@@ -2020,14 +2072,36 @@ class SurfaceLoadBCBox(QtGui.QDialog):
         self.okButton_Flag = True
         self.close()
 
+    # The simple function to reset values in the text input fields
+
     def resetInputValues(self):
         self.text_x_constraint.setText("")
         self.text_y_constraint.setText("")
         self.text_z_constraint.setText("")
         self.text_SurfaceLoad_modulus.setText("")
 
+##  **************************************************************************************
+
+##**************************************************************************************##
+##  The list showing the surfaces subject to Penalty Support Boundary Condition by the  ##
+##                                         user                                         ##
+##**************************************************************************************##
+
+# The reason of implementing it separately from QuESoParameters main window is to be \n
+# able delete the FaceIDs completely in the closing event when user decides to discard \n
+# them. Also, if the user does not discard, we must be capable of keeping track of the \n
+# surfaces subject to Penalty Support Boundary Condition - that is to say, we must not \n
+# get a blank list every time user launches unless he/she does not discard it. Moreover, \n
+# it is not really dependent QuESoParameters main window - i.e. it is not a button or \n 
+# checkbox that is located directly on the main window. It is a separate dialog box, \n
+# and we may want to show several times when the user decides so. It is also more \n 
+# convenient script-based, because we already created an instace of it that is an object \n 
+# of QuESoParameters main window. So, it does not go out of scope and we can show it \n
+# whenever we want.
+
+
 class PenaltySupportFacesList(QtGui.QWidget):
-    """"""
+
     def __init__(self):
         QtGui.QWidget.__init__(self)
         self.setWindowTitle("List of Faces")
@@ -2079,11 +2153,12 @@ class PenaltySupportFacesList(QtGui.QWidget):
 
         self.setLayout(layout)
 
+        # Setting the position such that it will always appear at the top-left corner
+
         topLeftPoint = QtGui.QDesktopWidget().availableGeometry().topLeft()
         frameGm = self.frameGeometry()
         frameGm.moveTopLeft(topLeftPoint)
         self.move(frameGm.topLeft())
-
 
     def closeEvent(self, event):
         if (self.result):
@@ -2092,8 +2167,27 @@ class PenaltySupportFacesList(QtGui.QWidget):
             self.listwidget.clear()
             event.accept()
 
+##  **************************************************************************************
+
+##**************************************************************************************##
+##     The list showing the surfaces subject to Surface Load Boundary Condition by the  ##
+##                                         user                                         ##
+##**************************************************************************************##
+
+# The reason of implementing it separately from QuESoParameters main window is to be \n
+# able delete the FaceIDs completely in the closing event when user decides to discard \n
+# them. Also, if the user does not discard, we must be capable of keeping track of the \n
+# surfaces subject to Surface Load Boundary Condition - that is to say, we must not \n
+# get a blank list every time user launches unless he/she does not discard it. Moreover, \n
+# it is not really dependent QuESoParameters main window - i.e. it is not a button or \n 
+# checkbox that is located directly on the main window. It is a separate dialog box, \n
+# and we may want to show several times when the user decides so. It is also more \n 
+# convenient script-based, because we already created an instace of it that is an object \n 
+# of QuESoParameters main window. So, it does not go out of scope and we can show it \n
+# whenever we want.
+
 class SurfaceLoadFacesList(QtGui.QWidget):
-    """"""
+
     def __init__(self):
         QtGui.QWidget.__init__(self)
         self.setWindowTitle("List of Faces")
@@ -2145,6 +2239,8 @@ class SurfaceLoadFacesList(QtGui.QWidget):
 
         self.setLayout(layout)
 
+        # Setting the position such that it will always appear at the top-left corner
+
         topLeftPoint = QtGui.QDesktopWidget().availableGeometry().topLeft()
         frameGm = self.frameGeometry()
         frameGm.moveTopLeft(topLeftPoint)
@@ -2157,6 +2253,12 @@ class SurfaceLoadFacesList(QtGui.QWidget):
         else:
             self.listwidget.clear()
             event.accept()
+
+##  **************************************************************************************
+            
+##**************************************************************************************##
+##                 The dialog box to set up the Kratos Solver Settings                  ##
+##**************************************************************************************##
 
 class SolverSettingsBox(QtGui.QDialog):
 
@@ -2366,6 +2468,9 @@ class SolverSettingsBox(QtGui.QDialog):
         self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
         self.setFixedSize(width, height)
 
+    # When the Ok button is clicked, the key:value pairs that will be in KratosParameters.json
+    # file are created, but the JSON file is not dumped yet. Dumping it takes place upon clicking
+    # the Ok button of QuESoParameters main window.
     
     def onOk(self):
 
@@ -2483,3 +2588,7 @@ class SolverSettingsBox(QtGui.QDialog):
     def onCancel(self):
         self.result = "Cancel"
         self.close()
+
+##  **************************************************************************************
+
+##  ######################################################################################
