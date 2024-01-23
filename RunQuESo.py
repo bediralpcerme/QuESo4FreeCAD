@@ -4,6 +4,11 @@ import FreeCAD
 import sys, os, stat, platform
 import json
 
+##--------------------------------------------------------------------------------------##
+##                                                                                      ##
+##       RUN BUTTON FOR QuESo and Kratos - COMPATIBLE WITH BOTH LINUX AND WINDOWS       ##
+##                                                                                      ##
+##--------------------------------------------------------------------------------------##
 
 class RunQuESo(QtGui.QDialog):
 
@@ -13,23 +18,30 @@ class RunQuESo(QtGui.QDialog):
 
     def initUI(self):
 
-        #position and geometry of the dialog box
+## ---- Position and geometry of the dialog box ------------------------------------------
+
         self.setWindowTitle("Run QuESo")
         layout = QtGui.QGridLayout()
         cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
         ok_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogApplyButton)
 
-        #label text
+##  --------------------------------------------------------------------------------------
+
+## ---- Label text -----------------------------------------------------------------------
+
         self.label_ = QtGui.QLabel("Are you sure you want to run QuESo and Kratos?", self)
         layout.addWidget(self.label_, 0, 0, QtCore.Qt.AlignCenter)
 
         layout.setRowMinimumHeight(1, 20)
 
-        # cancel button
+##  --------------------------------------------------------------------------------------
+
+## ---- Ok-Cancel buttons ----------------------------------------------------------------
+
         cancelButton = QtGui.QPushButton('Cancel', self)
         cancelButton.setIcon(cancel_icon)
         cancelButton.clicked.connect(self.onCancel)
-        # OK button
+
         okButton = QtGui.QPushButton('OK', self)
         okButton.setIcon(ok_icon)
         okButton.clicked.connect(self.onOk)
@@ -42,13 +54,19 @@ class RunQuESo(QtGui.QDialog):
         layout_okCancel.addWidget(cancelButton)
         layout_okCancel.setSpacing(40)
 
+##  --------------------------------------------------------------------------------------
+
         layout.addLayout(layout_okCancel, 2, 0, QtCore.Qt.AlignCenter)
 
         self.setLayout(layout)
 
     def onOk(self):
-       
-        #Changing working directory to read JSON file containing the directory info
+
+##**************************************************************************************##
+##                       Tasks Performed to run QuESo and Kratos                        ##
+##**************************************************************************************##
+
+## ---- Changing working directory to read JSON file containing the directory info -------
 
         docName =  "/" + FreeCAD.ActiveDocument.Label + ".FCStd"
         work_dir = FreeCAD.ActiveDocument.FileName
@@ -56,7 +74,9 @@ class RunQuESo(QtGui.QDialog):
 
         os.chdir(work_dir)
 
-        #Reading the directories
+##  --------------------------------------------------------------------------------------
+
+## ---- Reading the directories ----------------------------------------------------------
 
         with open('OtherInfos.json', 'r') as myfile:
             mydata = json.load(myfile)
@@ -66,8 +86,12 @@ class RunQuESo(QtGui.QDialog):
         QuESo_dirOrg = mydata['QuESo_directory']
         QuESo_lib_dirOrg = mydata['QuESo_lib_directory']
 
-        #Creating the bash file based on the operating system (except macOS). The extension of the file is ".sh" for Linux and ".bat" for Windows.
-        #The bash file is made to be executable, and run as subprocess.
+##  --------------------------------------------------------------------------------------
+
+## ---- Creating the bash file based on the operating system (except macOS) --------------
+
+        # The extension of the file is ".sh" for Linux and ".bat" for Windows. 
+        # The bash file is made to be executable, and run as subprocess.
 
         if platform.system() == 'Linux':
 
@@ -112,8 +136,12 @@ gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; 
 
         self.close()
 
+##  --------------------------------------------------------------------------------------
+
+##  **************************************************************************************
+
     def onCancel(self):
         self.result = "Cancel"
         self.close()
 
-    
+##  #######################################################################################
