@@ -3,7 +3,7 @@
 ## Description
 
 One of the most significant challenges among engineering softwares is interoperability of CAD (Computer Aided Design) and CAE (Computer Aided Engineering) tools. Efficient and advanced engineering workflow requires close collaboration between CAD environment and FE (Finite Element) software. Integrated applications not only reduce the requirement of model conversion but also improve development process by making it accessible and convenient.
-QuESo4FreeCAD is a plug-in developed for the FreeCAD on the purpose enabling of direct structural analysis that provides a Graphical User Interface (GUI) to the open-source softwares QuESo and Kratos Multiphysics based on embedded FE model. The plug-in allows user to perform the fundamental tasks for a structural analysis that are:
+QuESo4FreeCAD is a plug-in developed for the FreeCAD on the purpose enabling of direct structural analysis that provides a Graphical User Interface (GUI) to the open-source softwares [QuESo](https://github.com/manuelmessmer/QuESo) and [Kratos Multiphysics](https://github.com/KratosMultiphysics/Kratos) based on embedded FE model. The plug-in allows user to perform the fundamental tasks for a structural analysis that are:
 
 - Preprocessing
 - Solving Process
