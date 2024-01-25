@@ -1174,13 +1174,12 @@ class QuESoParameters(QtGui.QMainWindow):
 ##**************************************************************************************##
                     
                     n = 1 
-
                     for sel in Gui.Selection.getSelectionEx('', 0): 
                         for path in sel.SubElementNames if sel.SubElementNames else ['']:
                             shape = sel.Object.getSubObject(path)
                            
                             iconDir = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Dirichlet BC_" + element_list.get('Component'))
-
+			    #Loop over all vertices
                             for i in [v.Point for v in shape.Vertexes]:
 
                                 # i <- coordinates of vertex
@@ -1194,13 +1193,17 @@ class QuESoParameters(QtGui.QMainWindow):
                                 u, v = sub.Surface.parameter(pnt)
                                 nv = sub.Surface.normal(u,v)
 
-                                #Calculating rotation angles:
+                                #Defining base axes
                                 vX = FreeCAD.Vector(1,0,0)
                                 vY = FreeCAD.Vector(0,1,0)
                                 vZ = FreeCAD.Vector(0,0,1)
+				    
+				#Defining rotation axes
                                 axis1 = FreeCAD.Vector.cross(vX,snv)
                                 axis2 = FreeCAD.Vector.cross(vY,snv)
                                 axis3 = FreeCAD.Vector.cross(vZ,snv)
+				    
+				#Calculating rotation angles:
                                 angle1 = math.degrees(vX.getAngle(snv))
                                 angle2 = math.degrees(vY.getAngle(snv))
                                 angle3 = math.degrees(vZ.getAngle(snv))
@@ -1217,18 +1220,20 @@ class QuESoParameters(QtGui.QMainWindow):
                                 bcBox.Length = 5
                                 bcBox.Width = 5
                                 bcBox.Label = "_bcBox_" + str(n)
-                                
+
                                 bcBox.Placement = FreeCAD.Placement(FreeCAD.Vector(-2.5, -2.5, 5.0),FreeCAD.Rotation(0, 0, 0), FreeCAD.Vector(0, 0, 0))
                                 FreeCAD.ActiveDocument.recompute()
                                 
                                 fusion = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + element_list.get('Component') + str(n))
                                 fusion.Shapes = [bcCone, bcBox]
-
+				
+				#Orienting and locating icone into vertex
                                 fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1, angle1))
                                 fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2, angle2))
                                 fusion.Placement = FreeCAD.Placement(i + FreeCAD.Vector(0, 0, 0),FreeCAD.Rotation(axis3,  angle3))
                                 FreeCAD.ActiveDocument.recompute()
-
+				    
+				#Adding icon's label on list
                                 fusion.Label = "Dirichlet_BC_" + element_list.get('Component') + "_" + str(n)
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).Selectable = False
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShowInTree = True
@@ -1237,7 +1242,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
                                 iconDir.addObject(fusion)
                                 n +=1
-
+		    #Adding icon to component list
                     self.Dirichlet_BC_icons.update({str(element_list.get('Component')): str(n)})
                     Gui.Selection.clearSelection()
 
@@ -1291,11 +1296,12 @@ class QuESoParameters(QtGui.QMainWindow):
 ##   Preprocessing Icons to visualize them on the model for Surface load Boundary       ##
 ##                                      Condition                                       ##
 ##**************************************************************************************##
-					
+		    #Loop over all vertices			
                     for sel in Gui.Selection.getSelectionEx('', 0):
                         for path in sel.SubElementNames if sel.SubElementNames else ['']:
                             shape = sel.Object.getSubObject(path)
-
+				
+			    #Calculating vector components
                             neuVector = FreeCAD.Vector(float(self.SurfaceLoadBCBox_obj.x_val),float(self.SurfaceLoadBCBox_obj.y_val),float(self.SurfaceLoadBCBox_obj.z_val))
                             exeptVector = FreeCAD.Vector(0.00,0.00,-1.00)
                             vX = FreeCAD.Vector(1,0,0)
@@ -1305,15 +1311,18 @@ class QuESoParameters(QtGui.QMainWindow):
                             axis1 = FreeCAD.Vector.cross(vX, neuVector)
                             axis2 = FreeCAD.Vector.cross(vY, neuVector)
                             axis3 = FreeCAD.Vector.cross(vZ, neuVector)
-
+				
+			    #Calculating angles between main vector and origin
                             angle1 = math.degrees(vX.getAngle(neuVector))
                             angle2 = math.degrees(vY.getAngle(neuVector))
                             angle3 = math.degrees(vZ.getAngle(neuVector))
 
                             iconNeu = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Neumann BC_" + element_list.get('Component'))
                             n = 1 
+			    #Loop over all vertices
                             for i in [v.Point for v in shape.Vertexes]:
-                              
+				    
+                                #Creating icons
                                 bcTip = FreeCAD.ActiveDocument.addObject("Part::Cone")
                                 bcTip.Height = 7.5	
                                 bcTip.Radius1 = 2
@@ -1328,24 +1337,20 @@ class QuESoParameters(QtGui.QMainWindow):
 
                                 bcCyl.Placement = FreeCAD.Placement(FreeCAD.Vector(0, 0, -15.0), FreeCAD.Rotation(0, 0, 0))
                                 bcCyl.Label = "_bcCyl_" + str(n)
-
                                 FreeCAD.ActiveDocument.recompute()
                                 
                                 fusion_arrow = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + element_list.get('Component') + str(n))
                                 fusion_arrow.Shapes = [bcTip, bcCyl]
-
                                 FreeCAD.ActiveDocument.recompute()
-
                                 fusion_arrow.Label = "Neumann_BC_" + element_list.get('Component') + "_" + str(n)
-
+				    
+				#Orienting and locating icone into vertex
                                 fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1,angle1))
                                 fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2,180 - angle2))
                                 fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis3,angle3))
                                 if neuVector == exeptVector:
-                                    print("NeuVector is 0 0 -1")
                                     fusion_arrow.Placement = FreeCAD.Placement(i,FreeCAD.Rotation(FreeCAD.Vector(0,1,0),180))
                                 else:
-                                    print("NeuVector is 0 0 1")
                                     fusion_arrow.Placement = FreeCAD.Placement(i,FreeCAD.Rotation(axis3,angle3))
 
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).Selectable = False
@@ -1353,11 +1358,14 @@ class QuESoParameters(QtGui.QMainWindow):
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShapeColor = (0.0,0.0,1.0)
 
                                 FreeCAD.ActiveDocument.recompute()
-
+				    
+				#Adding icon's label on list
                                 iconNeu.addObject(fusion_arrow)        
                                 n +=1
 
                     self.Neumann_BC_icons.update({str(element_list.get('Component')): str(n)})
+			
+		    #Adding icon to component list
                     self.SurfaceLoad_faces.append(element_list['Component'])
                     self.mainObjectName = element_list['Object']
                     Gui.Selection.clearSelection()
@@ -1970,7 +1978,6 @@ class PenaltySupportBCBox(QtGui.QDialog):
         self.close()
 
     # The simple function to reset values in the text input fields
-
     def resetInputValues(self):
         self.text_x_constraint.setText("")
         self.text_y_constraint.setText("")
@@ -2018,7 +2025,7 @@ class SurfaceLoadBCBox(QtGui.QDialog):
 
             self.label_SurfaceLoad_direction = QtGui.QLabel("Please enter the acting direction of the force :", self)
             self.label_SurfaceLoad_direction.move(10, self.text_SurfaceLoad_modulus.y()+30)
-            # self.element_list = [] # it seems reduntant?
+
             self.x_val = 0
             self.y_val = 0
             self.z_val = 0
@@ -2049,8 +2056,6 @@ class SurfaceLoadBCBox(QtGui.QDialog):
             okButton_SurfaceLoadBCBox.clicked.connect(self.okButton_SurfaceLoadBCBox)
             okButton_SurfaceLoadBCBox.setAutoDefault(True)
 
-            #self.SurfaceLoad_count = 1 #it seems redundant?
-
     # Adding the feature of resetting the input values upon closing the dialog box
 
     def closeEvent(self, event):
@@ -2058,7 +2063,6 @@ class SurfaceLoadBCBox(QtGui.QDialog):
         event.accept()
 
     def okButton_SurfaceLoadBCBox(self):
-        #self.SurfaceLoad_count = self.SurfaceLoad_count + 1 #it seems redundant
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
         self.z_val = self.text_z_constraint.text()
@@ -2154,7 +2158,6 @@ class PenaltySupportFacesList(QtGui.QWidget):
         self.setLayout(layout)
 
         # Setting the position such that it will always appear at the top-left corner
-
         topLeftPoint = QtGui.QDesktopWidget().availableGeometry().topLeft()
         frameGm = self.frameGeometry()
         frameGm.moveTopLeft(topLeftPoint)
@@ -2240,7 +2243,6 @@ class SurfaceLoadFacesList(QtGui.QWidget):
         self.setLayout(layout)
 
         # Setting the position such that it will always appear at the top-left corner
-
         topLeftPoint = QtGui.QDesktopWidget().availableGeometry().topLeft()
         frameGm = self.frameGeometry()
         frameGm.moveTopLeft(topLeftPoint)
