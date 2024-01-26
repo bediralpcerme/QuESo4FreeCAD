@@ -16,7 +16,10 @@ QuESo4FreeCAD plug-in is written completely in Python due to the its flexibility
   <img
   src="https://github.com/manuelmessmer/QuESo4FreeCAD/blob/1901d9c8e6378db91515e1c5b13110cee9d42196/docs/QuESo4FreeCAD_Interface_Windows.png"
   alt="Interface of QuESo4FreeCAD in Windows">
-  <figcaption>'text-align: center;'Figure: Interface of QuESo4FreeCAD in Windows.</figcaption>
+  <figcaption>
+    text-align=center;
+    Figure: Interface of QuESo4FreeCAD in Windows.
+  </figcaption>
 </figure>
 
 ## Required Softwares To Be Installed
