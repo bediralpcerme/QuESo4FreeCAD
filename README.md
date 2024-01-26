@@ -14,11 +14,15 @@ QuESo4FreeCAD plug-in is written completely in Python due to the its flexibility
 
 ![myimage](https://github.com/manuelmessmer/QuESo4FreeCAD/blob/e8dbfae689877dfb60115179644c6c30bcd5e2fa/docs/QuESo4FreeCAD_Interface_Windows.png "Interface of QuESo4FreeCAD in Windows")
 
-## Required Softwares to be Installed
+## Required Softwares To Be Installed
 
 As QuESo4FreeCAD is a plug-in for FreeCAD, please make sure that you have [FreeCAD](https://www.freecad.org/) installed on your computer. Besides, the repository of QuESo4FreeCAD does not include QuESo and Kratos Multiphysics softwares. Because of that, please refer to [QuESo](https://github.com/manuelmessmer/QuESo) and [Kratos Multiphysics](https://github.com/KratosMultiphysics/Kratos) for the compilation instructions.
 
 Besides, please note that the plug-in does not ask the user which type of direct sparse solver to use, but by default, it makes use of "Pardiso Solver", which has a dependency on [Intel® MKL library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html), due to its robustsness and efficiency compared to regular "Sparse Solver" [^2]. Because of that, installing and enabling Intel® MKL library is strongly recommended, as otherwise, you will need to change the solver type manually in one of the JSON files (for more information, please see the Wiki). For more information about how to install and enable Intel® MKL library, please refer to [this](https://github.com/KratosMultiphysics/Kratos/blob/master/applications/LinearSolversApplication/README.md) page of Kratos Multiphysics.
+
+## Special Thanks To
+
+- [Manuel Meßmer](https://github.com/manuelmessmer) for the supervision of the project
 
 [^1]: https://wiki.freecad.org/Workbench_creation
 [^2]: https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html
