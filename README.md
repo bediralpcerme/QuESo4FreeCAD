@@ -18,5 +18,3 @@ QuESo4FreeCAD plug-in is written completely in Python due to the its flexibility
 - [Manuel Meßmer](https://github.com/manuelmessmer) for the supervision of the project
 
 [^1]: https://wiki.freecad.org/Workbench_creation
-[^2]: https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html
-__
