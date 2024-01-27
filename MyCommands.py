@@ -31,7 +31,7 @@ class SetQuESoParameters():
 
     def Activated(self):
 
-        # Observee that we do not execcute the QuESoParameters class, because we want \n
+        # Observe that we do not execute the QuESoParameters class, because we want \n
         # hide or minimize it if necessary when we run the plug-in. Otherwise, we would \n
         # execute it - refer to RunQuESo_Class below.
         __main__.form = QuESoParameters.QuESoParameters()
