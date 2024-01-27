@@ -1176,10 +1176,10 @@ class QuESoParameters(QtGui.QMainWindow):
                     n = 1 
                     for sel in Gui.Selection.getSelectionEx('', 0): 
                         for path in sel.SubElementNames if sel.SubElementNames else ['']:
-                            shape = sel.Object.getSubObject(path)
-                           
+                            shape = sel.Object.getSubObject(path)                          
                             iconDir = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Dirichlet BC_" + element_list.get('Component'))
-			    #Loop over all vertices
+
+			                #Loop over all vertices
                             for i in [v.Point for v in shape.Vertexes]:
 
                                 # i <- coordinates of vertex
@@ -1198,12 +1198,12 @@ class QuESoParameters(QtGui.QMainWindow):
                                 vY = FreeCAD.Vector(0,1,0)
                                 vZ = FreeCAD.Vector(0,0,1)
 				    
-				#Defining rotation axes
+				                #Defining rotation axes
                                 axis1 = FreeCAD.Vector.cross(vX,snv)
                                 axis2 = FreeCAD.Vector.cross(vY,snv)
                                 axis3 = FreeCAD.Vector.cross(vZ,snv)
 				    
-				#Calculating rotation angles:
+				                #Calculating rotation angles:
                                 angle1 = math.degrees(vX.getAngle(snv))
                                 angle2 = math.degrees(vY.getAngle(snv))
                                 angle3 = math.degrees(vZ.getAngle(snv))
@@ -1227,13 +1227,13 @@ class QuESoParameters(QtGui.QMainWindow):
                                 fusion = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + element_list.get('Component') + str(n))
                                 fusion.Shapes = [bcCone, bcBox]
 				
-				#Orienting and locating icone into vertex
+				                #Orienting and locating icone into vertex
                                 fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1, angle1))
                                 fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2, angle2))
                                 fusion.Placement = FreeCAD.Placement(i + FreeCAD.Vector(0, 0, 0),FreeCAD.Rotation(axis3,  angle3))
                                 FreeCAD.ActiveDocument.recompute()
 				    
-				#Adding icon's label on list
+				                #Adding icon's label on list
                                 fusion.Label = "Dirichlet_BC_" + element_list.get('Component') + "_" + str(n)
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).Selectable = False
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShowInTree = True
@@ -1242,7 +1242,8 @@ class QuESoParameters(QtGui.QMainWindow):
 
                                 iconDir.addObject(fusion)
                                 n +=1
-		    #Adding icon to component list
+                                
+		            #Adding icon to component list
                     self.Dirichlet_BC_icons.update({str(element_list.get('Component')): str(n)})
                     Gui.Selection.clearSelection()
 
