@@ -16,21 +16,33 @@ from femobjects import result_mechanical
 import math
 
 class PostProcess(QtGui.QDialog):
+    #Class containing GUI and its variables
+    #Beginning with defining a signal which will be emitted upon resizing the window
+
     resized = QtCore.Signal()
 
     def __init__(self):
+        #Initialization of starting parameters and GUI
         super(PostProcess, self).__init__()
         self.visulizerun=False
         self.slider_num=1
         self.initUI()
 
     def initUI(self):
+
+##########################################################################################
+##                                                                                      ##
+##                       SETTING UP THE PostProcess POP-UP WINDOW                       ##
+##                                                                                      ##
+##########################################################################################
+
+        '''Constructs the GUI and other usables
+        '''
         self.docName =  FreeCAD.ActiveDocument.Label + ".FCStd"
         self.work_dir = FreeCAD.ActiveDocument.FileName
         self.work_dir = self.work_dir.replace(self.docName,"")
 
-        #position and geometry of the dialog box
-
+        #position and geometry of the dialog box is set
         std_validate = QtGui.QIntValidator()
         scientific_validate = QtGui.QDoubleValidator()
         scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation)
@@ -54,6 +66,10 @@ class PostProcess(QtGui.QDialog):
         #Text edit of pathname
         self.textInput_pathname_ = QtGui.QLineEdit(self)
         self.textInput_pathname_.setText("")
+
+##**************************************************************************************##
+##                          Beginning Definition of Buttons                             ##
+##**************************************************************************************##
 
         #file browser button
         fileBrowseButton = QtGui.QPushButton('Browse files', self)
@@ -142,7 +158,17 @@ class PostProcess(QtGui.QDialog):
 
         self.show()
 
+##  **************************************************************************************
+
+##**************************************************************************************##
+##                          Beginning of Functions Doing Tasks                          ##
+##**************************************************************************************##
+
+## ---- Visualize Function for Different Modes -------------------------------------------
+
     def Visualize(self):
+        '''Visualization function, it makes mesh visible depending on which mode is selected on the combo box for the same mesh
+        '''
         self.visulizerun=True
 
         #mesh is colored by the scalars
@@ -182,12 +208,24 @@ class PostProcess(QtGui.QDialog):
 
         self.mesh_obj.ViewObject.DisplayMode="Faces"
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Devisualize Function for the Mesh  -----------------------------------------------
+        
     def deVisualize(self):
+        '''Makes mesh unvisible for the same mesh
+        '''
         if self.visulizerun:
             self.mesh_obj.ViewObject.resetNodeColor()
             self.mesh_obj.Visibility= False
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Devisualize Function for Another Mesh  -------------------------------------------
+            
     def deVisualize_(self):
+        '''Deletes mesh and empties variables for other mesh installation
+        '''
         if self.visulizerun:
             FreeCAD.activeDocument().removeObject('mesh_result')
             FreeCAD.activeDocument().removeObject('ResultMechanical')
@@ -201,7 +239,13 @@ class PostProcess(QtGui.QDialog):
             self.cauchy=[]
             self.vonmisses=[]
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Browse Function -----------------------------------------------------------------
+            
     def onBrowseButton(self):
+        '''When browse button is clicked, mesh is deleted, new mesh is read and visualized
+        '''
         browseWindow = QtGui.QFileDialog.getOpenFileName(self, "Select the Result File", self.work_dir, "*.vtk")
         print(browseWindow[0])
         print(browseWindow[1])
@@ -210,19 +254,44 @@ class PostProcess(QtGui.QDialog):
         self.read_result()
         self.onVisualize_()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Resizing Function for Whole Pop-op Window  ---------------------------------------
+        
     def resizeEvent(self, event):
+        '''Does resizing of the window. Also, the signal is emitted to be caught 
+        by update_gradient, when window width is divisible with 50.
+        '''
         if (self.width()%50 == 0):
             self.resized.emit()
         return super(PostProcess, self).resizeEvent(event)
     
+##  --------------------------------------------------------------------------------------
+ 
+## ---- Resizing and Updating Color Gradient Function ------------------------------------
+
     def windowSizedChanged(self):
+        '''It catches the signal emitted by the resizeEvent, and calls update_gradient function.
+        '''
         self.update_gradient()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Cancel ---------------------------------------------------------------------------
+
     def onCancel(self):
+        '''Cancel button
+        '''
         self.result = "Cancel"
         self.close()
-    
+
+##  --------------------------------------------------------------------------------------
+
+## ---- Read VTK File Function -----------------------------------------------------------
+
     def read_result(self):
+        '''Reads vtk file and constructs mesh objects needed
+        '''
         with open(self.textInput_pathname_.text(),'r') as f:
             self.lines = f.readlines()
 
@@ -325,33 +394,61 @@ class PostProcess(QtGui.QDialog):
         self.update_slider(self.get_max_length())
         self.slider.setValue(self.get_max_length())
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Visulize Function for Visualize Button -------------------------------------------
 
     def onVisualize(self):
+        '''Visulizes or devisualize depending on the visualize button
+        '''
         if (self.visualizeButton.isChecked()):
             self.Visualize()
             self.update_gradient()
         else:
             self.deVisualize()
 
+## --------------------------------------------------------------------------------------
+
+## ---- Visulize Function for Reading File -----------------------------------------------
+
     def onVisualize_(self):
+        '''First visualization after reading vtk file
+        '''
         if( self.visualizeButton.isChecked() ):
             self.Visualize()
             self.update_gradient()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Visulize Function for Mode Changing ----------------------------------------------
+
     def onVisualize__(self):
+        '''Combo box mode changing triggers this visualization with visulaization and gradient updatig
+        '''
         if self.visulizerun:
             if( self.visualizeButton.isChecked() ):
                 self.Visualize()
                 self.update_gradient()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Slider Function for Mesh Displacement --------------------------------------------
+
     def slider_function(self):
+        '''Depending on which number slider is on, displacement of the mesh changes
+        '''
         if self.visulizerun:
             if( self.visualizeButton.isChecked() ):
                 self.update_slider(self.slider.value())
                 self.mesh_obj.ViewObject.applyDisplacement(self.slider.value())
+
+##  --------------------------------------------------------------------------------------
                 
+## ---- Min/Max Function for Colour Gradient ---------------------------------------------
 
     def get_min_max_values(self):
+        '''Minimum or maximum values are return depending on the physical quantity mode
+        '''
         if self.visulizerun:
             if (self.popup_result.currentText()=="Total Displacement"):
                 return min(self.result_obj.DisplacementLengths), max(self.result_obj.DisplacementLengths)
@@ -377,29 +474,46 @@ class PostProcess(QtGui.QDialog):
                 return min(self.result_obj.vonMises), max(self.result_obj.vonMises)
         else:
             return 0, 1
+        
+##  --------------------------------------------------------------------------------------
+
+## ---- Ratio to Set Slider for Mesh Displacement ----------------------------------------
 
     def get_max_length(self):
+        '''Ratio for scaling displacement on mesh to make it naked to eye is obtained
+        '''
         if self.visulizerun:
             list_length=[np.max(self.locations[0,:])-np.min(self.locations[0,:]),np.max(self.locations[1,:])-np.min(self.locations[1,:]),np.max(self.locations[2,:])-np.min(self.locations[2,:])]
             ratio=max(list_length)/max(self.result_obj.DisplacementLengths)*0.1
             return ratio
         else:
             return  1
+        
+##  --------------------------------------------------------------------------------------
+
+## ---- Slider Update Function -----------------------------------------------------------
 
     def update_slider(self,new_ratio):
+        '''Slider size update
+        '''
         self.layout.itemAtPosition(8, 0).itemAt(0).widget().setText('Scale: ' + str(new_ratio))
         self.layout.update()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Update Colour Gradient Function --------------------------------------------------
+
     def update_gradient(self):
+        '''Color gradient is obtained with texts and max/min values.
+        Depending on the signal emitted by the resizeEvent, when the windowSizedChanged 
+        catches that signal, it calls this function.
+        '''
         self.min_val, self.max_val = self.get_min_max_values()
         gradient_bar = GradientBar(self.min_val, self.max_val, self.width())
 
-        #changed this part
         self.layout.itemAtPosition(12, 0).widget().setParent(None)
         self.layout.addWidget(gradient_bar, 12, 0)
         self.colorGradient = gradient_bar
-       
-        #self.layout.replaceWidget(self.layout.itemAtPosition(12, 0).widget(), gradient_bar)
         
         min_val_round = "{:.4f}".format(self.min_val)
         min_label_text = "Min. value: " + min_val_round
@@ -411,8 +525,20 @@ class PostProcess(QtGui.QDialog):
         self.layout.itemAtPosition(10, 0).itemAt(1).widget().setFont(self.small_font)
         self.layout.update()
 
+##  --------------------------------------------------------------------------------------
+
+##  **************************************************************************************
+
+##--------------------------------------------------------------------------------------##
+##                         Construction of Colour Gradient Bar                          ##
+##--------------------------------------------------------------------------------------##
+
 class GradientBar(QtGui.QWidget):
+    '''Class to define and have color gradient bar depending on the maximum/minimum values and width
+    '''
     def __init__(self, min_val, max_val, width_val):
+        ''' Initialization of starting parameters and widget
+        '''
         super().__init__()
         self.min_val = min_val
         self.max_val = max_val
@@ -420,6 +546,8 @@ class GradientBar(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
+        ''' Aligns the widget and writes maximum/minimum values
+        '''
         self.setMinimumHeight(30)
         self.min_val_label = QtGui.QLabel(f'{self.min_val:.2e}')
         self.max_val_label = QtGui.QLabel(f'{self.max_val:.2e}')
@@ -427,6 +555,8 @@ class GradientBar(QtGui.QWidget):
         self.max_val_label.setAlignment(QtCore.Qt.AlignRight)
 
     def paintEvent(self, event):
+        ''' Coloring of the bar is done
+        '''
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
@@ -484,3 +614,7 @@ class GradientBar(QtGui.QWidget):
             value = f'{self.min_val + i * interval:.2e}'
             if(x != QtCore.QRectF(rect).x()) and (x != QtCore.QRectF(rect).width()):
                 painter.drawText(x - 20 , self.height() - 20, value)
+
+##  **************************************************************************************
+                
+## #######################################################################################

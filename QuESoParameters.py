@@ -1,37 +1,61 @@
+##--------------------------------------------------------------------------------------##
+##--------------------------------------------------------------------------------------##
+##                                                                                      ##
+##    Software Lab Project: FreeCAD Plug-in "QuESo4FreeCAD" by:                         ##
+##                                                                                      ##
+##    Bediralp Çerme                                                                    ##
+##    Daniel Perka                                                                      ##      
+##    Barış Egemen Sucu                                                                 ##
+##                                                                                      ##
+##--------------------------------------------------------------------------------------##
+##--------------------------------------------------------------------------------------##
+
+
 from FreeCAD_PySide import QtGui, QtCore
 import os, shutil
 import FreeCAD
 import FreeCADGui as Gui
-import Draft, Mesh, MeshPart, Part, ImportGui
+import Draft, Mesh, MeshPart, ImportGui
 import json
 from pivy import coin
-import numpy as np
 from collections import OrderedDict
 import math
 import subprocess
 import OpenSCADUtils
 
-class QuESoParameters(QtGui.QMainWindow):
+class QuESoParameters(QtGui.QMainWindow): 
 
-    def __init__(self):
+    def __init__(self): 
 
         super(QuESoParameters, self).__init__()
         self.initUI()
-        self.visulizerun=0
-        self.gridList=[]     
+        self.visulizerun    = 0
+        self.gridList       = []
+        self.mainObjectName = ""
             
 
     def initUI(self):
 
-        # Basic settings of the QuESo Parameters Window
+##########################################################################################
+##                                                                                      ##
+##                     SETTING UP THE QuESoParameters POP-UP WINDOW                     ##
+##                                                                                      ##
+##########################################################################################
 
-        self.viewport = QtGui.QDialog()
+        #The original QuESoParameters pop-up window is a QMainWindow object because we 
+        #wanted to include scrolling option in it. It is our primary window on which everything 
+        #is displayed.\n
+        #'viewport' is a QDialog object, and every label, text input box is an object of viewport.
+        #The reason not creating the QuESoParameters primary window as QDialog object is solely 
+        #to be able to use scrolling feature.
+
+        self.viewport   = QtGui.QDialog()
         self.scrollArea = QtGui.QScrollArea()
-        layout_dialog = QtGui.QGridLayout()
+        layout_dialog   = QtGui.QGridLayout()
 
-        std_validate = QtGui.QIntValidator()
-        scientific_validate = QtGui.QDoubleValidator()
-        scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation)
+        std_validate        = QtGui.QIntValidator()                                # The validation method for an input to be integer.
+        scientific_validate = QtGui.QDoubleValidator()                             # The validation method for an input to be double.
+        scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation) # The validation method for an input to be in scientific notation.
         self.setWindowTitle("QuESo Parameters")
         self.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
@@ -44,18 +68,24 @@ class QuESoParameters(QtGui.QMainWindow):
         boldUnderlinedFont.setUnderline(True)
         blueFont = QtGui.QPalette()
         blueFont.setColor(QtGui.QPalette.WindowText, QtGui.QColor('#005293'))
-        back_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowBack)
-        cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
-        save_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogSaveButton)
-        browse_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DirOpenIcon)
 
-        ## BEGINNING OF GENERAL SETTINGS ##
+        # Introducing Qt's built-in icons for visual enchancements
+
+        back_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowBack)
+        cancel_icon     = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
+        save_icon       = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogSaveButton)
+        browse_icon     = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DirOpenIcon)
 
         self.viewport.goback_button = QtGui.QPushButton("Go Back", self)
         self.viewport.goback_button.setIcon(back_arrow_icon)
         layout_dialog.addWidget(self.viewport.goback_button, 0, 0, QtCore.Qt.AlignLeft)
 
         layout_dialog.setRowMinimumHeight(1, 10)
+
+##**************************************************************************************##
+##                          Beginning of General Settings Head                          ##
+##**************************************************************************************##
+
 
         self.viewport.label_main_ = QtGui.QLabel("General settings", self)
         self.viewport.label_main_.setFont(boldUnderlinedFont)
@@ -69,7 +99,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(5, 0)
 
-        layout_QuESo_text = QtGui.QHBoxLayout()
+        layout_QuESo_text              = QtGui.QHBoxLayout()
         self.viewport.textInput_QuESo_ = QtGui.QLineEdit(self)
         self.viewport.textInput_QuESo_.setText("")
         self.viewport.textInput_QuESo_.setMinimumWidth(200)
@@ -89,7 +119,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(9, 0)
 
-        layout_kratos_text = QtGui.QHBoxLayout()
+        layout_kratos_text              = QtGui.QHBoxLayout()
         self.viewport.textInput_Kratos_ = QtGui.QLineEdit(self)
         self.viewport.textInput_Kratos_.setText("")
         self.viewport.textInput_Kratos_.setMinimumWidth(200)
@@ -116,9 +146,14 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.addWidget(self.viewport.textInput_echo_, 14, 0, QtCore.Qt.AlignLeft)
 
-        ## END OF GENERAL SETTINGS ##
-
         layout_dialog.setRowMinimumHeight(15, 10)
+
+##  **************************************************************************************
+
+##**************************************************************************************##
+##                           Beginning of Mesh Settings Head                            ##
+##**************************************************************************************##
+
 
         self.viewport.label_main_ = QtGui.QLabel("Mesh Settings", self)
         self.viewport.label_main_.setFont(boldUnderlinedFont)
@@ -126,6 +161,8 @@ class QuESoParameters(QtGui.QMainWindow):
         layout_dialog.addWidget(self.viewport.label_main_, 16, 0, QtCore.Qt.AlignHCenter)
 
         layout_dialog.setRowMinimumHeight(17, 5)
+        
+## ---- Mesher Type Section --------------------------------------------------------------
 
         self.viewport.label_mesh_type = QtGui.QLabel("Mesher Type:", self)
         self.viewport.label_mesh_type.setFont(boldFont)
@@ -133,11 +170,13 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(19, 0)
 
+        # Creating a subLayout for Mesher Type
+
         sublayout_mesh_types = QtGui.QGridLayout()
 
         self.viewport.standardUse_group = QtGui.QGroupBox("Standard mesher", self)
         self.viewport.standardUse_group.setCheckable(True)      
-        sublayout_standardUse = QtGui.QGridLayout()
+        sublayout_standardUse                 = QtGui.QGridLayout()
         self.viewport.surface_deviation_label = QtGui.QLabel("Surface Deviation:", self)
         sublayout_standardUse.addWidget(self.viewport.surface_deviation_label, 0, 0)
         sublayout_standardUse.setRowMinimumHeight(1, 0)
@@ -156,7 +195,7 @@ class QuESoParameters(QtGui.QMainWindow):
         self.viewport.gmshUse_group = QtGui.QGroupBox("Gmsh mesher", self)
         self.viewport.gmshUse_group.setCheckable(True)
         self.viewport.gmshUse_group.setChecked(False)     
-        sublayout_gmshUse = QtGui.QGridLayout()
+        sublayout_gmshUse             = QtGui.QGridLayout()
         self.viewport.maxElSize_label = QtGui.QLabel("Max Element Size:", self)
         sublayout_gmshUse.addWidget(self.viewport.maxElSize_label, 0, 0)
         sublayout_gmshUse.setRowMinimumHeight(1, 0)
@@ -177,9 +216,11 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.addLayout(sublayout_mesh_types, 20, 0)
 
+##  --------------------------------------------------------------------------------------
+
         layout_dialog.setRowMinimumHeight(21, 0)
 
-        ########
+## ---- Polynomial Order Section ---------------------------------------------------------
 
         self.viewport.label_polynomialOrder_ = QtGui.QLabel("Polynomial order:", self)
         self.viewport.label_polynomialOrder_.setFont(boldFont)
@@ -187,7 +228,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(23, 0)
 
-        # Creating SubLayout for Polynomial Order
+        # Creating a subLayout for Polynomial Order
 
         layout_poly_xyz = QtGui.QGridLayout()
 
@@ -230,11 +271,13 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_poly_xyz.addWidget(self.viewport.textInput_polynomialOrder_z_, 0, 10, QtCore.Qt.AlignLeft)
 
-        # End of SubLayout for Polynomial Order
-
         layout_dialog.addLayout(layout_poly_xyz, 24, 0, QtCore.Qt.AlignCenter)
 
+##  --------------------------------------------------------------------------------------
+
         layout_dialog.setRowMinimumHeight(25, 5)
+
+## ---- Number of Elements Section -------------------------------------------------------
 
         self.viewport.label_nElements_ = QtGui.QLabel("Number of elements:", self)
         self.viewport.label_nElements_.setFont(boldFont)
@@ -242,7 +285,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(27, 0)
 
-        # Creating SubLayout for Number of Elements
+        # Creating a subLayout for Number of Elements
 
         layout_nElements_ = QtGui.QGridLayout()
 
@@ -284,18 +327,27 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_nElements_.addWidget(self.viewport.textInput_nElements_z_, 0, 10, QtCore.Qt.AlignLeft)
 
-        ## End of SubLayout for Number of Elements
-
         layout_dialog.addLayout(layout_nElements_, 28, 0, QtCore.Qt.AlignCenter)
 
+##  --------------------------------------------------------------------------------------
+
         layout_dialog.setRowMinimumHeight(29, 5)
+
+## ---- Visualize Grids Section ----------------------------------------------------------
 
         self.viewport.visualizeButton = QtGui.QCheckBox('Visualize Grids', self)
         layout_dialog.addWidget(self.viewport.visualizeButton, 30, 0)
 
+##  --------------------------------------------------------------------------------------
+
         layout_dialog.setRowMinimumHeight(31, 10)
 
-        ## END OF MESH SETTINGS ##
+##  **************************************************************************************
+
+##**************************************************************************************##
+##                         Beginning of Solution Settings Head                          ##
+##**************************************************************************************##
+
 
         self.viewport.label_main_ = QtGui.QLabel("Solution Settings:", self)
         self.viewport.label_main_.setFont(boldUnderlinedFont)
@@ -322,7 +374,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(39, 0)
 
-        self.viewport.popup_integration = QtGui.QComboBox(self)
+        self.viewport.popup_integration       = QtGui.QComboBox(self)
         self.viewport.popup_integration_items = ("Gauss","Gauss_Reduced1","Gauss_Reduced2","GGQ_Optimal","GGQ_Reduced1", "GGQ_Reduced2")
         self.viewport.popup_integration.addItems(self.viewport.popup_integration_items)
         self.viewport.popup_integration.setMinimumWidth(140)
@@ -330,7 +382,12 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(41, 10)
 
-        ## END OF SOLUTION SETTINGS ##
+##  **************************************************************************************
+
+##**************************************************************************************##
+##                        Beginning of Boundary Conditions Head                         ##
+##**************************************************************************************##
+
 
         self.viewport.label_ApplyBC_ = QtGui.QLabel("Boundary Conditions", self)
         self.viewport.label_ApplyBC_.setFont(boldUnderlinedFont)
@@ -353,7 +410,12 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(47, 10)
 
-        ## END OF BOUNDARY CONDITIONS ##
+##  **************************************************************************************
+
+##**************************************************************************************##
+##                          Beginning of Solver Settings Head                           ##
+##**************************************************************************************##
+
 
         self.viewport.label_SolverSettings_ = QtGui.QLabel("Solver Settings", self)
         self.viewport.label_SolverSettings_.setFont(boldUnderlinedFont)
@@ -369,12 +431,14 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(51, 20)
 
-        ## END OF SOLVER SETTINGS
+##  **************************************************************************************
 
-        ## Sublayout for save-cancel
+##**************************************************************************************##
+##                           Placement of Save-Cancel buttons                           ##
+##**************************************************************************************##
 
         layout_saveCancel = QtGui.QHBoxLayout()
-        cancelButton = QtGui.QPushButton("Cancel", self)
+        cancelButton      = QtGui.QPushButton("Cancel", self)
         cancelButton.setIcon(cancel_icon)
         saveButton = QtGui.QPushButton("Save", self)
         saveButton.setIcon(save_icon)
@@ -382,25 +446,34 @@ class QuESoParameters(QtGui.QMainWindow):
         layout_saveCancel.addWidget(cancelButton)
         layout_saveCancel.setSpacing(40)
 
-        ## End of Sublayout save-cancel
-
         layout_dialog.addLayout(layout_saveCancel, 52, 0, QtCore.Qt.AlignCenter)
 
+##  **************************************************************************************
+
         self.viewport.setLayout(layout_dialog)
+
+##**************************************************************************************##
+## Adjusting the position and geometry of the QuESoParameters pop-up window as well as  ##
+##                  establishing the scrolling option and its features                  ##
+##**************************************************************************************##
 
         self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setWidget(self.viewport)
-
         self.setCentralWidget(self.scrollArea)
-
-        width = self.sizeHint().width()
-        height = self.viewport.sizeHint().height()
+        width       = self.sizeHint().width()
+        height      = self.viewport.sizeHint().height()
         centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
         self.setMinimumWidth(self.sizeHint().width())
         self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
 
+##  **************************************************************************************
+
+##**************************************************************************************##
+##         Establishing the signal/slot pairs for the buttons/checkboxes put in         ##
+##                            QuESoParameters pop-up window                             ##
+##**************************************************************************************##
         
         self.viewport.goback_button.clicked.connect(self.onGoBackButton)
         self.viewport.fileBrowseButton_QuESo.clicked.connect(self.onBrowseButton_QuESodirectory)
@@ -414,12 +487,19 @@ class QuESoParameters(QtGui.QMainWindow):
         cancelButton.clicked.connect(self.onCancel)
         saveButton.clicked.connect(self.onSave)
 
+##  **************************************************************************************
 
-        # show the dialog box and creates instances of other required classes
+##**************************************************************************************##
+##      Creating the other class instances for the pop-up window to work properly       ##
+##**************************************************************************************##
+
+        #Since some of those class instances have some buttons/checkboxes that perform 
+        #several tasks, their signal/slot pairs are also declared here.
+
         self.PenaltySupportBCBox_obj = PenaltySupportBCBox()
-        self.SurfaceLoadBCBox_obj = SurfaceLoadBCBox()
-        self.projectNameWindow_obj = projectNameWindow()
-        self.SolverSettingsBox_obj = SolverSettingsBox()
+        self.SurfaceLoadBCBox_obj    = SurfaceLoadBCBox()
+        self.projectNameWindow_obj   = projectNameWindow()
+        self.SolverSettingsBox_obj   = SolverSettingsBox()
 
         self.PenaltySupportFacesList_Obj = PenaltySupportFacesList()
         self.PenaltySupportFacesList_Obj.Modify_button.clicked.connect(self.ModifyButtonClicked_PenaltySupportFacesList)
@@ -433,36 +513,74 @@ class QuESoParameters(QtGui.QMainWindow):
         self.SurfaceLoadFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_SurfaceLoadFacesList)
         self.SurfaceLoadFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_SurfaceLoadFacesList)
 
+##  **************************************************************************************
+
+##**************************************************************************************##
+##           Creating the arrays/dictionaries that will be used in the script           ##
+##**************************************************************************************##
+
+        #The main idea is keeping track of the boudnary conditions applied.
+
         self.PenaltySupport_displacement_arr = []
-        self.mainObjectName = ""
-        self.SurfaceLoad_modulus_arr=[]
-        self.SurfaceLoad_force_arr = []
-        self.PenaltySupportSelectionList = []
-        self.SurfaceLoadSelectionList = []
-        self.Dirichlet_BC_icons = {}
-        self.Neumann_BC_icons = {}
-        self.PenaltySupport_faces = []
-        self.SurfaceLoad_faces = []
+        self.SurfaceLoad_modulus_arr         = []
+        self.SurfaceLoad_force_arr           = []
+        self.PenaltySupportSelectionList     = []
+        self.SurfaceLoadSelectionList        = []
+        self.Dirichlet_BC_icons              = {}
+        self.Neumann_BC_icons                = {}
+        self.PenaltySupport_faces            = []
+        self.SurfaceLoad_faces               = []
+
+##  **************************************************************************************
+
+##**************************************************************************************##
+##  Executing the dialog box, in which the project name and its directory is given by   ##
+##                                       the user                                       ##
+##**************************************************************************************##
+
+        #Although our primary pop-up window is the QuESoParameters window, it is not the 
+        #pop-up window that is shown to the user firstly, when the user wants to use the 
+        #whole plug-in. Instead, the first pop-up window shown is the project name window
+        #(which is an instance of the class 'projectNameWindow', and belongs to our primary 
+        #window 'QuESoParameters' QMainWindow). The user enters the name and directory of the 
+        #project. If they are not blank and the 'Ok' button is clicked on the project name 
+        #window, it is checked whether the project name already exists within the directory
+        #provided by the user. If yes, previous values are used to fill the relevant sections
+        #in the QuESoParameters main window. If not, a blank QuESoParameters main window is
+        #shown.
         
         self.projectNameWindow_obj.exec_()
-        self.work_dir = self.projectNameWindow_obj.project_dir
+        self.work_dir            = self.projectNameWindow_obj.project_dir
         self.ActiveDocument_Name = FreeCAD.ActiveDocument.Name
 
-        if (self.projectNameWindow_obj.project_Name != "") and (self.projectNameWindow_obj.project_dir != "") and (self.projectNameWindow_obj.okFlag == True):
-            self.previousValuesCheck_QuESoParam()
+        if (self.projectNameWindow_obj.project_Name != "") and (self.projectNameWindow_obj.project_dir != "") and (self.projectNameWindow_obj.okFlag == True): 
+            self.previousValuesCheck_QuESoKratosParam()
             self.previousValuesCheck_BC()
             self.show()
-        else:
+        else: 
             pass
 
+##  **************************************************************************************
 
-    #################################################################################################################################
-                            ############################# FUNCTION DEFINITIONS #############################
-    #################################################################################################################################
+## #######################################################################################
 
-                                                ##### Browse Files Function #####
 
-    def previousValuesCheck_QuESoParam(self):
+##########################################################################################
+##                                                                                      ##
+##            FUNCTION DEFINITIONS OF PREVIOUS VALUE/BOUNDARY CONDITION CHECK            ##
+##                                                                                      ##
+##########################################################################################
+
+
+
+##**************************************************************************************##
+##      Checking the Previous Values of QuESO and Kratos Parameters (if possible)       ##
+##**************************************************************************************##
+
+
+    def previousValuesCheck_QuESoKratosParam(self):
+
+## ---- Reading the directory information ------------------------------------------------
 
         try:
             os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
@@ -482,7 +600,9 @@ class QuESoParameters(QtGui.QMainWindow):
         except:
             pass
 
-                        ## Setting Up QuESo Parameters and changing values on the pop-up screen ##
+##  --------------------------------------------------------------------------------------
+
+## ---- Setting Up QuESo Parameters and changing values on the pop-up screen -------------
 
         try:
             os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
@@ -509,18 +629,13 @@ class QuESoParameters(QtGui.QMainWindow):
             number_of_elements_z = str(number_of_elements[2])
 
             # Reading trimmed_quadrature_rule_settings
-
             trimmed_quadrature_rule_settings = mydata_QuESo['trimmed_quadrature_rule_settings']
             moment_fitting_residual = str(trimmed_quadrature_rule_settings['moment_fitting_residual'])
 
             # Reading non_trimmed_quadrature_rule_settings
-
             non_trimmed_quadrature_rule_settings = mydata_QuESo['non_trimmed_quadrature_rule_settings']
             integration_method = str(non_trimmed_quadrature_rule_settings['integration_method'])
             myfile.close()
-            #######
-
-            #######
 
             self.viewport.textInput_echo_.setText(echo_level)
             self.viewport.textInput_polynomialOrder_x_.setText(polynomial_order_x)
@@ -535,8 +650,10 @@ class QuESoParameters(QtGui.QMainWindow):
         except:
             pass
 
-                        ## Setting Up Kratos Parameters and changing values on the pop-up screen ##
-        
+##  --------------------------------------------------------------------------------------
+
+## ---- Setting Up Kratos Parameters and changing values on the pop-up screen ------------
+      
         try:
             os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
             work_dir = os.getcwd()
@@ -557,9 +674,7 @@ class QuESoParameters(QtGui.QMainWindow):
             solver_type = str(solver_settings['solver_type'])
             analysis_type = str(solver_settings['analysis_type'])
             echo_level_solversettings = str(solver_settings['echo_level'])
-
             myfile.close()
-
 
             self.SolverSettingsBox_obj.popup_parallel_type_.setCurrentText(parallel_type)
             self.SolverSettingsBox_obj.popup_echo_level2_.setCurrentText(echo_level_problemdata)
@@ -572,7 +687,9 @@ class QuESoParameters(QtGui.QMainWindow):
         except:
             pass
 
-            ## Setting Up Structural Materials Parameters and changing values on the pop-up screen ##
+##  --------------------------------------------------------------------------------------
+
+## ---- Setting Up Structural Materials Parameters and changing values on the pop-up screen ----
 
         try:
             os.chdir(self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name)
@@ -601,7 +718,15 @@ class QuESoParameters(QtGui.QMainWindow):
 
         except:
             pass
-    
+
+##  --------------------------------------------------------------------------------------
+
+##  **************************************************************************************
+        
+##**************************************************************************************##
+##                      Checking the previous boundary conditions                       ##
+##**************************************************************************************##
+
     def previousValuesCheck_BC(self):
 
         try:
@@ -643,12 +768,22 @@ class QuESoParameters(QtGui.QMainWindow):
                         sel = Gui.Selection.getSelectionEx()
                         self.PenaltySupportSelectionList.append(sel)
                         Gui.Selection.clearSelection()
-            
-            print(str(self.SurfaceLoadSelectionList))
-            print(str(self.PenaltySupportSelectionList))
 
         except:
             pass
+
+##  **************************************************************************************
+        
+##  ######################################################################################
+        
+##########################################################################################
+##                                                                                      ##
+##   SIGNAL/SLOT FUNCTIONS FOR THE BUTTONS AND CHECKBOXES ON THE QuESoParameters MAIN   ##
+##                         WINDOW (EXCEPT Ok and Cancel Button)                         ##
+##                                                                                      ##
+##########################################################################################
+
+## ---- Go back button from QuESoParameters main window to the Project Name and Directory Dialog Box ----
 
     def onGoBackButton(self):
 
@@ -665,6 +800,10 @@ class QuESoParameters(QtGui.QMainWindow):
         else:
             pass
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Selecting between Gmsh or FreeCAD's Standard Mesher (Exclusive Group Box Objects) ----
+
     def onStandardUseButton(self):
         if self.viewport.standardUse_group.isChecked():
             self.viewport.gmshUse_group.setChecked(False)
@@ -672,6 +811,10 @@ class QuESoParameters(QtGui.QMainWindow):
     def onGmshUseButton(self):
         if self.viewport.gmshUse_group.isChecked():
             self.viewport.standardUse_group.setChecked(False)
+
+##  --------------------------------------------------------------------------------------
+
+## ---- Browse Files to set up the directory of QuESo and Kratos -------------------------
 
     def onBrowseButton_QuESodirectory(self):
         self.QuESo_directory = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory", self.work_dir, QtGui.QFileDialog.ShowDirsOnly)
@@ -684,6 +827,13 @@ class QuESoParameters(QtGui.QMainWindow):
         self.Kratos_directory = self.Kratos_directory + '/bin/Release'
         self.Kratos_lib_directory = self.Kratos_directory + '/libs'
 
+##  --------------------------------------------------------------------------------------
+
+## ---- Apply Boundary Condition buttons -------------------------------------------------
+
+    #The lines involving self.callback = ... enable FreeCAD to keep track of that where 
+    #is clicked (which coordinates, edge, line etc.) by the user. It activates recognizing
+    #the mouse button events by FreeCAD.
 
     def onPenaltySupportBC(self):
         infoBox = QtGui.QMessageBox.information(self, "Apply PenaltySupport Boundary Conditions", \
@@ -695,15 +845,65 @@ class QuESoParameters(QtGui.QMainWindow):
             self.setVisible(False)
             self.PenaltySupportFacesList_Obj.show()
 
-            ############################ PenaltySupport FACES LIST FUNCTIONS #################################
+    def onSurfaceLoadBC(self):
+        infoBox = QtGui.QMessageBox.information(self, "Apply SurfaceLoad Boundary Conditions", \
+                                                "Please select faces subject to SurfaceLoad BC one by one!")
+
+        if infoBox == QtGui.QMessageBox.StandardButton.Ok:
+            self.view = Gui.ActiveDocument.ActiveView
+            self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_SurfaceLoadBCBox)
+            self.setVisible(False)
+            self.SurfaceLoadFacesList_Obj.show()
+
+##  --------------------------------------------------------------------------------------
+
+## ---- The pop-up window (an object of QuESoParameters main window still) to set up Solver Settings ----
+
+    def onSolverSettingsButton(self):
+
+        self.SolverSettingsBox_obj.exec_()
+
+##  --------------------------------------------------------------------------------------
+        
+## ---- Visualizing the bounding box grids -----------------------------------------------
+
+    #Visualizing/devisualizing grids uses a function called 'VisualizeGrid_Fun' and 
+    #'deVisualizeGrid_Fun'. Their definition is given in the Supplementary Functions Section. 
+    #(At the end of methods of QuESoParameters main window)
+
+    def onVisualize(self):
+            
+            if (self.viewport.visualizeButton.isChecked()):
+                self.VisualizeGrid_Fun()
+            else:
+                self.deVisualizeGrid_Fun()
+
+##  --------------------------------------------------------------------------------------
+            
+##  ######################################################################################
+
+##########################################################################################
+##                                                                                      ##
+##   PenaltySupportFacesList CLASS INSTANCE'S FUNCTIONS THAT INVOLVE AT AN ACTION OF    ##
+##                             QuESoParameters MAIN WINDOW                              ##
+##                                                                                      ##
+##########################################################################################
+            
+## ---- To confirm the applied penalty support boundary conditions and their values ------
 
     def okButtonClicked_PenaltySupportFacesList(self):
+
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.PenaltySupportFacesList_Obj.result = True
         self.PenaltySupportFacesList_Obj.close()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- To completely discard all the penalty support boundary conditions applied (Face IDs and values) ----
+
     def DiscardButtonClicked_PenaltySupportFacesList(self):
+
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.PenaltySupportFacesList_Obj.result = False
@@ -712,29 +912,36 @@ class QuESoParameters(QtGui.QMainWindow):
         self.PenaltySupportSelectionList = []
         self.PenaltySupportFacesList_Obj.close()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- To delete the penalty support boundary condition selected on the list ------------
+
     def DeleteButtonClicked_PenaltySupportFacesList(self):
+
         current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
         current_Item_text = self.PenaltySupportFacesList_Obj.listwidget.currentItem().text()
         indexToDel = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        del self.PenaltySupport_displacement_arr[indexToDel]
         k = self.Dirichlet_BC_icons[current_Item_text]
         for i in range (1, int(k), 1):
             obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Dirichlet_BC_" + str(current_Item_text) + "_" + str(i))
             OpenSCADUtils.removesubtree(obj)
         else:
-            print()
+            pass
         FreeCAD.ActiveDocument.removeObject('Dirichlet_BC_' + current_Item_text)
         self.Dirichlet_BC_icons.pop(str(current_Item_text))
-        print('BC Container: ', str(self.Dirichlet_BC_icons))
+        del self.PenaltySupport_displacement_arr[indexToDel]
         del self.PenaltySupport_faces[indexToDel]
         del self.PenaltySupportSelectionList[indexToDel]
-        print(str(self.PenaltySupport_displacement_arr))
         self.PenaltySupportFacesList_Obj.listwidget.takeItem(self.PenaltySupportFacesList_Obj.listwidget.row(current_Item))
 
+##  --------------------------------------------------------------------------------------
+        
+## ---- To modify the value of the penalty support boundary condition selected on the list ----
+
     def ModifyButtonClicked_PenaltySupportFacesList(self):
+
         current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
         indexToMod = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        print("whole surface load arr = " + str(self.PenaltySupport_displacement_arr))
         prev_vals = self.PenaltySupport_displacement_arr[indexToMod]
         prev_x = prev_vals[0]
         prev_y = prev_vals[1]
@@ -748,133 +955,35 @@ class QuESoParameters(QtGui.QMainWindow):
                                                     [float(self.PenaltySupportBCBox_obj.x_val),\
                                                      float(self.PenaltySupportBCBox_obj.y_val),\
                                                      float(self.PenaltySupportBCBox_obj.z_val)]
+        
+##  --------------------------------------------------------------------------------------
+        
+##  ######################################################################################
 
+##########################################################################################
+##                                                                                      ##
+##     SurfaceLoadFacesList CLASS INSTANCE'S FUNCTIONS THAT INVOLVE AT AN ACTION OF     ##
+##                             QuESoParameters MAIN WINDOW                              ##
+##                                                                                      ##
+##########################################################################################
+        
+## ---- To confirm the applied surface load boundary conditions and their values ---------
 
-
-                                                ##### PenaltySupport Event Button #####
-
-    def getMouseClick_PenaltySupportBCBox(self, event_cb):
-        event = event_cb.getEvent()
-
-        if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
-        &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
-            pos = event.getPosition().getValue()
-            element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
-            print(str(element_list))
-            if(element_list != None):
-                self.PenaltySupportBCBox_obj.element_list = element_list
-                self.PenaltySupportBCBox_obj.okButton_Flag = False
-                self.PenaltySupportBCBox_obj.exec_()
-                if(self.PenaltySupportBCBox_obj.okButton_Flag):
-                    self.PenaltySupport_displacement_arr.append(\
-                                                                [float(self.PenaltySupportBCBox_obj.x_val), \
-                                                                 float(self.PenaltySupportBCBox_obj.y_val), \
-                                                                 float(self.PenaltySupportBCBox_obj.z_val)])
-                    print(str(self.PenaltySupport_displacement_arr))
-                    self.PenaltySupportFacesList_Obj.listwidget.addItem(element_list.get('Component'))
-
-                    Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
-                                               element_list.get('Component'), element_list.get('x'), element_list.get('y'))
-                    sel = Gui.Selection.getSelectionEx()
-                    # object = Draft.makeFacebinder(sel, 'D' + str(self.PenaltySupportBCBox_obj.PenaltySupport_count))
-                    self.PenaltySupportSelectionList.append(sel)
-                    self.PenaltySupport_faces.append(element_list['Component'])
-                    self.mainObjectName = element_list['Object']
-                                        
-                    n = 1 
-                                                               ##### Preprocessing Icons -> Dirichlet BC #####
-                    for sel in Gui.Selection.getSelectionEx('', 0): 
-                        for path in sel.SubElementNames if sel.SubElementNames else ['']:
-                            shape = sel.Object.getSubObject(path)
-                           
-                            iconDir = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Dirichlet BC_" + element_list.get('Component'))
-
-                            #print([v.Point for v in shape.Vertexes])
-                            for i in [v.Point for v in shape.Vertexes]:
-
-                                # i <- coordinates of vertex
-                                #Calculating normals:
-                                sub = sel.SubObjects[0]
-                                suv = sub.Surface.parameter(i)
-                                snv = sub.normalAt(suv[0], suv[1]).normalize()
-
-                                pnt = sel.PickedPoints[0]
-                                sub = sel.SubObjects[0]
-                                u, v = sub.Surface.parameter(pnt)
-                                nv = sub.Surface.normal(u,v)
-
-                                #Calculating rotation angles:
-                                vX = FreeCAD.Vector(1,0,0)
-                                vY = FreeCAD.Vector(0,1,0)
-                                vZ = FreeCAD.Vector(0,0,1)
-                                axis1 = FreeCAD.Vector.cross(vX,snv)
-                                axis2 = FreeCAD.Vector.cross(vY,snv)
-                                axis3 = FreeCAD.Vector.cross(vZ,snv)
-                                angle1 = math.degrees(vX.getAngle(snv))
-                                angle2 = math.degrees(vY.getAngle(snv))
-                                angle3 = math.degrees(vZ.getAngle(snv))
-
-                                #Creating icons:
-                                bcCone = FreeCAD.ActiveDocument.addObject("Part::Cone")
-                                bcCone.Height = 5	
-                                bcCone.Radius1 = 0
-                                bcCone.Radius2 = 2
-                                bcCone.Label = "_bcCone_" + str(n)
-
-                                bcBox = FreeCAD.ActiveDocument.addObject("Part::Box")
-                                bcBox.Height = 1
-                                bcBox.Length = 5
-                                bcBox.Width = 5
-                                bcBox.Label = "_bcBox_" + str(n)
-                                
-                                bcBox.Placement = FreeCAD.Placement(FreeCAD.Vector(-2.5, -2.5, 5.0),FreeCAD.Rotation(0, 0, 0), FreeCAD.Vector(0, 0, 0))
-                                FreeCAD.ActiveDocument.recompute()
-                                
-                                fusion = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + element_list.get('Component') + str(n))
-                                fusion.Shapes = [bcCone, bcBox]
-
-                                fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1, angle1))
-                                fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2, angle2))
-                                fusion.Placement = FreeCAD.Placement(i + FreeCAD.Vector(0, 0, 0),FreeCAD.Rotation(axis3,  angle3))
-                                FreeCAD.ActiveDocument.recompute()
-
-                                fusion.Label = "Dirichlet_BC_" + element_list.get('Component') + "_" + str(n)
-                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).Selectable = False
-                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShowInTree = True
-                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShapeColor = (1.0,0.0,0.0)
-                                FreeCAD.ActiveDocument.recompute()
-
-                                iconDir.addObject(fusion)
-                                n +=1
-
-                    self.Dirichlet_BC_icons.update({str(element_list.get('Component')): str(n)})
-                    print('BC Container: ', str(self.Dirichlet_BC_icons))
-                    Gui.Selection.clearSelection()                                        
-
-    def onSolverSettingsButton(self):
-
-        self.SolverSettingsBox_obj.exec_()
-
-
-    def onSurfaceLoadBC(self):
-        infoBox = QtGui.QMessageBox.information(self, "Apply SurfaceLoad Boundary Conditions", \
-                                                "Please select faces subject to SurfaceLoad BC one by one!")
-
-        if infoBox == QtGui.QMessageBox.StandardButton.Ok:
-            self.view = Gui.ActiveDocument.ActiveView
-            self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_SurfaceLoadBCBox)
-            self.setVisible(False)
-            self.SurfaceLoadFacesList_Obj.show()
-
-            ############################ SurfaceLoad FACES LIST FUNCTIONS #################################
 
     def okButtonClicked_SurfaceLoadFacesList(self):
+
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.SurfaceLoadFacesList_Obj.result = True
         self.SurfaceLoadFacesList_Obj.close()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- To completely discard all the surface load boundary conditions applied (Face IDs and values) ----
+
+
     def DiscardButtonClicked_SurfaceLoadFacesList(self):
+
         self.setVisible(True)
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.SurfaceLoadFacesList_Obj.result = False
@@ -884,34 +993,37 @@ class QuESoParameters(QtGui.QMainWindow):
         self.SurfaceLoadSelectionList = []
         self.SurfaceLoadFacesList_Obj.close()
 
+##  --------------------------------------------------------------------------------------
+
+## ---- To delete the penalty surface load condition selected on the list ----------------
+
     def DeleteButtonClicked_SurfaceLoadFacesList(self):
+
         current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
         current_Item_text = self.SurfaceLoadFacesList_Obj.listwidget.currentItem().text()
         indexToDel = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        del self.SurfaceLoad_force_arr[indexToDel]
         k = self.Neumann_BC_icons[current_Item_text]
         for i in range (1, int(k), 1):
             obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Neumann_BC_" + str(current_Item_text) + "_" + str(i))
             OpenSCADUtils.removesubtree(obj)
         else:
-            print()
+            pass
         FreeCAD.ActiveDocument.removeObject('Neumann_BC_' + current_Item_text)
         self.Neumann_BC_icons.pop(str(current_Item_text))
-        print('BC Container: ', str(self.Neumann_BC_icons))
-        del self.SurfaceLoad_faces[indexToDel]
+        del self.SurfaceLoad_force_arr[indexToDel]
         del self.SurfaceLoad_modulus_arr[indexToDel]
+        del self.SurfaceLoad_faces[indexToDel]
         del self.SurfaceLoadSelectionList[indexToDel]
-        print(str(self.SurfaceLoad_force_arr))
-        print(str(self.SurfaceLoad_modulus_arr))
         self.SurfaceLoadFacesList_Obj.listwidget.takeItem(self.SurfaceLoadFacesList_Obj.listwidget.row(current_Item))
 
+##  --------------------------------------------------------------------------------------
+
+## ---- To modify the penalty surface load condition selected on the list ----------------
+
     def ModifyButtonClicked_SurfaceLoadFacesList(self):
+
         current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
-        print(current_Item)
         indexToMod = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        print(indexToMod)
-        print(str(self.SurfaceLoad_force_arr))
-        print(str(self.SurfaceLoad_modulus_arr))
         prev_vals_direction = self.SurfaceLoad_force_arr[indexToMod]
         prev_vals_modulus = self.SurfaceLoad_modulus_arr[indexToMod]
         prev_x = prev_vals_direction[0]
@@ -928,17 +1040,156 @@ class QuESoParameters(QtGui.QMainWindow):
                                                      float(self.SurfaceLoadBCBox_obj.y_val),\
                                                      float(self.SurfaceLoadBCBox_obj.z_val)]
         self.SurfaceLoad_modulus_arr[indexToMod] = float(self.SurfaceLoadBCBox_obj.modulus_val)
-        print(str(self.SurfaceLoad_force_arr))
         Gui.Selection.clearSelection()
 
-    def getMouseClick_SurfaceLoadBCBox(self, event_cb):
+##  --------------------------------------------------------------------------------------
+
+##  ######################################################################################
+
+##########################################################################################
+##                                                                                      ##
+##   PENALTY SUPPORT MOUSE CLICK EVENT- Getting the coordinate of where the mouse is    ##
+##                 clicked to apply penalty support boundary condition                  ##
+##                                                                                      ##
+##########################################################################################
+
+    def getMouseClick_PenaltySupportBCBox(self, event_cb):
         event = event_cb.getEvent()
+
+##**************************************************************************************##
+##  Getting the coordinate of the mouse click and asking the user to enter the penalty  ##
+## support boundary condition value - Storing the Face IDs and corresponding values     ## 
+##**************************************************************************************##
 
         if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
         &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
             pos = event.getPosition().getValue()
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
-            print(str(element_list))
+            if(element_list != None):
+                self.PenaltySupportBCBox_obj.element_list = element_list # This seems redundant?
+                self.PenaltySupportBCBox_obj.okButton_Flag = False
+                self.PenaltySupportBCBox_obj.exec_()
+                if(self.PenaltySupportBCBox_obj.okButton_Flag):
+                    self.PenaltySupport_displacement_arr.append(\
+                                                                [float(self.PenaltySupportBCBox_obj.x_val), \
+                                                                 float(self.PenaltySupportBCBox_obj.y_val), \
+                                                                 float(self.PenaltySupportBCBox_obj.z_val)])
+                    self.PenaltySupportFacesList_Obj.listwidget.addItem(element_list.get('Component'))
+
+                    Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
+                                               element_list.get('Component'), element_list.get('x'), element_list.get('y'))
+                    sel = Gui.Selection.getSelectionEx()
+                    self.PenaltySupportSelectionList.append(sel)
+                    self.PenaltySupport_faces.append(element_list['Component'])
+                    self.mainObjectName = element_list['Object']
+
+##  **************************************************************************************
+                                        
+##**************************************************************************************##
+##   Preprocessing Icons to visualize them on the model for Penalty Support Boundary    ##
+##                                      Condition                                       ##
+##**************************************************************************************##
+                    
+                    n = 1 
+                    for sel in Gui.Selection.getSelectionEx('', 0): 
+                        for path in sel.SubElementNames if sel.SubElementNames else ['']:
+                            shape = sel.Object.getSubObject(path)                          
+                            iconDir = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Dirichlet BC_" + element_list.get('Component'))
+
+			                #Loop over all vertices
+                            for i in [v.Point for v in shape.Vertexes]:
+
+                                # i <- coordinates of vertex
+                                #Calculating normals:
+                                sub = sel.SubObjects[0]
+                                suv = sub.Surface.parameter(i)
+                                snv = sub.normalAt(suv[0], suv[1]).normalize()
+
+                                pnt = sel.PickedPoints[0]
+                                sub = sel.SubObjects[0]
+                                u, v = sub.Surface.parameter(pnt)
+                                nv = sub.Surface.normal(u,v)
+
+                                #Defining base axes
+                                vX = FreeCAD.Vector(1,0,0)
+                                vY = FreeCAD.Vector(0,1,0)
+                                vZ = FreeCAD.Vector(0,0,1)
+				    
+				                #Defining rotation axes
+                                axis1 = FreeCAD.Vector.cross(vX,snv)
+                                axis2 = FreeCAD.Vector.cross(vY,snv)
+                                axis3 = FreeCAD.Vector.cross(vZ,snv)
+				    
+				                #Calculating rotation angles:
+                                angle1 = math.degrees(vX.getAngle(snv))
+                                angle2 = math.degrees(vY.getAngle(snv))
+                                angle3 = math.degrees(vZ.getAngle(snv))
+
+                                #Creating icons:
+                                bcCone = FreeCAD.ActiveDocument.addObject("Part::Cone")
+                                bcCone.Height = 5	
+                                bcCone.Radius1 = 0
+                                bcCone.Radius2 = 2
+                                bcCone.Label = "_bcCone_" + str(n)
+
+                                bcBox = FreeCAD.ActiveDocument.addObject("Part::Box")
+                                bcBox.Height = 1
+                                bcBox.Length = 5
+                                bcBox.Width = 5
+                                bcBox.Label = "_bcBox_" + str(n)
+
+                                bcBox.Placement = FreeCAD.Placement(FreeCAD.Vector(-2.5, -2.5, 5.0),FreeCAD.Rotation(0, 0, 0), FreeCAD.Vector(0, 0, 0))
+                                FreeCAD.ActiveDocument.recompute()
+                                
+                                fusion = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + element_list.get('Component') + str(n))
+                                fusion.Shapes = [bcCone, bcBox]
+				
+				                #Orienting and locating icone into vertex
+                                fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1, angle1))
+                                fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2, angle2))
+                                fusion.Placement = FreeCAD.Placement(i + FreeCAD.Vector(0, 0, 0),FreeCAD.Rotation(axis3,  angle3))
+                                FreeCAD.ActiveDocument.recompute()
+				    
+				                #Adding icon's label on list
+                                fusion.Label = "Dirichlet_BC_" + element_list.get('Component') + "_" + str(n)
+                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).Selectable = False
+                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShowInTree = True
+                                Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShapeColor = (1.0,0.0,0.0)
+                                FreeCAD.ActiveDocument.recompute()
+
+                                iconDir.addObject(fusion)
+                                n +=1
+                                
+		            #Adding icon to component list
+                    self.Dirichlet_BC_icons.update({str(element_list.get('Component')): str(n)})
+                    Gui.Selection.clearSelection()
+
+##  **************************************************************************************
+
+##  ######################################################################################
+
+##########################################################################################
+##                                                                                      ##
+##     SURFACE LOAD MOUSE CLICK EVENT- Getting the coordinate of where the mouse is     ##
+##                   clicked to apply surface load boundary condition                   ##
+##                                                                                      ##
+##########################################################################################
+
+    def getMouseClick_SurfaceLoadBCBox(self, event_cb):
+        event = event_cb.getEvent()
+
+##**************************************************************************************##
+##                                                                                      ##
+##  Getting the coordinate of the mouse click and asking the user to enter the penalty  ##
+## support boundary condition value - Storing the Face IDs and corresponding values in  ##
+##                                     a dictionary                                     ##
+##                                                                                      ##
+##**************************************************************************************##
+
+        if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
+        &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
+            pos = event.getPosition().getValue()
+            element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
             if(element_list != None):
                 self.SurfaceLoadBCBox_obj.element_list = element_list
                 self.SurfaceLoadBCBox_obj.okButton_Flag = False
@@ -950,22 +1201,26 @@ class QuESoParameters(QtGui.QMainWindow):
                                                                  float(self.SurfaceLoadBCBox_obj.z_val)])
                     self.SurfaceLoad_modulus_arr.append(\
                                                                 float(self.SurfaceLoadBCBox_obj.modulus_val))
-                    print(str(self.SurfaceLoad_force_arr))
                     self.SurfaceLoadFacesList_Obj.listwidget.addItem(element_list.get('Component'))
 
                     Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
                                                element_list.get('Component'), element_list.get('x'), element_list.get('y'))
                     sel = Gui.Selection.getSelectionEx()
-                    # object = Draft.makeFacebinder(sel, 'D' + str(self.PenaltySupportBCBox_obj.PenaltySupport_count))
                     self.SurfaceLoadSelectionList.append(sel)
+                    self.SurfaceLoad_faces.append(element_list['Component'])
 
-
-                                                               ##### Preprocessing Icons -> Dirichlet BC #####
-					
+##  **************************************************************************************
+                                        
+##**************************************************************************************##
+##   Preprocessing Icons to visualize them on the model for Surface load Boundary       ##
+##                                      Condition                                       ##
+##**************************************************************************************##
+		    #Loop over all vertices			
                     for sel in Gui.Selection.getSelectionEx('', 0):
                         for path in sel.SubElementNames if sel.SubElementNames else ['']:
                             shape = sel.Object.getSubObject(path)
-
+				
+			    #Calculating vector components
                             neuVector = FreeCAD.Vector(float(self.SurfaceLoadBCBox_obj.x_val),float(self.SurfaceLoadBCBox_obj.y_val),float(self.SurfaceLoadBCBox_obj.z_val))
                             exeptVector = FreeCAD.Vector(0.00,0.00,-1.00)
                             vX = FreeCAD.Vector(1,0,0)
@@ -975,19 +1230,18 @@ class QuESoParameters(QtGui.QMainWindow):
                             axis1 = FreeCAD.Vector.cross(vX, neuVector)
                             axis2 = FreeCAD.Vector.cross(vY, neuVector)
                             axis3 = FreeCAD.Vector.cross(vZ, neuVector)
-
+				
+			    #Calculating angles between main vector and origin
                             angle1 = math.degrees(vX.getAngle(neuVector))
                             angle2 = math.degrees(vY.getAngle(neuVector))
                             angle3 = math.degrees(vZ.getAngle(neuVector))
 
-                            #prepIcons = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Prep_icons")
                             iconNeu = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Neumann BC_" + element_list.get('Component'))
-                            #prepIcons.addObject(iconNeu)
-
                             n = 1 
-                            #print([v.Point for v in shape.Vertexes])
+			    #Loop over all vertices
                             for i in [v.Point for v in shape.Vertexes]:
-                              
+				    
+                                #Creating icons
                                 bcTip = FreeCAD.ActiveDocument.addObject("Part::Cone")
                                 bcTip.Height = 7.5	
                                 bcTip.Radius1 = 2
@@ -1002,24 +1256,20 @@ class QuESoParameters(QtGui.QMainWindow):
 
                                 bcCyl.Placement = FreeCAD.Placement(FreeCAD.Vector(0, 0, -15.0), FreeCAD.Rotation(0, 0, 0))
                                 bcCyl.Label = "_bcCyl_" + str(n)
-
                                 FreeCAD.ActiveDocument.recompute()
                                 
                                 fusion_arrow = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + element_list.get('Component') + str(n))
                                 fusion_arrow.Shapes = [bcTip, bcCyl]
-
                                 FreeCAD.ActiveDocument.recompute()
-
                                 fusion_arrow.Label = "Neumann_BC_" + element_list.get('Component') + "_" + str(n)
-
+				    
+				#Orienting and locating icone into vertex
                                 fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1,angle1))
                                 fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2,180 - angle2))
                                 fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis3,angle3))
                                 if neuVector == exeptVector:
-                                    print("NeuVector is 0 0 -1")
                                     fusion_arrow.Placement = FreeCAD.Placement(i,FreeCAD.Rotation(FreeCAD.Vector(0,1,0),180))
                                 else:
-                                    print("NeuVector is 0 0 1")
                                     fusion_arrow.Placement = FreeCAD.Placement(i,FreeCAD.Rotation(axis3,angle3))
 
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).Selectable = False
@@ -1027,26 +1277,29 @@ class QuESoParameters(QtGui.QMainWindow):
                                 Gui.ActiveDocument.getObject("Part__MultiFuse" + element_list.get('Component') + str(n)).ShapeColor = (0.0,0.0,1.0)
 
                                 FreeCAD.ActiveDocument.recompute()
-
+				    
+				#Adding icon's label on list
                                 iconNeu.addObject(fusion_arrow)        
                                 n +=1
 
                     self.Neumann_BC_icons.update({str(element_list.get('Component')): str(n)})
-                    print('BC Container: ', str(self.Neumann_BC_icons))
+			
+		    #Adding icon to component list
                     self.SurfaceLoad_faces.append(element_list['Component'])
                     self.mainObjectName = element_list['Object']
                     Gui.Selection.clearSelection()
 
-    def onVisualize(self):
-            
-            if (self.viewport.visualizeButton.isChecked()):
-                self.VisualizeGrid_Fun()
-            else:
-                self.deVisualizeGrid_Fun()
-
+##  **************************************************************************************
+                    
+##  ######################################################################################
+                    
+##########################################################################################
+##                                                                                      ##
+##             TASKS DONE BY THE SAVE BUTTON ON QuESoParameters MAIN WINDOW             ##
+##                                                                                      ##
+##########################################################################################
 
     def onSave(self):
-        #bounds
 
         if (self.viewport.standardUse_group.isChecked() == False) & (self.viewport.gmshUse_group.isChecked() == False):
             errorMsg = QtGui.QMessageBox.critical(self, "Error: No mesher selected", "You must select a mesher type!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
@@ -1071,7 +1324,11 @@ class QuESoParameters(QtGui.QMainWindow):
 
         elif reply == QtGui.QMessageBox.Yes:
 
-            #  Creating Project and data directories (changing to project directory):
+##**************************************************************************************##
+##    Creating Project (if they don't already exist) and data directories as well as    ##
+##                     changing the working directory of the script                     ##
+##**************************************************************************************##
+
             os.chdir(self.work_dir)
 
             if os.path.isdir(os.getcwd() + "/" + self.projectNameWindow_obj.project_Name):
@@ -1093,12 +1350,17 @@ class QuESoParameters(QtGui.QMainWindow):
             temp_name = FreeCAD.ActiveDocument.Name
             FreeCAD.getDocument(temp_name).saveAs(self.work_dir + "/" + self.projectNameWindow_obj.project_Name + ".FCStd")
 
+            #Step directory is needed in case the user wants to use Gmsh mesher
             self.STL_directory = self.data_dir + "/" + self.projectNameWindow_obj.project_Name + ".stl"
             self.step_directory = self.data_dir + "/" + self.projectNameWindow_obj.project_Name + ".step"
+
+## **************************************************************************************
+            
+##**************************************************************************************##
+##                        Bounding Box with 0.1 offset in total                         ##
+##**************************************************************************************##
+
             mybounds=self.bounds()
-
-            #bounds with 0.1 offset in total
-
             self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
             self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
             self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
@@ -1106,6 +1368,11 @@ class QuESoParameters(QtGui.QMainWindow):
             self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
             self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
 
+## **************************************************************************************
+            
+##**************************************************************************************##
+##          Creating QuESoParameters.json file and Exporting surface STL files          ##
+##**************************************************************************************##
 
             QuESoParam = \
             {
@@ -1132,32 +1399,17 @@ class QuESoParameters(QtGui.QMainWindow):
                 ]
             }
 
-            self.OtherInfos = \
-            {
-                "mainObjectName"        : self.mainObjectName,
-                "SurfaceLoadFaces"      : self.SurfaceLoad_faces,
-                "PenaltySupportFaces"   : self.PenaltySupport_faces,
-                "working_directory"     : self.work_dir,
-                "STL_directory"         : self.STL_directory,
-                "QuESo_directory"       : self.viewport.textInput_QuESo_.text(),
-                "QuESo_lib_directory"   : self.viewport.textInput_QuESo_.text() + "/libs",
-                "kratos_directory"      : self.viewport.textInput_Kratos_.text() + '/bin/Release',
-                "kratos_lib_directory"  : self.viewport.textInput_Kratos_.text() + '/bin/Release/libs'
-            }
-
-
-            # Creating QuESoParameters.json file and Exporting surface STL files:
+            #In the QuESoParameters.json file, in order to include the name of the surfaces that \n
+            #are subject to boundary conditions, the function called 'append_json' is used. \n
+            #Its definition is at the Supplementary Functions section (at the end of the \n
+            #QuESoParameters main window's methods)
+            #It basically appends the names of the respective surfaces in the 'conditions' key.
 
             with open('QuESoParameters.json', 'w') as f:
                 json.dump(QuESoParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
 
             for i in range (int(len(self.SurfaceLoad_force_arr))):
-                print("i = " + str(i))
-                print("surface load arr = " + str(self.SurfaceLoad_force_arr[i]))
-                print("whole surface load arr = " + str(self.SurfaceLoad_force_arr))
-                print("magnitude = " + str(self.SurfaceLoad_modulus_arr[i]))
-                print("whole magnitude arr = " + str(self.SurfaceLoad_modulus_arr))
                 force_direction = list(self.SurfaceLoad_force_arr[i])
                 magnitude = self.SurfaceLoad_modulus_arr[i]
                 SurfaceLoad_json = {"SurfaceLoadCondition": {
@@ -1188,20 +1440,50 @@ class QuESoParameters(QtGui.QMainWindow):
                 PenaltySupport_STL_Face_Object = [(FreeCAD.getDocument(self.ActiveDocument_Name).getObject(faceObject_Name))]
                 Mesh.export(PenaltySupport_STL_Face_Object, self.data_dir + "/" + faceObject_Name + '.stl')
 
-            # Creating KratosParameters.json file:
+## **************************************************************************************
+                
+##**************************************************************************************##
+##    Creating the OtherInfos.json file, which contains other several things for the    ##
+##                         proper functionality of the plug-in                          ##
+##**************************************************************************************##
+
+            self.OtherInfos = \
+            {
+                "mainObjectName"        : self.mainObjectName,
+                "SurfaceLoadFaces"      : self.SurfaceLoad_faces,
+                "PenaltySupportFaces"   : self.PenaltySupport_faces,
+                "working_directory"     : self.work_dir,
+                "STL_directory"         : self.STL_directory,
+                "QuESo_directory"       : self.viewport.textInput_QuESo_.text(),
+                "QuESo_lib_directory"   : self.viewport.textInput_QuESo_.text() + "/libs",
+                "kratos_directory"      : self.viewport.textInput_Kratos_.text() + '/bin/Release',
+                "kratos_lib_directory"  : self.viewport.textInput_Kratos_.text() + '/bin/Release/libs'
+            }
+
+            with open('OtherInfos.json', 'w') as f:
+                json.dump(self.OtherInfos, f, indent=4, separators=(", ", ": "), sort_keys=False)
+                pass
+
+## **************************************************************************************
+
+##**************************************************************************************##
+##          Creating KratosParameters.json and StructuralMaterials.json files           ##
+##**************************************************************************************##
+
             with open('KratosParameters.json', 'w') as f:
                 json.dump(self.SolverSettingsBox_obj.KratosParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
             
-            # Creating StructuralMaterials.json file:
             with open('StructuralMaterials.json', 'w') as f:
                 json.dump(self.SolverSettingsBox_obj.StructuralMat, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
 
-            # Creating OtherInfos.json file:
-            with open('OtherInfos.json', 'w') as f:
-                json.dump(self.OtherInfos, f, indent=4, separators=(", ", ": "), sort_keys=False)
-                pass
+## **************************************************************************************
+
+##**************************************************************************************##
+##   Creating the QuESo_main.py file, which must be run by Python interpreter so that   ##
+##                    QuESo and then Kratos can perform their tasks                     ##
+##**************************************************************************************##
 
             QuESo_main_script = \
 '''from QuESo_PythonApplication.PyQuESo import PyQuESo
@@ -1214,10 +1496,18 @@ def main():
 if __name__ == "__main__":
     main()'''.format(QuESo_param_json="QuESoParameters.json")
 
-            # Creating QuESo_main.py file:
             with open('QuESo_main.py', 'w') as f:
                 f.write(QuESo_main_script)
                 pass
+
+## **************************************************************************************
+            
+##**************************************************************************************##
+##  Performing the surface mesh and saving the resultant STL file to be used later by   ##
+##                                        QuESo                                         ##
+##**************************************************************************************##
+            
+## ---- In case user wants to use Gmsh mesher (Gmsh takes STEP file as input and saves STL as output) ----
 
             if self.gmsh_use_flag == True:
                 object = []
@@ -1237,9 +1527,18 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
                 with open('Gmsh_main.py', 'w') as f:
                     f.write(Gmsh_main_script)
                     pass
+
+                #Although Gmsh_main.py is to be run by Python interpreter, we wanted to \n
+                #open it in a separate system console so that the user can see the \n
+                #progress. Therefore, Gmsh_main.py is run by Python interpreter in \n
+                #a subprocess
                 
                 subprocess_command = "gnome-terminal --title='Running Gmsh' -- bash -c 'cd {dir}; python3 Gmsh_main.py'".format(dir=self.work_dir)
                 subprocess.run(subprocess_command, timeout=None, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
+
+##  --------------------------------------------------------------------------------------
+
+## ---- In case user wants to use FreeCAD's Standard mesher ------------------------------
 
             elif self.gmsh_use_flag == False:
                 object = []
@@ -1248,12 +1547,16 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
                 msh.Mesh = MeshPart.meshFromShape(Shape=object[0].Shape, LinearDeflection = float(self.viewport.surface_deviation_textInput.text()), AngularDeflection = float(self.viewport.angular_deviation_textInput.text()), Relative = True)
                 Mesh.export([FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject("Mesh")], str(self.STL_directory))
 
+##  --------------------------------------------------------------------------------------
+                
+##  **************************************************************************************
 
-            #BOUNDINGBOX&GRID
+##**************************************************************************************##
+##                      Visualizing the bounding box for the model                      ##
+##**************************************************************************************##
 
             if self.visulizerun>0:
                 FreeCAD.activeDocument().removeObject('Grid')
-                #FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
                 for i in self.gridList:
                     FreeCAD.activeDocument().removeObject(i)
                 self.gridList=[]
@@ -1270,7 +1573,6 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
             oripl_Y=BDvol.Placement.Base.y
             oripl_Z=BDvol.Placement.Base.z
 
-
             if (mybounds[6] and mybounds[7]) > 0.0:
                 pl_z_first=[]
                 pl_z_sec=[]
@@ -1284,7 +1586,6 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
                     duble.Label = "_BoundBoxRectangle_z_fill"+str(i)
                     Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
                     conteneurRectangle.addObject(duble)
-    
     
             if (mybounds[6] and mybounds[8]) > 0.0:
                 pl_y_first=[]
@@ -1320,44 +1621,35 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
             os.chdir(self.work_dir)
             self.close()
 
+## **************************************************************************************
+
+## ######################################################################################
+            
+##########################################################################################
+##                                                                                      ##
+##            TASKS DONE BY THE CANCEL BUTTON ON QuESoParameters MAIN WINDOW            ##
+##                                                                                      ##
+##########################################################################################
+
     def onCancel(self):
         self.result = "Cancel"
         self.close()
 
+## ######################################################################################
 
-    def bounds(self):
-        try:
-            mesh = Mesh.Mesh(self.STL_directory)
+##########################################################################################
+##                                                                                      ##
+##                          SUPPLEMENTARY FUNCTION DEFINITIONS                          ##
+##                                                                                      ##
+##########################################################################################
 
-        except:
-            object = []
-            object.append(FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(FreeCAD.ActiveDocument.Objects[0].Name))
-            STL_temp_directory = self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name + "_temp.stl"
-            Mesh.export(object, STL_temp_directory)
-            mesh = Mesh.Mesh(STL_temp_directory)
+##**************************************************************************************##
+##          Visualize grids function for the checkbox item on the main window           ##
+##**************************************************************************************##
 
-        # boundBox
-        boundBox_    = mesh.BoundBox
-
-        try:
-            os.remove(STL_temp_directory)
-        except:
-            pass
-
-        boundBoxXMin = boundBox_.XMin
-        boundBoxYMin = boundBox_.YMin
-        boundBoxZMin = boundBox_.ZMin
-
-        boundBoxXMax = boundBox_.XMax
-        boundBoxYMax = boundBox_.YMax
-        boundBoxZMax = boundBox_.ZMax
-
-        boundBoxLX=boundBox_.XLength
-        boundBoxLY=boundBox_.YLength
-        boundBoxLZ=boundBox_.ZLength
-
-        return [boundBoxXMin, boundBoxYMin, boundBoxZMin, boundBoxXMax, boundBoxYMax, boundBoxZMax, boundBoxLX, boundBoxLY, boundBoxLZ]
-    
+# VisualizeGrid_Fun and deVisualizeGrid_Fun functions make use of another function defined,
+# namely 'bounds'. Its definition is given in a separate section
+        
     def VisualizeGrid_Fun(self):
 
         mybounds=self.bounds()
@@ -1370,15 +1662,8 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
         self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
         self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
         self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
+
         #BOUNDINGBOX&GRID
-        #if vizualize run for the first time
-        '''
-        if self.visulizerun>1:
-            FreeCAD.activeDocument().removeObject('Grid')
-            for i in self.gridList:
-                FreeCAD.activeDocument().removeObject(i)
-            self.gridList=[]
-        '''
         BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
         conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
             
@@ -1407,7 +1692,6 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
                 self.gridList.append(duble.Name)
                 Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
                 conteneurRectangle.addObject(duble)
-
 
         if (mybounds[6] and mybounds[8]) > 0.0:
             pl_y_first=[]
@@ -1440,9 +1724,14 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
         FreeCAD.ActiveDocument.recompute()
         FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
 
-    def deVisualizeGrid_Fun(self):
+##  **************************************************************************************
+        
+##**************************************************************************************##
+##         Removing Bounding Box grids when the checkbox item's tick is removed         ##
+##**************************************************************************************##
 
-        ######### INSERT YOUR CODE HERE #########
+
+    def deVisualizeGrid_Fun(self):
 
         if self.visulizerun>0:
             FreeCAD.activeDocument().removeObject('Grid')
@@ -1450,7 +1739,50 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
                 FreeCAD.activeDocument().removeObject(i)
             self.gridList=[]
             self.visulizerun = 0
-            
+
+##  **************************************************************************************
+
+##**************************************************************************************##
+##                          Obtaining the bounds of the grid box                        ##
+##**************************************************************************************##
+
+    def bounds(self):
+        try:
+            mesh = Mesh.Mesh(self.STL_directory)
+
+        except:
+            object = []
+            object.append(FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(FreeCAD.ActiveDocument.Objects[0].Name))
+            STL_temp_directory = self.projectNameWindow_obj.project_dir + "/" + self.projectNameWindow_obj.project_Name + "_temp.stl"
+            Mesh.export(object, STL_temp_directory)
+            mesh = Mesh.Mesh(STL_temp_directory)
+
+        boundBox_    = mesh.BoundBox
+
+        try:
+            os.remove(STL_temp_directory)
+        except:
+            pass
+
+        boundBoxXMin = boundBox_.XMin
+        boundBoxYMin = boundBox_.YMin
+        boundBoxZMin = boundBox_.ZMin
+
+        boundBoxXMax = boundBox_.XMax
+        boundBoxYMax = boundBox_.YMax
+        boundBoxZMax = boundBox_.ZMax
+
+        boundBoxLX=boundBox_.XLength
+        boundBoxLY=boundBox_.YLength
+        boundBoxLZ=boundBox_.ZLength
+
+        return [boundBoxXMin, boundBoxYMin, boundBoxZMin, boundBoxXMax, boundBoxYMax, boundBoxZMax, boundBoxLX, boundBoxLY, boundBoxLZ]
+
+##  **************************************************************************************
+
+##**************************************************************************************##
+##               Appending boundary conditions to the relevant JSON file                ##
+##**************************************************************************************##
 
 
     def append_json(self, entry, filename='QuESoParameters.json'):
@@ -1462,9 +1794,22 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
             with open(filename, "w") as file:
                 json.dump(data, file, indent = 4, separators=(", ", ": "), sort_keys=False)
 
-            
+##  **************************************************************************************
 
-################################## OTHER REQUIRED CLASS DEFINITIONS #############################################
+##  ######################################################################################
+                
+## _______________________________________________________________________________________
+## _______________________________________________________________________________________
+
+##########################################################################################
+##                                                                                      ##
+##                           OTHER REQUIRED CLASS DEFINITIONS                           ##
+##                                                                                      ##
+##########################################################################################
+
+##**************************************************************************************##
+##             Dialog Box to give project a name and specify its directory              ##
+##**************************************************************************************##
 
 class projectNameWindow(QtGui.QDialog):
 
@@ -1480,6 +1825,8 @@ class projectNameWindow(QtGui.QDialog):
         layout = QtGui.QGridLayout()
 
         self.setWindowTitle("Project Name")
+
+        # Introducing QtGui's built-in icons for visual enchancements
         forward_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowForward)
         cancel_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
         browse_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DirOpenIcon)
@@ -1523,6 +1870,7 @@ class projectNameWindow(QtGui.QDialog):
         cancelButton.setIcon(cancel_icon)
         okButton = QtGui.QPushButton('Next', self)
         okButton.setAutoDefault(True)
+
         okButton.clicked.connect(self.onOkButton)
         okButton.setAutoDefault(True)
         okButton.setIcon(forward_arrow_icon)
@@ -1557,9 +1905,26 @@ class projectNameWindow(QtGui.QDialog):
         project_dir = QtGui.QFileDialog.getExistingDirectory(self, "Select Directory",os.getcwd(), QtGui.QFileDialog.ShowDirsOnly)
         self.textInput_dir.setText(project_dir)
 
+##  **************************************************************************************
+        
+##**************************************************************************************##
+## Penalty Support Boundary Condition Dialog Box - the one that appears after clicking  ##
+##                     on a surface and on which values are entered                     ##
+##**************************************************************************************##
+
+# The reason of implementing it separately from QuESoParameters main window is to be \n
+# able reset the values in the text input fields upon closing the dialog box. Also, \n
+# error handling is easier that such that if the user leaves the value input fields, \n
+# we can pop an error message and return to dialog box again. Also, it is not really \n
+# dependent QuESoParameters main window - i.e. it is not a button or checkbox that is \n
+# located directly on the main window. It is a separate dialog box, and we may want to \n
+# show/execute it (depending on the situation) several times when the user decides so.
+# It is also more convenient script-based, because we already created an instace of it \n
+# that is an object of QuESoParameters main window. So, it does not go out of scope \n
+# and we can show/execute it whenever we want.
 
 class PenaltySupportBCBox(QtGui.QDialog):
-    """"""
+
     def __init__(self):
         super(PenaltySupportBCBox, self).__init__()
         self.initUI()
@@ -1567,15 +1932,15 @@ class PenaltySupportBCBox(QtGui.QDialog):
     def initUI(self):
             width = 350
             height = 120
-            std_validate = QtGui.QDoubleValidator()
+            std_validate = QtGui.QDoubleValidator() #Validating the input to be a double
             std_validate.setNotation(QtGui.QDoubleValidator.StandardNotation)
             centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
             self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
             self.setWindowTitle("Apply PenaltySupport Boundary Condition")
             self.label_PenaltySupport = QtGui.QLabel("Please enter the displacement constraint values:", self)
             self.label_PenaltySupport.move(10, 20)
-            self.element_list = []
-            self.icon_element_list = []
+            # self.element_list = [] #It seems redundant?
+            # self.icon_element_list = [] #It seems redundant?
 
             self.x_val = 0
             self.y_val = 0
@@ -1609,12 +1974,13 @@ class PenaltySupportBCBox(QtGui.QDialog):
 
             self.PenaltySupport_count = 0
 
+    # Adding the feature of resetting the input values upon closing the dialog box
+
     def closeEvent(self, event):
         self.resetInputValues()
         event.accept()
 
     def okButton_PenaltySupportBCBox(self):
-        #print("Mouse Click " + str(self.PenaltySupport_count))
         self.PenaltySupport_count = self.PenaltySupport_count + 1
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
@@ -1628,13 +1994,32 @@ class PenaltySupportBCBox(QtGui.QDialog):
         self.okButton_Flag = True
         self.close()
 
+    # The simple function to reset values in the text input fields
     def resetInputValues(self):
         self.text_x_constraint.setText("")
         self.text_y_constraint.setText("")
         self.text_z_constraint.setText("")
 
+##  **************************************************************************************
+
+##**************************************************************************************##
+##    Surface Load Boundary Condition Dialog Box - the one that appears after clicking  ##
+##                     on a surface and on which values are entered                     ##
+##**************************************************************************************##
+
+# The reason of implementing it separately from QuESoParameters main window is to be \n
+# able reset the values in the text input fields upon closing the dialog box. Also, \n
+# error handling is easier that such that if the user leaves the value input fields, \n
+# we can pop an error message and return to dialog box again. Also, it is not really \n
+# dependent QuESoParameters main window - i.e. it is not a button or checkbox that is \n
+# located directly on the main window. It is a separate dialog box, and we may want to \n
+# show/execute it (depending on the situation) several times when the user decides so.
+# It is also more convenient script-based, because we already created an instace of it \n
+# that is an object of QuESoParameters main window. So, it does not go out of scope \n
+# and we can show/execute it whenever we want.
+
 class SurfaceLoadBCBox(QtGui.QDialog):
-    """"""
+
     def __init__(self):
         super(SurfaceLoadBCBox, self).__init__()
         self.initUI()
@@ -1642,7 +2027,7 @@ class SurfaceLoadBCBox(QtGui.QDialog):
     def initUI(self):
             width = 350
             height = 175
-            std_validate = QtGui.QDoubleValidator()
+            std_validate = QtGui.QDoubleValidator() #Validating the input to be a double
             std_validate.setNotation(QtGui.QDoubleValidator.StandardNotation)
             centerPoint = QtGui.QDesktopWidget().availableGeometry().center()
             self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
@@ -1657,7 +2042,7 @@ class SurfaceLoadBCBox(QtGui.QDialog):
 
             self.label_SurfaceLoad_direction = QtGui.QLabel("Please enter the acting direction of the force :", self)
             self.label_SurfaceLoad_direction.move(10, self.text_SurfaceLoad_modulus.y()+30)
-            self.element_list = []
+
             self.x_val = 0
             self.y_val = 0
             self.z_val = 0
@@ -1688,15 +2073,13 @@ class SurfaceLoadBCBox(QtGui.QDialog):
             okButton_SurfaceLoadBCBox.clicked.connect(self.okButton_SurfaceLoadBCBox)
             okButton_SurfaceLoadBCBox.setAutoDefault(True)
 
-            self.SurfaceLoad_count = 1
+    # Adding the feature of resetting the input values upon closing the dialog box
 
     def closeEvent(self, event):
         self.resetInputValues()
         event.accept()
 
     def okButton_SurfaceLoadBCBox(self):
-        #print("Mouse Click " + str(self.SurfaceLoad_count))
-        self.SurfaceLoad_count = self.SurfaceLoad_count + 1
         self.x_val = self.text_x_constraint.text()
         self.y_val = self.text_y_constraint.text()
         self.z_val = self.text_z_constraint.text()
@@ -1710,14 +2093,36 @@ class SurfaceLoadBCBox(QtGui.QDialog):
         self.okButton_Flag = True
         self.close()
 
+    # The simple function to reset values in the text input fields
+
     def resetInputValues(self):
         self.text_x_constraint.setText("")
         self.text_y_constraint.setText("")
         self.text_z_constraint.setText("")
         self.text_SurfaceLoad_modulus.setText("")
 
+##  **************************************************************************************
+
+##**************************************************************************************##
+##  The list showing the surfaces subject to Penalty Support Boundary Condition by the  ##
+##                                         user                                         ##
+##**************************************************************************************##
+
+# The reason of implementing it separately from QuESoParameters main window is to be \n
+# able delete the FaceIDs completely in the closing event when user decides to discard \n
+# them. Also, if the user does not discard, we must be capable of keeping track of the \n
+# surfaces subject to Penalty Support Boundary Condition - that is to say, we must not \n
+# get a blank list every time user launches unless he/she does not discard it. Moreover, \n
+# it is not really dependent QuESoParameters main window - i.e. it is not a button or \n 
+# checkbox that is located directly on the main window. It is a separate dialog box, \n
+# and we may want to show several times when the user decides so. It is also more \n 
+# convenient script-based, because we already created an instace of it that is an object \n 
+# of QuESoParameters main window. So, it does not go out of scope and we can show it \n
+# whenever we want.
+
+
 class PenaltySupportFacesList(QtGui.QWidget):
-    """"""
+
     def __init__(self):
         QtGui.QWidget.__init__(self)
         self.setWindowTitle("List of Faces")
@@ -1769,11 +2174,11 @@ class PenaltySupportFacesList(QtGui.QWidget):
 
         self.setLayout(layout)
 
+        # Setting the position such that it will always appear at the top-left corner
         topLeftPoint = QtGui.QDesktopWidget().availableGeometry().topLeft()
         frameGm = self.frameGeometry()
         frameGm.moveTopLeft(topLeftPoint)
         self.move(frameGm.topLeft())
-
 
     def closeEvent(self, event):
         if (self.result):
@@ -1782,8 +2187,27 @@ class PenaltySupportFacesList(QtGui.QWidget):
             self.listwidget.clear()
             event.accept()
 
+##  **************************************************************************************
+
+##**************************************************************************************##
+##     The list showing the surfaces subject to Surface Load Boundary Condition by the  ##
+##                                         user                                         ##
+##**************************************************************************************##
+
+# The reason of implementing it separately from QuESoParameters main window is to be \n
+# able delete the FaceIDs completely in the closing event when user decides to discard \n
+# them. Also, if the user does not discard, we must be capable of keeping track of the \n
+# surfaces subject to Surface Load Boundary Condition - that is to say, we must not \n
+# get a blank list every time user launches unless he/she does not discard it. Moreover, \n
+# it is not really dependent QuESoParameters main window - i.e. it is not a button or \n 
+# checkbox that is located directly on the main window. It is a separate dialog box, \n
+# and we may want to show several times when the user decides so. It is also more \n 
+# convenient script-based, because we already created an instace of it that is an object \n 
+# of QuESoParameters main window. So, it does not go out of scope and we can show it \n
+# whenever we want.
+
 class SurfaceLoadFacesList(QtGui.QWidget):
-    """"""
+
     def __init__(self):
         QtGui.QWidget.__init__(self)
         self.setWindowTitle("List of Faces")
@@ -1835,6 +2259,7 @@ class SurfaceLoadFacesList(QtGui.QWidget):
 
         self.setLayout(layout)
 
+        # Setting the position such that it will always appear at the top-left corner
         topLeftPoint = QtGui.QDesktopWidget().availableGeometry().topLeft()
         frameGm = self.frameGeometry()
         frameGm.moveTopLeft(topLeftPoint)
@@ -1847,6 +2272,12 @@ class SurfaceLoadFacesList(QtGui.QWidget):
         else:
             self.listwidget.clear()
             event.accept()
+
+##  **************************************************************************************
+            
+##**************************************************************************************##
+##                 The dialog box to set up the Kratos Solver Settings                  ##
+##**************************************************************************************##
 
 class SolverSettingsBox(QtGui.QDialog):
 
@@ -2056,6 +2487,9 @@ class SolverSettingsBox(QtGui.QDialog):
         self.setGeometry(centerPoint.x()-0.5*width, centerPoint.y()-0.5*height, width, height)
         self.setFixedSize(width, height)
 
+    # When the Ok button is clicked, the key:value pairs that will be in KratosParameters.json
+    # file are created, but the JSON file is not dumped yet. Dumping it takes place upon clicking
+    # the Ok button of QuESoParameters main window.
     
     def onOk(self):
 
@@ -2173,3 +2607,7 @@ class SolverSettingsBox(QtGui.QDialog):
     def onCancel(self):
         self.result = "Cancel"
         self.close()
+
+##  **************************************************************************************
+
+##  ######################################################################################
