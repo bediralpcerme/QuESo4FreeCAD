@@ -69,7 +69,7 @@ class QuESoParameters(QtGui.QMainWindow):
         blueFont = QtGui.QPalette()
         blueFont.setColor(QtGui.QPalette.WindowText, QtGui.QColor('#005293'))
 
-        # Introducing QtGui's built-in icons for visual enchancements
+        # Introducing Qt's built-in icons for visual enchancements
 
         back_arrow_icon = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_ArrowBack)
         cancel_icon     = QtGui.QApplication.style().standardIcon(QtGui.QStyle.StandardPixmap.SP_DialogCancelButton)
@@ -539,7 +539,7 @@ class QuESoParameters(QtGui.QMainWindow):
 ##**************************************************************************************##
 
         #Although our primary pop-up window is the QuESoParameters window, it is not the 
-        #pop-up window that is shown to the user firstly, when the user wants to user the 
+        #pop-up window that is shown to the user firstly, when the user wants to use the 
         #whole plug-in. Instead, the first pop-up window shown is the project name window
         #(which is an instance of the class 'projectNameWindow', and belongs to our primary 
         #window 'QuESoParameters' QMainWindow). The user enters the name and directory of the 
@@ -567,7 +567,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
 ##########################################################################################
 ##                                                                                      ##
-##            FUNCTION DEFINITIONS OF PREVOUS VALUE/BOUNDARY CONDITION CHECK            ##
+##            FUNCTION DEFINITIONS OF PREVIOUS VALUE/BOUNDARY CONDITION CHECK            ##
 ##                                                                                      ##
 ##########################################################################################
 
@@ -867,8 +867,9 @@ class QuESoParameters(QtGui.QMainWindow):
         
 ## ---- Visualizing the bounding box grids -----------------------------------------------
 
-    #Visualizing grids uses a function called 'bounds'. Its definition is given in the
-    #Supplementary Functions Section. (At the end of methods of QuESoParameters main window)
+    #Visualizing/devisualizing grids uses a function called 'VisualizeGrid_Fun' and 
+    #'deVisualizeGrid_Fun'. Their definition is given in the Supplementary Functions Section. 
+    #(At the end of methods of QuESoParameters main window)
 
     def onVisualize(self):
             
@@ -876,89 +877,6 @@ class QuESoParameters(QtGui.QMainWindow):
                 self.VisualizeGrid_Fun()
             else:
                 self.deVisualizeGrid_Fun()
-
-    def VisualizeGrid_Fun(self):
-
-        mybounds=self.bounds()
-        self.visulizerun=self.visulizerun+1
-
-        #bounds with 0.1 offset in total
-        self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
-        self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
-        self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
-        self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
-        self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
-        self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
-
-        #BOUNDINGBOX&GRID
-        BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
-        conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
-            
-        
-        BDvol.Length.Value = (self.upperbound_x_-self.lowerbound_x_)
-        BDvol.Width.Value  = (self.upperbound_y_-self.lowerbound_y_)
-        BDvol.Height.Value = (self.upperbound_z_-self.lowerbound_z_)
-        BDvol.Placement = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
-        BDPl = BDvol.Placement
-        oripl_X=BDvol.Placement.Base.x
-        oripl_Y=BDvol.Placement.Base.y
-        oripl_Z=BDvol.Placement.Base.z
-        Gui.ActiveDocument.getObject(BDvol.Name).Transparency = 100
-        
-
-        if (mybounds[6] and mybounds[7]) > 0.0:
-            pl_z_first=[]
-            pl_z_sec=[]
-            stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.viewport.textInput_nElements_z_.text())
-            
-            for i in range(int(self.viewport.textInput_nElements_z_.text())+1):
-
-                pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
-                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_z_fill"+str(i)
-                self.gridList.append(duble.Name)
-                Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
-                conteneurRectangle.addObject(duble)
-
-        if (mybounds[6] and mybounds[8]) > 0.0:
-            pl_y_first=[]
-            pl_y_sec=[]
-            stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.viewport.textInput_nElements_y_.text())
-
-            for i in range(int(self.viewport.textInput_nElements_y_.text())+1):
-
-                pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
-                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_y_fill"+str(i)
-                self.gridList.append(duble.Name)
-                Gui.activeDocument().activeObject().LineColor = (0.0 , 1.0, 0.0)
-                conteneurRectangle.addObject(duble)
-
-        if (mybounds[7] and mybounds[8]) > 0.0:
-            pl_x_first=[]
-            pl_x_sec=[]
-            stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.viewport.textInput_nElements_x_.text())
-
-            for i in range(int(self.viewport.textInput_nElements_x_.text())+1):
-
-                pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
-                duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
-                duble.Label = "_BoundBoxRectangle_x_fill"+str(i)
-                self.gridList.append(duble.Name)
-                Gui.activeDocument().activeObject().LineColor = (0.0 , 0.0, 1.0)
-                conteneurRectangle.addObject(duble)
-
-        FreeCAD.ActiveDocument.recompute()
-        FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
-
-    def deVisualizeGrid_Fun(self):
-
-        if self.visulizerun>0:
-            FreeCAD.activeDocument().removeObject('Grid')
-            for i in self.gridList:
-                FreeCAD.activeDocument().removeObject(i)
-            self.gridList=[]
-            self.visulizerun = 0
 
 ##  --------------------------------------------------------------------------------------
             
@@ -1003,7 +921,6 @@ class QuESoParameters(QtGui.QMainWindow):
         current_Item = self.PenaltySupportFacesList_Obj.listwidget.currentItem()
         current_Item_text = self.PenaltySupportFacesList_Obj.listwidget.currentItem().text()
         indexToDel = self.PenaltySupportFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        del self.PenaltySupport_displacement_arr[indexToDel]
         k = self.Dirichlet_BC_icons[current_Item_text]
         for i in range (1, int(k), 1):
             obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Dirichlet_BC_" + str(current_Item_text) + "_" + str(i))
@@ -1012,6 +929,7 @@ class QuESoParameters(QtGui.QMainWindow):
             pass
         FreeCAD.ActiveDocument.removeObject('Dirichlet_BC_' + current_Item_text)
         self.Dirichlet_BC_icons.pop(str(current_Item_text))
+        del self.PenaltySupport_displacement_arr[indexToDel]
         del self.PenaltySupport_faces[indexToDel]
         del self.PenaltySupportSelectionList[indexToDel]
         self.PenaltySupportFacesList_Obj.listwidget.takeItem(self.PenaltySupportFacesList_Obj.listwidget.row(current_Item))
@@ -1084,7 +1002,6 @@ class QuESoParameters(QtGui.QMainWindow):
         current_Item = self.SurfaceLoadFacesList_Obj.listwidget.currentItem()
         current_Item_text = self.SurfaceLoadFacesList_Obj.listwidget.currentItem().text()
         indexToDel = self.SurfaceLoadFacesList_Obj.listwidget.indexFromItem(current_Item).row()
-        del self.SurfaceLoad_force_arr[indexToDel]
         k = self.Neumann_BC_icons[current_Item_text]
         for i in range (1, int(k), 1):
             obj  = FreeCAD.ActiveDocument.getObjectsByLabel("Neumann_BC_" + str(current_Item_text) + "_" + str(i))
@@ -1093,8 +1010,9 @@ class QuESoParameters(QtGui.QMainWindow):
             pass
         FreeCAD.ActiveDocument.removeObject('Neumann_BC_' + current_Item_text)
         self.Neumann_BC_icons.pop(str(current_Item_text))
-        del self.SurfaceLoad_faces[indexToDel]
+        del self.SurfaceLoad_force_arr[indexToDel]
         del self.SurfaceLoad_modulus_arr[indexToDel]
+        del self.SurfaceLoad_faces[indexToDel]
         del self.SurfaceLoadSelectionList[indexToDel]
         self.SurfaceLoadFacesList_Obj.listwidget.takeItem(self.SurfaceLoadFacesList_Obj.listwidget.row(current_Item))
 
@@ -1140,8 +1058,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
 ##**************************************************************************************##
 ##  Getting the coordinate of the mouse click and asking the user to enter the penalty  ##
-## support boundary condition value - Storing the Face IDs and corresponding values in  ##
-##                                     a dictionary                                     ##
+## support boundary condition value - Storing the Face IDs and corresponding values     ## 
 ##**************************************************************************************##
 
         if (coin.SoMouseButtonEvent.isButtonPressEvent(event, coin.SoMouseButtonEvent.BUTTON1) == True) \
@@ -1149,7 +1066,7 @@ class QuESoParameters(QtGui.QMainWindow):
             pos = event.getPosition().getValue()
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
             if(element_list != None):
-                self.PenaltySupportBCBox_obj.element_list = element_list
+                self.PenaltySupportBCBox_obj.element_list = element_list # This seems redundant?
                 self.PenaltySupportBCBox_obj.okButton_Flag = False
                 self.PenaltySupportBCBox_obj.exec_()
                 if(self.PenaltySupportBCBox_obj.okButton_Flag):
@@ -1290,6 +1207,7 @@ class QuESoParameters(QtGui.QMainWindow):
                                                element_list.get('Component'), element_list.get('x'), element_list.get('y'))
                     sel = Gui.Selection.getSelectionEx()
                     self.SurfaceLoadSelectionList.append(sel)
+                    self.SurfaceLoad_faces.append(element_list['Component'])
 
 ##  **************************************************************************************
                                         
@@ -1639,7 +1557,6 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
 
             if self.visulizerun>0:
                 FreeCAD.activeDocument().removeObject('Grid')
-                #FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
                 for i in self.gridList:
                     FreeCAD.activeDocument().removeObject(i)
                 self.gridList=[]
@@ -1725,6 +1642,105 @@ gmsh.finalize()'''.format(step_directory = self.step_directory, max_mesh_size = 
 ##                          SUPPLEMENTARY FUNCTION DEFINITIONS                          ##
 ##                                                                                      ##
 ##########################################################################################
+
+##**************************************************************************************##
+##          Visualize grids function for the checkbox item on the main window           ##
+##**************************************************************************************##
+
+# VisualizeGrid_Fun and deVisualizeGrid_Fun functions make use of another function defined,
+# namely 'bounds'. Its definition is given in a separate section
+        
+    def VisualizeGrid_Fun(self):
+
+        mybounds=self.bounds()
+        self.visulizerun=self.visulizerun+1
+
+        #bounds with 0.1 offset in total
+        self.lowerbound_x_=mybounds[0]-(abs(mybounds[0]-mybounds[3]))*0.05
+        self.lowerbound_y_=mybounds[1]-(abs(mybounds[1]-mybounds[4]))*0.05
+        self.lowerbound_z_=mybounds[2]-(abs(mybounds[2]-mybounds[5]))*0.05
+        self.upperbound_x_=mybounds[3]+(abs(mybounds[0]-mybounds[3]))*0.05
+        self.upperbound_y_=mybounds[4]+(abs(mybounds[1]-mybounds[4]))*0.05
+        self.upperbound_z_=mybounds[5]+(abs(mybounds[2]-mybounds[5]))*0.05
+
+        #BOUNDINGBOX&GRID
+        BDvol = FreeCAD.ActiveDocument.addObject("Part::Box","_BoundBoxVolume")
+        conteneurRectangle = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Grid")
+            
+        
+        BDvol.Length.Value = (self.upperbound_x_-self.lowerbound_x_)
+        BDvol.Width.Value  = (self.upperbound_y_-self.lowerbound_y_)
+        BDvol.Height.Value = (self.upperbound_z_-self.lowerbound_z_)
+        BDvol.Placement = FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0))
+        BDPl = BDvol.Placement
+        oripl_X=BDvol.Placement.Base.x
+        oripl_Y=BDvol.Placement.Base.y
+        oripl_Z=BDvol.Placement.Base.z
+        Gui.ActiveDocument.getObject(BDvol.Name).Transparency = 100
+        
+
+        if (mybounds[6] and mybounds[7]) > 0.0:
+            pl_z_first=[]
+            pl_z_sec=[]
+            stepz=abs(self.upperbound_z_-self.lowerbound_z_)/float(self.viewport.textInput_nElements_z_.text())
+            
+            for i in range(int(self.viewport.textInput_nElements_z_.text())+1):
+
+                pl_z_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,self.lowerbound_y_,stepz*(i)+self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,0.0) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_y_-self.lowerbound_y_),placement=pl_z_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_z_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (1.0 , 1.0, 0.0)
+                conteneurRectangle.addObject(duble)
+
+        if (mybounds[6] and mybounds[8]) > 0.0:
+            pl_y_first=[]
+            pl_y_sec=[]
+            stepy=abs(self.upperbound_y_-self.lowerbound_y_)/float(self.viewport.textInput_nElements_y_.text())
+
+            for i in range(int(self.viewport.textInput_nElements_y_.text())+1):
+
+                pl_y_sec.append(FreeCAD.Placement(FreeCAD.Vector(self.lowerbound_x_,stepy*(i)+self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(0.0,0.0,90) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_x_-self.lowerbound_x_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_y_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_y_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (0.0 , 1.0, 0.0)
+                conteneurRectangle.addObject(duble)
+
+        if (mybounds[7] and mybounds[8]) > 0.0:
+            pl_x_first=[]
+            pl_x_sec=[]
+            stepx=abs(self.upperbound_x_-self.lowerbound_x_)/float(self.viewport.textInput_nElements_x_.text())
+
+            for i in range(int(self.viewport.textInput_nElements_x_.text())+1):
+
+                pl_x_sec.append(FreeCAD.Placement(FreeCAD.Vector(stepx*(i)+self.lowerbound_x_,self.lowerbound_y_,self.lowerbound_z_), FreeCAD.Rotation(90,0.0,90) ))
+                duble = Draft.makeRectangle(length=(self.upperbound_y_-self.lowerbound_y_),height=(self.upperbound_z_-self.lowerbound_z_),placement=pl_x_sec[i],face=False,support=None) #Ok
+                duble.Label = "_BoundBoxRectangle_x_fill"+str(i)
+                self.gridList.append(duble.Name)
+                Gui.activeDocument().activeObject().LineColor = (0.0 , 0.0, 1.0)
+                conteneurRectangle.addObject(duble)
+
+        FreeCAD.ActiveDocument.recompute()
+        FreeCAD.activeDocument().removeObject('_BoundBoxVolume')
+
+##  **************************************************************************************
+        
+##**************************************************************************************##
+##         Removing Bounding Box grids when the checkbox item's tick is removed         ##
+##**************************************************************************************##
+
+
+    def deVisualizeGrid_Fun(self):
+
+        if self.visulizerun>0:
+            FreeCAD.activeDocument().removeObject('Grid')
+            for i in self.gridList:
+                FreeCAD.activeDocument().removeObject(i)
+            self.gridList=[]
+            self.visulizerun = 0
+
+##  **************************************************************************************
 
 ##**************************************************************************************##
 ##                          Obtaining the bounds of the grid box                        ##

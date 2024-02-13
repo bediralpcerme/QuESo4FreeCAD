@@ -259,7 +259,8 @@ class PostProcess(QtGui.QDialog):
 ## ---- Resizing Function for Whole Pop-op Window  ---------------------------------------
         
     def resizeEvent(self, event):
-        '''Does resizing of the window when 50% is reached
+        '''Does resizing of the window. Also, the signal is emitted to be caught 
+        by update_gradient, when window width is divisible with 50.
         '''
         if (self.width()%50 == 0):
             self.resized.emit()
@@ -270,7 +271,7 @@ class PostProcess(QtGui.QDialog):
 ## ---- Resizing and Updating Color Gradient Function ------------------------------------
 
     def windowSizedChanged(self):
-        '''Resizing color gradient bar 
+        '''It catches the signal emitted by the resizeEvent, and calls update_gradient function.
         '''
         self.update_gradient()
 
@@ -503,7 +504,9 @@ class PostProcess(QtGui.QDialog):
 ## ---- Update Colour Gradient Function --------------------------------------------------
 
     def update_gradient(self):
-        '''Color gradient is obtained with texts and max/min values 
+        '''Color gradient is obtained with texts and max/min values.
+        Depending on the signal emitted by the resizeEvent, when the windowSizedChanged 
+        catches that signal, it calls this function.
         '''
         self.min_val, self.max_val = self.get_min_max_values()
         gradient_bar = GradientBar(self.min_val, self.max_val, self.width())
@@ -543,7 +546,7 @@ class GradientBar(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
-        ''' Alligns the widget and writes maximum/minimum values
+        ''' Aligns the widget and writes maximum/minimum values
         '''
         self.setMinimumHeight(30)
         self.min_val_label = QtGui.QLabel(f'{self.min_val:.2e}')
