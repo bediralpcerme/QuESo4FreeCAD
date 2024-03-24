@@ -56,6 +56,7 @@ class QuESoParameters(QtGui.QMainWindow):
         std_validate        = QtGui.QIntValidator()                                # The validation method for an input to be integer.
         scientific_validate = QtGui.QDoubleValidator()                             # The validation method for an input to be double.
         scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation) # The validation method for an input to be in scientific notation.
+        double_validate = QtGui.QDoubleValidator()
         self.setWindowTitle("QuESo Parameters")
         self.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, on = True)
@@ -114,8 +115,8 @@ class QuESoParameters(QtGui.QMainWindow):
 
         layout_dialog.setRowMinimumHeight(7, 5)
 
-        self.viewport.label_kratos_ = QtGui.QLabel("Directory of the Kratos:", self)
-        layout_dialog.addWidget(self.viewport.label_kratos_, 8, 0, QtCore.Qt.AlignLeft)
+        self.viewport.label_Kratos_ = QtGui.QLabel("Directory of the Kratos:", self)
+        layout_dialog.addWidget(self.viewport.label_Kratos_, 8, 0, QtCore.Qt.AlignLeft)
 
         layout_dialog.setRowMinimumHeight(9, 0)
 
@@ -200,6 +201,7 @@ class QuESoParameters(QtGui.QMainWindow):
         sublayout_gmshUse.addWidget(self.viewport.maxElSize_label, 0, 0)
         sublayout_gmshUse.setRowMinimumHeight(1, 0)
         self.viewport.maxElSize_textInput = QtGui.QLineEdit(self)
+        self.viewport.maxElSize_textInput.setValidator(double_validate)
         self.viewport.maxElSize_textInput.setPlaceholderText("units in mm")
         sublayout_gmshUse.addWidget(self.viewport.maxElSize_textInput, 2, 0)
         sublayout_gmshUse.setRowMinimumHeight(3, 0)
@@ -207,6 +209,7 @@ class QuESoParameters(QtGui.QMainWindow):
         sublayout_gmshUse.addWidget(self.viewport.minElSize_label, 4, 0)
         sublayout_gmshUse.setRowMinimumHeight(5, 0)
         self.viewport.minElSize_textInput = QtGui.QLineEdit(self)
+        self.viewport.minElSize_textInput.setValidator(double_validate)
         self.viewport.minElSize_textInput.setPlaceholderText("units in mm")
         sublayout_gmshUse.addWidget(self.viewport.minElSize_textInput, 6, 0)
         self.viewport.gmshUse_group.setLayout(sublayout_gmshUse)
@@ -415,7 +418,6 @@ class QuESoParameters(QtGui.QMainWindow):
 ##**************************************************************************************##
 ##                          Beginning of Solver Settings Head                           ##
 ##**************************************************************************************##
-
 
         self.viewport.label_SolverSettings_ = QtGui.QLabel("Solver Settings", self)
         self.viewport.label_SolverSettings_.setFont(boldUnderlinedFont)
@@ -1301,8 +1303,14 @@ class QuESoParameters(QtGui.QMainWindow):
 
     def onSave(self):
 
+##**************************************************************************************##
+##                                Error Handling Section                                ##
+##**************************************************************************************##
+
+## ---- Error Handling for QuESo Parameters Main Window ----------------------------------
+
         if (self.viewport.standardUse_group.isChecked() == False) & (self.viewport.gmshUse_group.isChecked() == False):
-            errorMsg = QtGui.QMessageBox.critical(self, "Error: No mesher selected", "You must select a mesher type!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in QuESo Parameters", "No mesher type selected!\n\nYou must select a mesher type!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
             if errorMsg == QtGui.QMessageBox.Ok:
                 return
         
@@ -1312,9 +1320,108 @@ class QuESoParameters(QtGui.QMainWindow):
                 self.gmsh_use_flag = True
             except:
                 print("You must install Gmsh to your computer by 'pip install --upgrade gmsh' to use it!")
+
+            if not (self.viewport.maxElSize_textInput.text()):
+                errorMsg = QtGui.QMessageBox.critical(self, "Error in QuESo Parameters", "Max. Element Size is left blank!\n\nWhen you choose to use Gmsh mesher, please make sure to enter the max. element size as well!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+                if errorMsg == QtGui.QMessageBox.Ok:
+                    return
+                
+            if not (self.viewport.minElSize_textInput.text()):
+                errorMsg = QtGui.QMessageBox.critical(self, "Error in QuESo Parameters", "Min. Element Size is left blank!\n\nWhen you choose to use Gmsh mesher, please make sure to enter the min. element size as well!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+                if errorMsg == QtGui.QMessageBox.Ok:
+                    return
             
         elif (self.viewport.standardUse_group.isChecked() == True):
             self.gmsh_use_flag = False
+
+            if not (self.viewport.surface_deviation_textInput.text()):
+                errorMsg = QtGui.QMessageBox.critical(self, "Error in QuESo Parameters", "Surface Deviation is left blank!\n\nWhen you choose to use FreeCAD's Standard mesher, please make sure to enter the surface deviation value as well!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+                if errorMsg == QtGui.QMessageBox.Ok:
+                    return
+                
+            if not (self.viewport.angular_deviation_textInput.text()):
+                errorMsg = QtGui.QMessageBox.critical(self, "Error in QuESo Parameters", "Angular Deviation is left blank!\n\nWhen you choose to use FreeCAD's Standard mesher, please make sure to enter the angular deviation value as well!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+                if errorMsg == QtGui.QMessageBox.Ok:
+                    return
+                
+
+        if not (self.viewport.textInput_QuESo_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in QuESo Parameters", "Directory of QuESo is left blank!\n\nPlease make sure to give the directory of QuESo!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+            
+        if not (self.viewport.textInput_Kratos_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in QuESo Parameters", "Directory of Kratos is left blank!\n\nPlease make sure to give the directory of Kratos!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+            
+        if not (self.viewport.textInput_echo_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in QuESo Parameters", "Echo level is left blank!\n\nPlease make sure to enter the value of the echo level!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+            
+        if not (self.viewport.textInput_polynomialOrder_x_.text() and self.viewport.textInput_polynomialOrder_y_.text() and self.viewport.textInput_polynomialOrder_z_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in QuESo Parameters", "At least one polynomial order box is left blank!\n\nPlease make sure to enter a value for the polynomial order of x, y and z!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+            
+        if not (self.viewport.textInput_nElements_x_.text() and self.viewport.textInput_nElements_y_.text() and self.viewport.textInput_nElements_z_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in QuESo Parameters", "At least one number of elements box is left blank!\n\nPlease make sure to enter a value for the number of elements along x, y and z!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+            
+        if not (self.viewport.textInput_residual_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in QuESo Parameters", "Moment fitting residual is left blank!\n\nPlease make sure to enter a value for the moment fitting residual!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+##  --------------------------------------------------------------------------------------
+            
+## ---- Error Handling for Kratos Solver Settings Main Window ----------------------------
+            
+        if not (self.SolverSettingsBox_obj.textInput_start_time_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in Kratos Solver Settings", "Start time is left blank!\n\nPlease make sure to enter a value for the start time!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+            
+        if not (self.SolverSettingsBox_obj.textInput_end_time_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in Kratos Solver Settings", "End time is left blank!\n\nPlease make sure to enter a value for the end time!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+
+        if not (self.SolverSettingsBox_obj.textInput_density_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in Kratos Solver Settings", "Density is left blank!\n\nPlease make sure to enter a value for the density!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+            
+        if not (self.SolverSettingsBox_obj.textInput_young_modulus_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in Kratos Solver Settings", "Young Modulus is left blank!\n\nPlease make sure to enter a value for the Young Modulus!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+
+        if not (self.SolverSettingsBox_obj.textInput_poisson_ratio_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in Kratos Solver Settings", "Poisson Ratio is left blank!\n\nPlease make sure to enter a value for the Poisson Ratio!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+
+        if not (self.SolverSettingsBox_obj.textInput_properties_id_.text()):
+            errorMsg = QtGui.QMessageBox.critical(self, "Error in Kratos Solver Settings", "Properties ID is left blank!\n\nPlease make sure to enter a value for the Properties ID!", QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+            if errorMsg == QtGui.QMessageBox.Ok:
+                return
+            
+##  --------------------------------------------------------------------------------------
+    
+##  **************************************************************************************
 
         reply = QtGui.QMessageBox.question(self, "QuESo Parameters", "Upon Yes, all files related to the project will be saved. \n \n"
                                            "Are you sure you want to continue?", QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
@@ -1469,13 +1576,119 @@ class QuESoParameters(QtGui.QMainWindow):
 ##**************************************************************************************##
 ##          Creating KratosParameters.json and StructuralMaterials.json files           ##
 ##**************************************************************************************##
+            KratosParam = \
+        {
+            "problem_data"    : {
+                "parallel_type" : self.SolverSettingsBox_obj.popup_parallel_type_.currentText(),
+                "echo_level"    : int(self.SolverSettingsBox_obj.popup_echo_level2_.currentText()),
+                "start_time"    : float(self.SolverSettingsBox_obj.textInput_start_time_.text()),
+                "end_time"      : float(self.SolverSettingsBox_obj.textInput_end_time_.text())
+            },
+            "solver_settings" : {
+                "solver_type"              : self.SolverSettingsBox_obj.popup_solver_type_.currentText(),
+                "analysis_type"            : self.SolverSettingsBox_obj.popup_analysis_type_.currentText(),
+                "model_part_name"          : "NurbsMesh",
+                "echo_level"               : int(self.SolverSettingsBox_obj.popup_echo_level3_.currentText()),
+                "domain_size"              : 3,
+                "model_import_settings"    : {
+                    "input_type"     : "use_input_model_part"
+                },
+                "material_import_settings"        : {
+                    "materials_filename" : "StructuralMaterials.json"
+                },
+                "time_stepping"            : {
+                    "time_step" : 1.1       
+                },
+                "linear_solver_settings":{
+                    "preconditioner_type" : "additive_schwarz",
+                    "solver_type": "pardiso_lu",
+                    "max_iteration" : 5000,
+                    "tolerance" : 1e-6
+                },
+                "rotation_dofs"            : False,
+                "builder_and_solver_settings" : {
+                    "use_block_builder" : True
+                },
+                "residual_relative_tolerance"        : 1e-6
+            },
+            "modelers" : [{
+                        "modeler_name": "NurbsGeometryModeler",
+                        "Parameters": {
+                            "model_part_name" : "NurbsMesh",
+                            "geometry_name"   : "NurbsVolume"}
+                    }],
+            
+            "output_processes": 
+            {
+                "vtk_output": 
+                [
+                    {
+                        "python_module": "vtk_embedded_geometry_output_process",
+                        "kratos_module": "KratosMultiphysics.IgaApplication",
+                        "process_name": "VtkEmbeddedGeometryOutputProcess",
+                        "help": "This process writes postprocessing files for Paraview",
+                        "Parameters": {
+                            "mapping_parameters": {
+                                "main_model_part_name": "NurbsMesh",
+                                "nurbs_volume_name": "NurbsVolume",
+                                "embedded_model_part_name": "EmbeddedModelPart"
+                            },
+                            "vtk_parameters": {
+                                "model_part_name": "EmbeddedModelPart",
+                                "output_control_type": "step",
+                                "output_interval": 1,
+                                "file_format": "ascii",
+                                "output_precision": 7,
+                                "output_sub_model_parts": False,
+                                "output_path": "kratos_output",
+                                "save_output_files_in_folder": True,
+                                "nodal_solution_step_data_variables": [
+                                    "DISPLACEMENT"
+                                ],
+                                "nodal_data_value_variables": [
+                                    "CAUCHY_STRESS_VECTOR",
+                                    "VON_MISES_STRESS"
+                                ],
+                                "nodal_flags": [],
+                                "element_data_value_variables": [],
+                                "element_flags": [],
+                                "condition_data_value_variables": [],
+                                "condition_flags": [],
+                                "gauss_point_variables_extrapolated_to_nodes": []
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+
+
+            StructuralMat = \
+            {
+                "properties" : [{
+                    "model_part_name" : "NurbsMesh",
+                    "properties_id"   : int(self.SolverSettingsBox_obj.textInput_properties_id_.text()),
+                    "Material"        : {
+                        "constitutive_law" : {
+                            "name" : self.SolverSettingsBox_obj.popup_constitutive_id_.currentText()
+                        },
+                        "Variables"        : {
+                            "DENSITY"       : float(self.SolverSettingsBox_obj.textInput_density_.text()),
+                            "YOUNG_MODULUS" : float(self.SolverSettingsBox_obj.textInput_young_modulus_.text()),
+                            "POISSON_RATIO" : float(self.SolverSettingsBox_obj.textInput_poisson_ratio_.text())
+                        },
+                        "Tables"           : {}
+                    }
+                }]
+            }
+
 
             with open('KratosParameters.json', 'w') as f:
-                json.dump(self.SolverSettingsBox_obj.KratosParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
+                json.dump(KratosParam, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
             
             with open('StructuralMaterials.json', 'w') as f:
-                json.dump(self.SolverSettingsBox_obj.StructuralMat, f, indent=4, separators=(", ", ": "), sort_keys=False)
+                json.dump(StructuralMat, f, indent=4, separators=(", ", ": "), sort_keys=False)
                 pass
 
 ## **************************************************************************************
@@ -2285,7 +2498,12 @@ class SolverSettingsBox(QtGui.QDialog):
         super(SolverSettingsBox, self).__init__()
         self.initUI()
 
-    def initUI(self):    
+    def initUI(self):
+
+        std_validate        = QtGui.QIntValidator()                                # The validation method for an input to be integer.
+        scientific_validate = QtGui.QDoubleValidator()                             # The validation method for an input to be double.
+        scientific_validate.setNotation(QtGui.QDoubleValidator.ScientificNotation) # The validation method for an input to be in scientific notation.
+        double_validate = QtGui.QDoubleValidator()
     
         self.setWindowTitle("Kratos Solver Settings")
         boldFont=QtGui.QFont()
@@ -2344,8 +2562,10 @@ class SolverSettingsBox(QtGui.QDialog):
 
         sublayout = QtGui.QGridLayout()
         self.textInput_start_time_ = QtGui.QLineEdit(self)
+        self.textInput_start_time_.setValidator(double_validate)
         self.textInput_start_time_.setPlaceholderText("0.0")
         self.textInput_end_time_ = QtGui.QLineEdit(self)
+        self.textInput_end_time_.setValidator(double_validate)
         self.textInput_end_time_.setPlaceholderText("1.0")
         sublayout.addWidget(self.textInput_start_time_, 0, 0, QtCore.Qt.AlignLeft)
         sublayout.setColumnMinimumWidth(1, 20)
@@ -2422,8 +2642,10 @@ class SolverSettingsBox(QtGui.QDialog):
 
         sublayout = QtGui.QGridLayout()
         self.textInput_density_ = QtGui.QLineEdit(self)
+        self.textInput_density_.setValidator(double_validate)
         self.textInput_density_.setPlaceholderText("1.0")
         self.textInput_young_modulus_ = QtGui.QLineEdit(self)
+        self.textInput_young_modulus_.setValidator(double_validate)
         self.textInput_young_modulus_.setPlaceholderText("100")
         sublayout.addWidget(self.textInput_density_, 0, 0, QtCore.Qt.AlignLeft)
         sublayout.setColumnMinimumWidth(1, 20)
@@ -2445,8 +2667,10 @@ class SolverSettingsBox(QtGui.QDialog):
         
         sublayout = QtGui.QGridLayout()
         self.textInput_poisson_ratio_ = QtGui.QLineEdit(self)
+        self.textInput_poisson_ratio_.setValidator(double_validate)
         self.textInput_poisson_ratio_.setPlaceholderText("0.0")
         self.textInput_properties_id_ = QtGui.QLineEdit(self)
+        self.textInput_properties_id_.setValidator(std_validate)
         self.textInput_properties_id_.setPlaceholderText("1")
         sublayout.addWidget(self.textInput_poisson_ratio_, 0, 0, QtCore.Qt.AlignLeft)
         sublayout.setColumnMinimumWidth(1, 20)
@@ -2492,115 +2716,7 @@ class SolverSettingsBox(QtGui.QDialog):
     # the Ok button of QuESoParameters main window.
     
     def onOk(self):
-
         self.result = "Ok"
-
-        self.KratosParam = \
-        {
-            "problem_data"    : {
-                "parallel_type" : self.popup_parallel_type_.currentText(),
-                "echo_level"    : int(self.popup_echo_level2_.currentText()),
-                "start_time"    : float(self.textInput_start_time_.text()),
-                "end_time"      : float(self.textInput_end_time_.text())
-            },
-            "solver_settings" : {
-                "solver_type"              : self.popup_solver_type_.currentText(),
-                "analysis_type"            : self.popup_analysis_type_.currentText(),
-                "model_part_name"          : "NurbsMesh",
-                "echo_level"               : int(self.popup_echo_level3_.currentText()),
-                "domain_size"              : 3,
-                "model_import_settings"    : {
-                    "input_type"     : "use_input_model_part"
-                },
-                "material_import_settings"        : {
-                    "materials_filename" : "StructuralMaterials.json"
-                },
-                "time_stepping"            : {
-                    "time_step" : 1.1       
-                },
-                "linear_solver_settings":{
-                    "preconditioner_type" : "additive_schwarz",
-                    "solver_type": "pardiso_lu",
-                    "max_iteration" : 5000,
-                    "tolerance" : 1e-6
-                },
-                "rotation_dofs"            : False,
-                "builder_and_solver_settings" : {
-                    "use_block_builder" : True
-                },
-                "residual_relative_tolerance"        : 1e-6
-            },
-            "modelers" : [{
-                        "modeler_name": "NurbsGeometryModeler",
-                        "Parameters": {
-                            "model_part_name" : "NurbsMesh",
-                            "geometry_name"   : "NurbsVolume"}
-                    }],
-            
-            "output_processes": 
-            {
-                "vtk_output": 
-                [
-                    {
-                        "python_module": "vtk_embedded_geometry_output_process",
-                        "kratos_module": "KratosMultiphysics.IgaApplication",
-                        "process_name": "VtkEmbeddedGeometryOutputProcess",
-                        "help": "This process writes postprocessing files for Paraview",
-                        "Parameters": {
-                            "mapping_parameters": {
-                                "main_model_part_name": "NurbsMesh",
-                                "nurbs_volume_name": "NurbsVolume",
-                                "embedded_model_part_name": "EmbeddedModelPart"
-                            },
-                            "vtk_parameters": {
-                                "model_part_name": "EmbeddedModelPart",
-                                "output_control_type": "step",
-                                "output_interval": 1,
-                                "file_format": "ascii",
-                                "output_precision": 7,
-                                "output_sub_model_parts": False,
-                                "output_path": "kratos_output",
-                                "save_output_files_in_folder": True,
-                                "nodal_solution_step_data_variables": [
-                                    "DISPLACEMENT"
-                                ],
-                                "nodal_data_value_variables": [
-                                    "CAUCHY_STRESS_VECTOR",
-                                    "VON_MISES_STRESS"
-                                ],
-                                "nodal_flags": [],
-                                "element_data_value_variables": [],
-                                "element_flags": [],
-                                "condition_data_value_variables": [],
-                                "condition_flags": [],
-                                "gauss_point_variables_extrapolated_to_nodes": []
-                            }
-                        }
-                    }
-                ]
-            }
-        }
-
-
-        self.StructuralMat = \
-        {
-            "properties" : [{
-                "model_part_name" : "NurbsMesh",
-                "properties_id"   : int(self.textInput_properties_id_.text()),
-                "Material"        : {
-                    "constitutive_law" : {
-                        "name" : self.popup_constitutive_id_.currentText()
-                    },
-                    "Variables"        : {
-                        "DENSITY"       : float(self.textInput_density_.text()),
-                        "YOUNG_MODULUS" : float(self.textInput_young_modulus_.text()),
-                        "POISSON_RATIO" : float(self.textInput_poisson_ratio_.text())
-                    },
-                    "Tables"           : {}
-                }
-            }]
-        }
-
         self.close()
 
             
