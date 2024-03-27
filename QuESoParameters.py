@@ -10,6 +10,9 @@
 ##--------------------------------------------------------------------------------------##
 ##--------------------------------------------------------------------------------------##
 
+# Tasks remaining:
+# - Normalization of force vector
+# - Highlight the selected face from the boundary condition list
 
 from FreeCAD_PySide import QtGui, QtCore
 import os, shutil
