@@ -1140,7 +1140,6 @@ class QuESoParameters(QtGui.QMainWindow):
         
 ## ---- To confirm the applied surface load boundary conditions and their values ---------
 
-
     def okButtonClicked_SurfaceLoadFacesList(self):
 
         self.setVisible(True)
@@ -1154,7 +1153,6 @@ class QuESoParameters(QtGui.QMainWindow):
 ##  --------------------------------------------------------------------------------------
 
 ## ---- To completely discard all the surface load boundary conditions applied (Face IDs and values) ----
-
 
     def DiscardButtonClicked_SurfaceLoadFacesList(self):
 
@@ -1172,7 +1170,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
 ##  --------------------------------------------------------------------------------------
 
-## ---- To delete the penalty surface load condition selected on the list ----------------
+## ---- To delete the surface load condition selected on the list ----------------
 
     def DeleteButtonClicked_SurfaceLoadFacesList(self):
 
@@ -1195,7 +1193,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
 ##  --------------------------------------------------------------------------------------
 
-## ---- To modify the penalty surface load condition selected on the list ----------------
+## ---- To modify the surface load condition selected on the list ----------------
 
     def ModifyButtonClicked_SurfaceLoadFacesList(self):
 
@@ -1221,7 +1219,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
 ##  --------------------------------------------------------------------------------------
 
-## ---- To highlight the current face ID selected on the penalty support boundary conditions list ----
+## ---- To highlight the current face ID selected on the surface load boundary conditions list ----
 
     def itemClicked_SurfaceLoadFacesList(self, item):
 
