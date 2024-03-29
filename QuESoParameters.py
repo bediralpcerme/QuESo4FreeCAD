@@ -25,6 +25,7 @@ from collections import OrderedDict
 import math
 import subprocess
 import OpenSCADUtils
+import re
 
 class QuESoParameters(QtGui.QMainWindow): 
 
@@ -510,12 +511,14 @@ class QuESoParameters(QtGui.QMainWindow):
         self.PenaltySupportFacesList_Obj.Delete_button.clicked.connect(self.DeleteButtonClicked_PenaltySupportFacesList)
         self.PenaltySupportFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_PenaltySupportFacesList)
         self.PenaltySupportFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_PenaltySupportFacesList)
+        self.PenaltySupportFacesList_Obj.listwidget.itemClicked.connect(self.itemClicked_PenaltySupportFacesList)
 
         self.SurfaceLoadFacesList_Obj = SurfaceLoadFacesList()
         self.SurfaceLoadFacesList_Obj.Modify_button.clicked.connect(self.ModifyButtonClicked_SurfaceLoadFacesList)
         self.SurfaceLoadFacesList_Obj.Delete_button.clicked.connect(self.DeleteButtonClicked_SurfaceLoadFacesList)
         self.SurfaceLoadFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_SurfaceLoadFacesList)
         self.SurfaceLoadFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_SurfaceLoadFacesList)
+        self.SurfaceLoadFacesList_Obj.listwidget.itemClicked.connect(self.itemClicked_SurfaceLoadFacesList)
 
 ##  **************************************************************************************
 
@@ -758,7 +761,7 @@ class QuESoParameters(QtGui.QMainWindow):
                 if ('SurfaceLoadFaces' in member_OtherInfos):
                     for idx, member_SurfaceLoadFaces in enumerate(mydata_OtherInfos['SurfaceLoadFaces']):
                         self.SurfaceLoad_faces.append(member_SurfaceLoadFaces)
-                        self.SurfaceLoadFacesList_Obj.listwidget.addItem(member_SurfaceLoadFaces)
+                        self.SurfaceLoadFacesList_Obj.listwidget.addItem(QtGui.QListWidgetItem(member_SurfaceLoadFaces))
                         Gui.Selection.addSelection(FreeCAD.ActiveDocument.Name, self.mainObjectName, member_SurfaceLoadFaces)
                         sel = Gui.Selection.getSelectionEx()
                         self.SurfaceLoadSelectionList.append(sel)
@@ -835,7 +838,7 @@ class QuESoParameters(QtGui.QMainWindow):
                 elif ('PenaltySupportFaces' in member_OtherInfos):
                     for member_PenaltySupportFaces in mydata_OtherInfos['PenaltySupportFaces']:
                         self.PenaltySupport_faces.append(member_PenaltySupportFaces)
-                        self.PenaltySupportFacesList_Obj.listwidget.addItem(member_PenaltySupportFaces)
+                        self.PenaltySupportFacesList_Obj.listwidget.addItem(QtGui.QListWidgetItem(member_PenaltySupportFaces))
                         Gui.Selection.addSelection(FreeCAD.ActiveDocument.Name, self.mainObjectName, member_PenaltySupportFaces)
                         sel = Gui.Selection.getSelectionEx()
                         self.PenaltySupportSelectionList.append(sel)
@@ -988,6 +991,7 @@ class QuESoParameters(QtGui.QMainWindow):
             self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_PenaltySupportBCBox)
             self.setVisible(False)
             self.PenaltySupportFacesList_Obj.show()
+            Gui.Selection.clearSelection()
 
     def onSurfaceLoadBC(self):
         infoBox = QtGui.QMessageBox.information(self, "Apply SurfaceLoad Boundary Conditions", \
@@ -998,6 +1002,7 @@ class QuESoParameters(QtGui.QMainWindow):
             self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_SurfaceLoadBCBox)
             self.setVisible(False)
             self.SurfaceLoadFacesList_Obj.show()
+            Gui.Selection.clearSelection()
 
 ##  --------------------------------------------------------------------------------------
 
@@ -1038,6 +1043,9 @@ class QuESoParameters(QtGui.QMainWindow):
     def okButtonClicked_PenaltySupportFacesList(self):
 
         self.setVisible(True)
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        setColor = [(float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0))]
+        main_obj.ViewObject.DiffuseColor = setColor
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.PenaltySupportFacesList_Obj.result = True
         self.PenaltySupportFacesList_Obj.close()
@@ -1049,6 +1057,9 @@ class QuESoParameters(QtGui.QMainWindow):
     def DiscardButtonClicked_PenaltySupportFacesList(self):
 
         self.setVisible(True)
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        setColor = [(float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0))]
+        main_obj.ViewObject.DiffuseColor = setColor
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.PenaltySupportFacesList_Obj.result = False
         self.PenaltySupport_displacement_arr = []
@@ -1102,6 +1113,23 @@ class QuESoParameters(QtGui.QMainWindow):
         
 ##  --------------------------------------------------------------------------------------
         
+## ---- To highlight the current face ID selected on the penalty support boundary conditions list ----
+
+    def itemClicked_PenaltySupportFacesList(self, item):
+
+        face_selected_index = int(re.sub('Face',' ',item.text()))-1
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        faces_all = main_obj.Shape.Faces
+        setColor = []
+        for idx in range(len(faces_all)):
+            if idx == face_selected_index:
+                setColor.append((float(0), float(1), float(1), float(0)))
+            else:
+                setColor.append((float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0)))
+        main_obj.ViewObject.DiffuseColor = setColor
+
+##  --------------------------------------------------------------------------------------
+        
 ##  ######################################################################################
 
 ##########################################################################################
@@ -1117,6 +1145,9 @@ class QuESoParameters(QtGui.QMainWindow):
     def okButtonClicked_SurfaceLoadFacesList(self):
 
         self.setVisible(True)
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        setColor = [(float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0))]
+        main_obj.ViewObject.DiffuseColor = setColor
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.SurfaceLoadFacesList_Obj.result = True
         self.SurfaceLoadFacesList_Obj.close()
@@ -1129,6 +1160,9 @@ class QuESoParameters(QtGui.QMainWindow):
     def DiscardButtonClicked_SurfaceLoadFacesList(self):
 
         self.setVisible(True)
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        setColor = [(float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0))]
+        main_obj.ViewObject.DiffuseColor = setColor
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.SurfaceLoadFacesList_Obj.result = False
         self.SurfaceLoad_force_arr = []
@@ -1188,6 +1222,23 @@ class QuESoParameters(QtGui.QMainWindow):
 
 ##  --------------------------------------------------------------------------------------
 
+## ---- To highlight the current face ID selected on the penalty support boundary conditions list ----
+
+    def itemClicked_SurfaceLoadFacesList(self, item):
+
+        face_selected_index = int(re.sub('Face','',item.text()))-1
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        faces_all = main_obj.Shape.Faces
+        setColor = []
+        for idx in range(len(faces_all)):
+            if idx == face_selected_index:
+                setColor.append((float(0), float(1), float(1), float(0)))
+            else:
+                setColor.append((float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0)))
+        main_obj.ViewObject.DiffuseColor = setColor
+
+##  --------------------------------------------------------------------------------------
+
 ##  ######################################################################################
 
 ##########################################################################################
@@ -1209,7 +1260,7 @@ class QuESoParameters(QtGui.QMainWindow):
         &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
             pos = event.getPosition().getValue()
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
-            if(element_list != None):
+            if(element_list != None) and (element_list.get('Component').startswith('Face')):
                 self.PenaltySupportBCBox_obj.okButton_Flag = False
                 self.PenaltySupportBCBox_obj.exec_()
                 if(self.PenaltySupportBCBox_obj.okButton_Flag):
@@ -1217,7 +1268,7 @@ class QuESoParameters(QtGui.QMainWindow):
                                                                 [float(self.PenaltySupportBCBox_obj.x_val), \
                                                                  float(self.PenaltySupportBCBox_obj.y_val), \
                                                                  float(self.PenaltySupportBCBox_obj.z_val)])
-                    self.PenaltySupportFacesList_Obj.listwidget.addItem(element_list.get('Component'))
+                    self.PenaltySupportFacesList_Obj.listwidget.addItem(QtGui.QListWidgetItem(element_list.get('Component')))
 
                     Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
                                                element_list.get('Component'), element_list.get('x'), element_list.get('y'))
@@ -1333,7 +1384,7 @@ class QuESoParameters(QtGui.QMainWindow):
         &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
             pos = event.getPosition().getValue()
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
-            if(element_list != None):
+            if(element_list != None) and (element_list.get('Component').startswith('Face')):
                 self.SurfaceLoadBCBox_obj.element_list = element_list
                 self.SurfaceLoadBCBox_obj.okButton_Flag = False
                 self.SurfaceLoadBCBox_obj.exec_()
@@ -1344,7 +1395,7 @@ class QuESoParameters(QtGui.QMainWindow):
                                                                  float(self.SurfaceLoadBCBox_obj.z_val)])
                     self.SurfaceLoad_modulus_arr.append(\
                                                                 float(self.SurfaceLoadBCBox_obj.modulus_val))
-                    self.SurfaceLoadFacesList_Obj.listwidget.addItem(element_list.get('Component'))
+                    self.SurfaceLoadFacesList_Obj.listwidget.addItem(QtGui.QListWidgetItem(element_list.get('Component')))
 
                     Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
                                                element_list.get('Component'), element_list.get('x'), element_list.get('y'))
