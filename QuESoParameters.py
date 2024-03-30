@@ -10,9 +10,6 @@
 ##--------------------------------------------------------------------------------------##
 ##--------------------------------------------------------------------------------------##
 
-# Tasks remaining:
-# - Normalization of force vector
-
 from FreeCAD_PySide import QtGui, QtCore
 import os, shutil
 import FreeCAD
