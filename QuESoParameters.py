@@ -1704,11 +1704,12 @@ class QuESoParameters(QtGui.QMainWindow):
 
             for i in range (int(len(self.SurfaceLoad_force_arr))):
                 force_direction = list(self.SurfaceLoad_force_arr[i])
+                force_direction_normalized = [x/math.sqrt(math.pow(force_direction[0],2) + math.pow(force_direction[1],2) + math.pow(force_direction[2],2)) for x in force_direction]
                 magnitude = self.SurfaceLoad_modulus_arr[i]
                 SurfaceLoad_json = {"SurfaceLoadCondition": {
                     "input_filename" : str(self.data_dir) + "/" + "N" + str(i+1) + ".stl",
                     "modulus"        : magnitude,
-                    "direction"      : force_direction,
+                    "direction"      : force_direction_normalized,
                     }
                 }
                 self.append_json(SurfaceLoad_json)
