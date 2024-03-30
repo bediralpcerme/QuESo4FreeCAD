@@ -10,6 +10,8 @@
 ##--------------------------------------------------------------------------------------##
 ##--------------------------------------------------------------------------------------##
 
+# Tasks remaining:
+# - Normalization of force vector
 
 from FreeCAD_PySide import QtGui, QtCore
 import os, shutil
@@ -22,17 +24,17 @@ from collections import OrderedDict
 import math
 import subprocess
 import OpenSCADUtils
+import re
 
 class QuESoParameters(QtGui.QMainWindow): 
 
     def __init__(self): 
 
         super(QuESoParameters, self).__init__()
-        self.initUI()
         self.visulizerun    = 0
         self.gridList       = []
         self.mainObjectName = ""
-            
+        self.initUI()           
 
     def initUI(self):
 
@@ -508,12 +510,14 @@ class QuESoParameters(QtGui.QMainWindow):
         self.PenaltySupportFacesList_Obj.Delete_button.clicked.connect(self.DeleteButtonClicked_PenaltySupportFacesList)
         self.PenaltySupportFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_PenaltySupportFacesList)
         self.PenaltySupportFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_PenaltySupportFacesList)
+        self.PenaltySupportFacesList_Obj.listwidget.itemClicked.connect(self.itemClicked_PenaltySupportFacesList)
 
         self.SurfaceLoadFacesList_Obj = SurfaceLoadFacesList()
         self.SurfaceLoadFacesList_Obj.Modify_button.clicked.connect(self.ModifyButtonClicked_SurfaceLoadFacesList)
         self.SurfaceLoadFacesList_Obj.Delete_button.clicked.connect(self.DeleteButtonClicked_SurfaceLoadFacesList)
         self.SurfaceLoadFacesList_Obj.okButton.clicked.connect(self.okButtonClicked_SurfaceLoadFacesList)
         self.SurfaceLoadFacesList_Obj.DiscardButton.clicked.connect(self.DiscardButtonClicked_SurfaceLoadFacesList)
+        self.SurfaceLoadFacesList_Obj.listwidget.itemClicked.connect(self.itemClicked_SurfaceLoadFacesList)
 
 ##  **************************************************************************************
 
@@ -754,21 +758,161 @@ class QuESoParameters(QtGui.QMainWindow):
 
             for member_OtherInfos in mydata_OtherInfos:
                 if ('SurfaceLoadFaces' in member_OtherInfos):
-                    for member_SurfaceLoadFaces in mydata_OtherInfos['SurfaceLoadFaces']:
+                    for idx, member_SurfaceLoadFaces in enumerate(mydata_OtherInfos['SurfaceLoadFaces']):
                         self.SurfaceLoad_faces.append(member_SurfaceLoadFaces)
-                        self.SurfaceLoadFacesList_Obj.listwidget.addItem(member_SurfaceLoadFaces)
+                        self.SurfaceLoadFacesList_Obj.listwidget.addItem(QtGui.QListWidgetItem(member_SurfaceLoadFaces))
                         Gui.Selection.addSelection(FreeCAD.ActiveDocument.Name, self.mainObjectName, member_SurfaceLoadFaces)
                         sel = Gui.Selection.getSelectionEx()
                         self.SurfaceLoadSelectionList.append(sel)
+                        #Loop over all vertices			
+                        for sel in Gui.Selection.getSelectionEx('', 0):
+                            for path in sel.SubElementNames if sel.SubElementNames else ['']:
+                                shape = sel.Object.getSubObject(path)
+
+			                    #Calculating vector components
+                                neuVector = FreeCAD.Vector(float(self.SurfaceLoad_force_arr[idx][0]),float(self.SurfaceLoad_force_arr[idx][1]),float(self.SurfaceLoad_force_arr[idx][2]))
+                                exeptVector = FreeCAD.Vector(0.00,0.00,-1.00)
+                                vX = FreeCAD.Vector(1,0,0)
+                                vY = FreeCAD.Vector(0,1,0)
+                                vZ = FreeCAD.Vector(0,0,1)
+
+                                axis1 = FreeCAD.Vector.cross(vX, neuVector)
+                                axis2 = FreeCAD.Vector.cross(vY, neuVector)
+                                axis3 = FreeCAD.Vector.cross(vZ, neuVector)
+    
+			                    #Calculating angles between main vector and origin
+                                angle1 = math.degrees(vX.getAngle(neuVector))
+                                angle2 = math.degrees(vY.getAngle(neuVector))
+                                angle3 = math.degrees(vZ.getAngle(neuVector))
+
+                                iconNeu = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Neumann BC_" + member_SurfaceLoadFaces)
+                                n = 1 
+			                    #Loop over all vertices
+                                for i in [v.Point for v in shape.Vertexes]:
+                                
+                                    #Creating icons
+                                    bcTip = FreeCAD.ActiveDocument.addObject("Part::Cone")
+                                    bcTip.Height = 7.5	
+                                    bcTip.Radius1 = 2
+                                    bcTip.Radius2 = 0
+                                    bcTip.Label = "_bcTip_" + str(n)
+
+                                    bcTip.Placement = FreeCAD.Placement(FreeCAD.Vector(0, 0, -7.5),FreeCAD.Rotation(0, 0, 0))
+                                    bcCyl = FreeCAD.ActiveDocument.addObject("Part::Cone")
+                                    bcCyl.Height = 7.5
+                                    bcCyl.Radius1 = 1.1
+                                    bcCyl.Radius2 = 1.0
+
+                                    bcCyl.Placement = FreeCAD.Placement(FreeCAD.Vector(0, 0, -15.0), FreeCAD.Rotation(0, 0, 0))
+                                    bcCyl.Label = "_bcCyl_" + str(n)
+                                    FreeCAD.ActiveDocument.recompute()
+
+                                    fusion_arrow = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + member_SurfaceLoadFaces + str(n))
+                                    fusion_arrow.Shapes = [bcTip, bcCyl]
+                                    FreeCAD.ActiveDocument.recompute()
+                                    fusion_arrow.Label = "Neumann_BC_" + member_SurfaceLoadFaces + "_" + str(n)
+    
+				                    #Orienting and locating icone into vertex
+                                    fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1,angle1))
+                                    fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2,180 - angle2))
+                                    fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis3,angle3))
+                                    if neuVector == exeptVector:
+                                        fusion_arrow.Placement = FreeCAD.Placement(i,FreeCAD.Rotation(FreeCAD.Vector(0,1,0),180))
+                                    else:
+                                        fusion_arrow.Placement = FreeCAD.Placement(i,FreeCAD.Rotation(axis3,angle3))
+
+                                    Gui.ActiveDocument.getObject("Part__MultiFuse" + member_SurfaceLoadFaces + str(n)).Selectable = False
+                                    Gui.ActiveDocument.getObject("Part__MultiFuse" + member_SurfaceLoadFaces + str(n)).ShowInTree = True
+                                    Gui.ActiveDocument.getObject("Part__MultiFuse" + member_SurfaceLoadFaces + str(n)).ShapeColor = (0.0,0.0,1.0)
+
+                                    FreeCAD.ActiveDocument.recompute()
+    
+				                    #Adding icon's label on list
+                                    iconNeu.addObject(fusion_arrow)        
+                                    n +=1
+
+                        self.Neumann_BC_icons.update({str(member_SurfaceLoadFaces): str(n)})
                         Gui.Selection.clearSelection()
 
                 elif ('PenaltySupportFaces' in member_OtherInfos):
                     for member_PenaltySupportFaces in mydata_OtherInfos['PenaltySupportFaces']:
                         self.PenaltySupport_faces.append(member_PenaltySupportFaces)
-                        self.PenaltySupportFacesList_Obj.listwidget.addItem(member_PenaltySupportFaces)
+                        self.PenaltySupportFacesList_Obj.listwidget.addItem(QtGui.QListWidgetItem(member_PenaltySupportFaces))
                         Gui.Selection.addSelection(FreeCAD.ActiveDocument.Name, self.mainObjectName, member_PenaltySupportFaces)
                         sel = Gui.Selection.getSelectionEx()
                         self.PenaltySupportSelectionList.append(sel)
+                        n = 1 
+                        for sel in Gui.Selection.getSelectionEx('', 0): 
+                            for path in sel.SubElementNames if sel.SubElementNames else ['']:
+                                shape = sel.Object.getSubObject(path)                          
+                                iconDir = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Dirichlet BC_" + member_PenaltySupportFaces)
+
+			                    #Loop over all vertices
+                                for i in [v.Point for v in shape.Vertexes]:
+
+                                    # i <- coordinates of vertex
+                                    #Calculating normals:
+                                    sub = sel.SubObjects[0]
+                                    suv = sub.Surface.parameter(i)
+                                    snv = sub.normalAt(suv[0], suv[1]).normalize()
+
+                                    pnt = sel.PickedPoints[0]
+                                    sub = sel.SubObjects[0]
+                                    u, v = sub.Surface.parameter(pnt)
+                                    nv = sub.Surface.normal(u,v)
+
+                                    #Defining base axes
+                                    vX = FreeCAD.Vector(1,0,0)
+                                    vY = FreeCAD.Vector(0,1,0)
+                                    vZ = FreeCAD.Vector(0,0,1)
+    
+				                    #Defining rotation axes
+                                    axis1 = FreeCAD.Vector.cross(vX,snv)
+                                    axis2 = FreeCAD.Vector.cross(vY,snv)
+                                    axis3 = FreeCAD.Vector.cross(vZ,snv)
+    
+				                    #Calculating rotation angles:
+                                    angle1 = math.degrees(vX.getAngle(snv))
+                                    angle2 = math.degrees(vY.getAngle(snv))
+                                    angle3 = math.degrees(vZ.getAngle(snv))
+
+                                    #Creating icons:
+                                    bcCone = FreeCAD.ActiveDocument.addObject("Part::Cone")
+                                    bcCone.Height = 5	
+                                    bcCone.Radius1 = 0
+                                    bcCone.Radius2 = 2
+                                    bcCone.Label = "_bcCone_" + str(n)
+
+                                    bcBox = FreeCAD.ActiveDocument.addObject("Part::Box")
+                                    bcBox.Height = 1
+                                    bcBox.Length = 5
+                                    bcBox.Width = 5
+                                    bcBox.Label = "_bcBox_" + str(n)
+
+                                    bcBox.Placement = FreeCAD.Placement(FreeCAD.Vector(-2.5, -2.5, 5.0),FreeCAD.Rotation(0, 0, 0), FreeCAD.Vector(0, 0, 0))
+                                    FreeCAD.ActiveDocument.recompute()
+
+                                    fusion = FreeCAD.ActiveDocument.addObject("Part::MultiFuse", "Part::MultiFuse" + member_PenaltySupportFaces + str(n))
+                                    fusion.Shapes = [bcCone, bcBox]
+    
+				                    #Orienting and locating icone into vertex
+                                    fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1, angle1))
+                                    fusion.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2, angle2))
+                                    fusion.Placement = FreeCAD.Placement(i + FreeCAD.Vector(0, 0, 0),FreeCAD.Rotation(axis3,  angle3))
+                                    FreeCAD.ActiveDocument.recompute()
+    
+				                    #Adding icon's label on list
+                                    fusion.Label = "Dirichlet_BC_" + member_PenaltySupportFaces + "_" + str(n)
+                                    Gui.ActiveDocument.getObject("Part__MultiFuse" + member_PenaltySupportFaces + str(n)).Selectable = False
+                                    Gui.ActiveDocument.getObject("Part__MultiFuse" + member_PenaltySupportFaces + str(n)).ShowInTree = True
+                                    Gui.ActiveDocument.getObject("Part__MultiFuse" + member_PenaltySupportFaces + str(n)).ShapeColor = (1.0,0.0,0.0)
+                                    FreeCAD.ActiveDocument.recompute()
+
+                                    iconDir.addObject(fusion)
+                                    n +=1
+
+		                #Adding icon to component list
+                        self.Dirichlet_BC_icons.update({str(member_PenaltySupportFaces): str(n)})
                         Gui.Selection.clearSelection()
 
         except:
@@ -846,6 +990,7 @@ class QuESoParameters(QtGui.QMainWindow):
             self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_PenaltySupportBCBox)
             self.setVisible(False)
             self.PenaltySupportFacesList_Obj.show()
+            Gui.Selection.clearSelection()
 
     def onSurfaceLoadBC(self):
         infoBox = QtGui.QMessageBox.information(self, "Apply SurfaceLoad Boundary Conditions", \
@@ -856,6 +1001,7 @@ class QuESoParameters(QtGui.QMainWindow):
             self.callback = self.view.addEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.getMouseClick_SurfaceLoadBCBox)
             self.setVisible(False)
             self.SurfaceLoadFacesList_Obj.show()
+            Gui.Selection.clearSelection()
 
 ##  --------------------------------------------------------------------------------------
 
@@ -896,6 +1042,9 @@ class QuESoParameters(QtGui.QMainWindow):
     def okButtonClicked_PenaltySupportFacesList(self):
 
         self.setVisible(True)
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        setColor = [(float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0))]
+        main_obj.ViewObject.DiffuseColor = setColor
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.PenaltySupportFacesList_Obj.result = True
         self.PenaltySupportFacesList_Obj.close()
@@ -907,6 +1056,9 @@ class QuESoParameters(QtGui.QMainWindow):
     def DiscardButtonClicked_PenaltySupportFacesList(self):
 
         self.setVisible(True)
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        setColor = [(float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0))]
+        main_obj.ViewObject.DiffuseColor = setColor
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.PenaltySupportFacesList_Obj.result = False
         self.PenaltySupport_displacement_arr = []
@@ -960,6 +1112,23 @@ class QuESoParameters(QtGui.QMainWindow):
         
 ##  --------------------------------------------------------------------------------------
         
+## ---- To highlight the current face ID selected on the penalty support boundary conditions list ----
+
+    def itemClicked_PenaltySupportFacesList(self, item):
+
+        face_selected_index = int(re.sub('Face',' ',item.text()))-1
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        faces_all = main_obj.Shape.Faces
+        setColor = []
+        for idx in range(len(faces_all)):
+            if idx == face_selected_index:
+                setColor.append((float(0), float(1), float(1), float(0)))
+            else:
+                setColor.append((float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0)))
+        main_obj.ViewObject.DiffuseColor = setColor
+
+##  --------------------------------------------------------------------------------------
+        
 ##  ######################################################################################
 
 ##########################################################################################
@@ -971,10 +1140,12 @@ class QuESoParameters(QtGui.QMainWindow):
         
 ## ---- To confirm the applied surface load boundary conditions and their values ---------
 
-
     def okButtonClicked_SurfaceLoadFacesList(self):
 
         self.setVisible(True)
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        setColor = [(float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0))]
+        main_obj.ViewObject.DiffuseColor = setColor
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.SurfaceLoadFacesList_Obj.result = True
         self.SurfaceLoadFacesList_Obj.close()
@@ -983,10 +1154,12 @@ class QuESoParameters(QtGui.QMainWindow):
 
 ## ---- To completely discard all the surface load boundary conditions applied (Face IDs and values) ----
 
-
     def DiscardButtonClicked_SurfaceLoadFacesList(self):
 
         self.setVisible(True)
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        setColor = [(float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0))]
+        main_obj.ViewObject.DiffuseColor = setColor
         self.view.removeEventCallbackPivy(coin.SoMouseButtonEvent.getClassTypeId(), self.callback)
         self.SurfaceLoadFacesList_Obj.result = False
         self.SurfaceLoad_force_arr = []
@@ -997,7 +1170,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
 ##  --------------------------------------------------------------------------------------
 
-## ---- To delete the penalty surface load condition selected on the list ----------------
+## ---- To delete the surface load condition selected on the list ----------------
 
     def DeleteButtonClicked_SurfaceLoadFacesList(self):
 
@@ -1020,7 +1193,7 @@ class QuESoParameters(QtGui.QMainWindow):
 
 ##  --------------------------------------------------------------------------------------
 
-## ---- To modify the penalty surface load condition selected on the list ----------------
+## ---- To modify the surface load condition selected on the list ----------------
 
     def ModifyButtonClicked_SurfaceLoadFacesList(self):
 
@@ -1046,6 +1219,23 @@ class QuESoParameters(QtGui.QMainWindow):
 
 ##  --------------------------------------------------------------------------------------
 
+## ---- To highlight the current face ID selected on the surface load boundary conditions list ----
+
+    def itemClicked_SurfaceLoadFacesList(self, item):
+
+        face_selected_index = int(re.sub('Face','',item.text()))-1
+        main_obj = FreeCAD.getDocument(FreeCAD.ActiveDocument.Name).getObject(self.mainObjectName)
+        faces_all = main_obj.Shape.Faces
+        setColor = []
+        for idx in range(len(faces_all)):
+            if idx == face_selected_index:
+                setColor.append((float(0), float(1), float(1), float(0)))
+            else:
+                setColor.append((float(0.800000011920929), float(0.800000011920929), float(0.800000011920929), float(0)))
+        main_obj.ViewObject.DiffuseColor = setColor
+
+##  --------------------------------------------------------------------------------------
+
 ##  ######################################################################################
 
 ##########################################################################################
@@ -1067,8 +1257,7 @@ class QuESoParameters(QtGui.QMainWindow):
         &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
             pos = event.getPosition().getValue()
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
-            if(element_list != None):
-                self.PenaltySupportBCBox_obj.element_list = element_list # This seems redundant?
+            if(element_list != None) and (element_list.get('Component').startswith('Face')):
                 self.PenaltySupportBCBox_obj.okButton_Flag = False
                 self.PenaltySupportBCBox_obj.exec_()
                 if(self.PenaltySupportBCBox_obj.okButton_Flag):
@@ -1076,7 +1265,7 @@ class QuESoParameters(QtGui.QMainWindow):
                                                                 [float(self.PenaltySupportBCBox_obj.x_val), \
                                                                  float(self.PenaltySupportBCBox_obj.y_val), \
                                                                  float(self.PenaltySupportBCBox_obj.z_val)])
-                    self.PenaltySupportFacesList_Obj.listwidget.addItem(element_list.get('Component'))
+                    self.PenaltySupportFacesList_Obj.listwidget.addItem(QtGui.QListWidgetItem(element_list.get('Component')))
 
                     Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
                                                element_list.get('Component'), element_list.get('x'), element_list.get('y'))
@@ -1192,7 +1381,7 @@ class QuESoParameters(QtGui.QMainWindow):
         &  (Gui.Selection.hasSelection() == False) & (event.getState() == coin.SoMouseButtonEvent.DOWN):
             pos = event.getPosition().getValue()
             element_list = Gui.ActiveDocument.ActiveView.getObjectInfo((int(pos[0]), int(pos[1])))
-            if(element_list != None):
+            if(element_list != None) and (element_list.get('Component').startswith('Face')):
                 self.SurfaceLoadBCBox_obj.element_list = element_list
                 self.SurfaceLoadBCBox_obj.okButton_Flag = False
                 self.SurfaceLoadBCBox_obj.exec_()
@@ -1203,13 +1392,14 @@ class QuESoParameters(QtGui.QMainWindow):
                                                                  float(self.SurfaceLoadBCBox_obj.z_val)])
                     self.SurfaceLoad_modulus_arr.append(\
                                                                 float(self.SurfaceLoadBCBox_obj.modulus_val))
-                    self.SurfaceLoadFacesList_Obj.listwidget.addItem(element_list.get('Component'))
+                    self.SurfaceLoadFacesList_Obj.listwidget.addItem(QtGui.QListWidgetItem(element_list.get('Component')))
 
                     Gui.Selection.addSelection(element_list.get('Document'), element_list.get('Object'), \
                                                element_list.get('Component'), element_list.get('x'), element_list.get('y'))
                     sel = Gui.Selection.getSelectionEx()
                     self.SurfaceLoadSelectionList.append(sel)
                     self.SurfaceLoad_faces.append(element_list['Component'])
+                    self.mainObjectName = element_list['Object']
 
 ##  **************************************************************************************
                                         
@@ -1217,12 +1407,12 @@ class QuESoParameters(QtGui.QMainWindow):
 ##   Preprocessing Icons to visualize them on the model for Surface load Boundary       ##
 ##                                      Condition                                       ##
 ##**************************************************************************************##
-		    #Loop over all vertices			
+		            #Loop over all vertices			
                     for sel in Gui.Selection.getSelectionEx('', 0):
                         for path in sel.SubElementNames if sel.SubElementNames else ['']:
                             shape = sel.Object.getSubObject(path)
 				
-			    #Calculating vector components
+			                #Calculating vector components
                             neuVector = FreeCAD.Vector(float(self.SurfaceLoadBCBox_obj.x_val),float(self.SurfaceLoadBCBox_obj.y_val),float(self.SurfaceLoadBCBox_obj.z_val))
                             exeptVector = FreeCAD.Vector(0.00,0.00,-1.00)
                             vX = FreeCAD.Vector(1,0,0)
@@ -1233,14 +1423,14 @@ class QuESoParameters(QtGui.QMainWindow):
                             axis2 = FreeCAD.Vector.cross(vY, neuVector)
                             axis3 = FreeCAD.Vector.cross(vZ, neuVector)
 				
-			    #Calculating angles between main vector and origin
+			                #Calculating angles between main vector and origin
                             angle1 = math.degrees(vX.getAngle(neuVector))
                             angle2 = math.degrees(vY.getAngle(neuVector))
                             angle3 = math.degrees(vZ.getAngle(neuVector))
 
                             iconNeu = FreeCAD.activeDocument().addObject("App::DocumentObjectGroup","Neumann BC_" + element_list.get('Component'))
                             n = 1 
-			    #Loop over all vertices
+			                #Loop over all vertices
                             for i in [v.Point for v in shape.Vertexes]:
 				    
                                 #Creating icons
@@ -1265,7 +1455,7 @@ class QuESoParameters(QtGui.QMainWindow):
                                 FreeCAD.ActiveDocument.recompute()
                                 fusion_arrow.Label = "Neumann_BC_" + element_list.get('Component') + "_" + str(n)
 				    
-				#Orienting and locating icone into vertex
+				                #Orienting and locating icone into vertex
                                 fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis1,angle1))
                                 fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis2,180 - angle2))
                                 fusion_arrow.Placement = FreeCAD.Placement(FreeCAD.Vector(0.00,0.00,0.00),FreeCAD.Rotation(axis3,angle3))
@@ -1280,15 +1470,11 @@ class QuESoParameters(QtGui.QMainWindow):
 
                                 FreeCAD.ActiveDocument.recompute()
 				    
-				#Adding icon's label on list
+				                #Adding icon's label on list
                                 iconNeu.addObject(fusion_arrow)        
                                 n +=1
 
                     self.Neumann_BC_icons.update({str(element_list.get('Component')): str(n)})
-			
-		    #Adding icon to component list
-                    self.SurfaceLoad_faces.append(element_list['Component'])
-                    self.mainObjectName = element_list['Object']
                     Gui.Selection.clearSelection()
 
 ##  **************************************************************************************
@@ -1518,11 +1704,12 @@ class QuESoParameters(QtGui.QMainWindow):
 
             for i in range (int(len(self.SurfaceLoad_force_arr))):
                 force_direction = list(self.SurfaceLoad_force_arr[i])
+                force_direction_normalized = [x/math.sqrt(math.pow(force_direction[0],2) + math.pow(force_direction[1],2) + math.pow(force_direction[2],2)) for x in force_direction]
                 magnitude = self.SurfaceLoad_modulus_arr[i]
                 SurfaceLoad_json = {"SurfaceLoadCondition": {
                     "input_filename" : str(self.data_dir) + "/" + "N" + str(i+1) + ".stl",
                     "modulus"        : magnitude,
-                    "direction"      : force_direction,
+                    "direction"      : force_direction_normalized,
                     }
                 }
                 self.append_json(SurfaceLoad_json)

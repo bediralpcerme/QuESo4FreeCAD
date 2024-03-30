@@ -3,6 +3,7 @@ import subprocess
 import FreeCAD
 import sys, os, stat, platform
 import json
+import re
 
 ##########################################################################################
 ##                                                                                      ##
@@ -95,10 +96,19 @@ class RunQuESo(QtGui.QDialog):
 
         if platform.system() == 'Linux':
 
+            # If a path to a directory with white spaces is passed into the bash script, Terminal is unable to treat it properly as desired.
+            # Hence, we perform an additional step of changing the paths that will be put into the bash script.   
+            
+            work_dir_bash = re.sub('\s', '\\'+' ', work_dir)
+            kratos_dirOrg_bash = re.sub('\s', '\\'+' ', kratos_dirOrg)
+            QuESo_dirOrg_bash = re.sub('\s', '\\'+' ', QuESo_dirOrg)
+            kratos_lib_dirOrg_bash = re.sub('\s', '\\'+' ', kratos_lib_dirOrg)
+            QuESo_lib_dirOrg_bash = re.sub('\s', '\\'+' ', QuESo_lib_dirOrg)
+
             Run_script = \
             '''#!/bin/bash
 
-gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; cd {dir}; export PYTHONPATH=$PYTHONPATH:{kratos_dir}:{QuESo_dir}; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir}; source /opt/intel/oneapi/setvars.sh intel64; python3 QuESo_main.py; echo 'Press ENTER to exit'; read"'''.format(dir=work_dir, kratos_dir=kratos_dirOrg, QuESo_dir=QuESo_dirOrg, kratos_lib_dir = kratos_lib_dirOrg, QuESo_lib_dir=QuESo_lib_dirOrg)
+gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; cd {dir}; export PYTHONPATH=$PYTHONPATH:{kratos_dir}:{QuESo_dir}; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{kratos_lib_dir}:{QuESo_lib_dir}; source /opt/intel/oneapi/setvars.sh intel64; python3 QuESo_main.py; echo 'Press ENTER to exit'; read"'''.format(dir=work_dir_bash, kratos_dir=kratos_dirOrg_bash, QuESo_dir=QuESo_dirOrg_bash, kratos_lib_dir=kratos_lib_dirOrg_bash, QuESo_lib_dir=QuESo_lib_dirOrg_bash)
 
             with open("RunQuESo_Shell.sh", "w") as rtsh:
                 rtsh.write(Run_script)
@@ -107,12 +117,13 @@ gnome-terminal --title="Running QuESo and Kratos" -- bash -c "source ~/.bashrc; 
             rtsh.close()
 
             RunQuESo_Shell_dir = work_dir + "/RunQuESo_Shell.sh"
+            RunQuESo_Shell_dir_bash = re.sub('\s', '\\'+' ', RunQuESo_Shell_dir)
             
             current_st = os.stat(RunQuESo_Shell_dir)
 
             os.chmod(RunQuESo_Shell_dir, current_st.st_mode | stat.S_IEXEC)
 
-            subprocess.run(RunQuESo_Shell_dir, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
+            subprocess.run(RunQuESo_Shell_dir_bash, shell = True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, text = True)
         
         elif platform.system() == 'Windows':
             
